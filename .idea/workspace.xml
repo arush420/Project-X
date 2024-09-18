@@ -4,12 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e6dbd0ca-4a40-421b-a54d-6efd19655733" name="Changes" comment="Version 1.0 creating basic framework">
-      <change afterPath="$PROJECT_DIR$/salary_management/employees/templates/employees/employee_list.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/salary_management/employees/templates/employees/generate_salary.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/salary_management/employees/templates/employees/home.html" afterDir="false" />
+    <list default="true" id="e6dbd0ca-4a40-421b-a54d-6efd19655733" name="Changes" comment="Version 1.1 webpage stated working">
+      <change afterPath="$PROJECT_DIR$/salary_management/employees/forms.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salary_management/employees/templates/employees/add_employee.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/salary_management/salary_management/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/salary_management/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/salary_management/employees/templates/employees/home.html" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/employees/templates/employees/home.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/salary_management/employees/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/employees/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/salary_management/employees/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/employees/views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -64,6 +65,11 @@
     "last_opened_file_path": "C:/Users/mkaus/MohitProjects/ProjectX/salary_management/employees/templates/employees"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\mkaus\MohitProjects\ProjectX\salary_management\employees\templates\employees" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -88,11 +94,20 @@
       <option name="project" value="LOCAL" />
       <updated>1726646249296</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Version 1.1 webpage stated working">
+      <option name="closed" value="true" />
+      <created>1726648351096</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1726648351096</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Version 1.0 creating basic framework" />
-    <option name="LAST_COMMIT_MESSAGE" value="Version 1.0 creating basic framework" />
+    <MESSAGE value="Version 1.1 webpage stated working" />
+    <option name="LAST_COMMIT_MESSAGE" value="Version 1.1 webpage stated working" />
   </component>
 </project>

@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Employee, Salary
 from datetime import datetime
+from .forms import EmployeeForm
 
 
 def employee_list(request):
@@ -36,3 +37,14 @@ def generate_salary(request):
 
 def home(request):
     return render(request, 'employees/home.html')
+
+
+def add_employee(request):
+    if request.method == 'POST':
+        form = EmployeeForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('employee_list')  # Redirect to the employee list after saving
+    else:
+        form = EmployeeForm()
+    return render(request, 'employees/add_employee.html', {'form': form})
