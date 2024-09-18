@@ -2,71 +2,84 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import Employee, Salary
 from datetime import datetime
 from .forms import EmployeeForm
+from django.db.models import Q  # For complex queries (like searching multiple fields)
 
 
 def employee_list(request):
-    employees = Employee.objects.all()
-    return render(request, 'employees/employee_list.html', {'employees': employees})
+    search_query = request.GET.get('search', '')  # Get the search term from the request
+
+    # Filter the employees based on the search query (searching in both employee_code and name)
+    if search_query:
+        employees = Employee.objects.filter(
+            Q(employee_code__icontains=search_query) | Q(name__icontains=search_query)
+        )
+    else:
+        employees = Employee.objects.all()  # If no search query, return all employees
+
+    return render(request, 'employees/employee_list.html', {'employees': employees, 'search_query': search_query})
 
 
 def generate_salary(request):
     if request.method == 'POST':
-        # Get the number of days worked and number of days in the month from the form
-        days_worked = request.POST.get('days_worked')
         days_in_month = request.POST.get('days_in_month')
 
-        # Ensure values are provided and convert them to integers
-        if not days_worked or not days_in_month:
-            # If input is missing, render the form again with an error message
+        if not days_in_month:
             return render(request, 'employees/generate_salary.html', {
-                'error': 'Please enter both days worked and number of days in the month.'
+                'error': 'Please enter the number of days in the month.'
             })
 
         try:
-            days_worked = int(days_worked)
             days_in_month = int(days_in_month)
         except ValueError:
-            # Handle case where the inputs are not valid integers
             return render(request, 'employees/generate_salary.html', {
-                'error': 'Invalid input. Please enter valid numbers for days worked and days in the month.'
+                'error': 'Invalid input for number of days in the month.'
             })
 
         employees = Employee.objects.all()
         salary_data = []
+        total_net_salary = 0
 
         for employee in employees:
+            days_worked = request.POST.get(f'days_worked_{employee.id}')
+
+            if not days_worked:
+                days_worked = 0
+            else:
+                try:
+                    days_worked = int(days_worked)
+                except ValueError:
+                    days_worked = 0
+
             basic = employee.basic
             transport = employee.transport
             canteen = employee.canteen
-            pf_percentage = employee.pf  # Assume `pf` is the percentage (e.g., 12 for 12%)
-            esic_percentage = employee.esic  # Assume `esic` is the percentage (e.g., 1 for 1%)
+            pf_percentage = employee.pf
+            esic_percentage = employee.esic
 
-            # Gross Salary Calculation: ((basic + transport) / days_in_month) * days_worked
             gross_salary = ((basic + transport) / days_in_month) * days_worked
-
-            # PF and ESIC calculation
             pf_amount = (pf_percentage / 100) * basic
             esic_amount = (esic_percentage / 100) * basic
-
-            # Net Salary Calculation: Gross Salary - (canteen + pf + esic)
             net_salary = gross_salary - (canteen + pf_amount + esic_amount)
 
-            # Round the gross and net salary to 2 decimal places
             gross_salary = round(gross_salary, 2)
             net_salary = round(net_salary, 2)
 
             salary_data.append({
                 'employee_code': employee.employee_code,
                 'name': employee.name,
-                'gross_salary': f'{gross_salary:.2f}',  # Format with 2 decimal places
-                'net_salary': f'{net_salary:.2f}',  # Format with 2 decimal places
+                'gross_salary': f'{gross_salary:.2f}',
+                'net_salary': f'{net_salary:.2f}',
             })
 
-        return render(request, 'employees/salary_report.html', {'salary_data': salary_data})
+            total_net_salary += net_salary
 
-    # Render the form when the page is first loaded or if there's an error
-    return render(request, 'employees/generate_salary.html')
+        return render(request, 'employees/salary_report.html', {
+            'salary_data': salary_data,
+            'total_net_salary': f'{total_net_salary:.2f}'
+        })
 
+    employees = Employee.objects.all()
+    return render(request, 'employees/generate_salary.html', {'employees': employees})
 def home(request):
     return render(request, 'employees/home.html')
 

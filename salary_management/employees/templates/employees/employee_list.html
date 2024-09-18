@@ -5,31 +5,50 @@
 </head>
 <body>
     <h1>Employee List</h1>
+
+    <!-- Search form -->
+    <form method="get" action="">
+        <label for="search">Search by Employee Code or Name:</label>
+        <input type="text" id="search" name="search" value="{{ search_query }}" placeholder="Enter employee code or name">
+        <button type="submit">Search</button>
+    </form>
+
+    <!-- Employee table -->
     <table border="1">
-        <tr>
-            <th>Employee Code</th>
-            <th>Name</th>
-            <th>Father Name</th>
-            <th>Basic</th>
-            <th>Transport</th>
-            <th>Canteen</th>
-            <th>PF</th>
-            <th>ESIC</th>
-            <th>Advance</th>
-        </tr>
-        {% for employee in employees %}
-        <tr>
-            <td>{{ employee.employee_code }}</td>
-            <td>{{ employee.name }}</td>
-            <td>{{ employee.father_name }}</td>
-            <td>{{ employee.basic }}</td>
-            <td>{{ employee.transport }}</td>
-            <td>{{ employee.canteen }}</td>
-            <td>{{ employee.pf }}</td>
-            <td>{{ employee.esic }}</td>
-            <td>{{ employee.advance }}</td>
-        </tr>
-        {% endfor %}
+        <thead>
+            <tr>
+                <th>Employee Code</th>
+                <th>Name</th>
+                <th>Father Name</th>
+                <th>Basic</th>
+                <th>Transport</th>
+                <th>Canteen</th>
+                <th>PF</th>
+                <th>ESIC</th>
+                <th>Advance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if employees %}
+                {% for employee in employees %}
+                <tr>
+                    <td>{{ employee.employee_code }}</td>
+                    <td>{{ employee.name }}</td>
+                    <td>{{ employee.father_name }}</td>
+                    <td>{{ employee.basic }}</td>
+                    <td>{{ employee.transport }}</td>
+                    <td>{{ employee.canteen }}</td>
+                    <td>{{ employee.pf }}</td>
+                    <td>{{ employee.esic }}</td>
+                    <td>{{ employee.advance }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="9">No employees found matching your search.</td>
+                </tr>
+            {% endif %}
+        </tbody>
     </table>
 </body>
 </html>
