@@ -12,8 +12,24 @@ def employee_list(request):
 def generate_salary(request):
     if request.method == 'POST':
         # Get the number of days worked and number of days in the month from the form
-        days_worked = int(request.POST.get('days_worked'))
-        days_in_month = int(request.POST.get('days_in_month'))
+        days_worked = request.POST.get('days_worked')
+        days_in_month = request.POST.get('days_in_month')
+
+        # Ensure values are provided and convert them to integers
+        if not days_worked or not days_in_month:
+            # If input is missing, render the form again with an error message
+            return render(request, 'employees/generate_salary.html', {
+                'error': 'Please enter both days worked and number of days in the month.'
+            })
+
+        try:
+            days_worked = int(days_worked)
+            days_in_month = int(days_in_month)
+        except ValueError:
+            # Handle case where the inputs are not valid integers
+            return render(request, 'employees/generate_salary.html', {
+                'error': 'Invalid input. Please enter valid numbers for days worked and days in the month.'
+            })
 
         employees = Employee.objects.all()
         salary_data = []
@@ -35,16 +51,21 @@ def generate_salary(request):
             # Net Salary Calculation: Gross Salary - (canteen + pf + esic)
             net_salary = gross_salary - (canteen + pf_amount + esic_amount)
 
+            # Round the gross and net salary to 2 decimal places
+            gross_salary = round(gross_salary, 2)
+            net_salary = round(net_salary, 2)
+
             salary_data.append({
                 'employee_code': employee.employee_code,
                 'name': employee.name,
-                'gross_salary': gross_salary,
-                'net_salary': net_salary
+                'gross_salary': f'{gross_salary:.2f}',  # Format with 2 decimal places
+                'net_salary': f'{net_salary:.2f}',  # Format with 2 decimal places
             })
 
         return render(request, 'employees/salary_report.html', {'salary_data': salary_data})
 
-    return render(request, 'employees/generate_salary.html')  # Display the form initially
+    # Render the form when the page is first loaded or if there's an error
+    return render(request, 'employees/generate_salary.html')
 
 def home(request):
     return render(request, 'employees/home.html')
