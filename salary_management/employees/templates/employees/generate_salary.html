@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Salary</title>
+</head>
+<body>
+    <h1>Generate Salary</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <table border="1">
+            <tr>
+                <th>Employee</th>
+                <th>Days Worked</th>
+            </tr>
+            {% for employee in employees %}
+            <tr>
+                <td>{{ employee.name }}</td>
+                <td>
+                    <input type="number" name="days_worked_{{ employee.id }}" min="0" max="30">
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        <button type="submit">Generate Salary</button>
+    </form>
+</body>
+</html>

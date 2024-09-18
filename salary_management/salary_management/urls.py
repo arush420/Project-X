@@ -18,7 +18,8 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
 
-from ..employees import views
+from employees import views  # This should work without any relative import
+
 
 urlpatterns = [
     path('', views.home, name='home'),  # Set the homepage view
