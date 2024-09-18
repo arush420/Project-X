@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Salary Report</title>
+</head>
+<body>
+    <h1>Salary Report for Employees</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Employee Code</th>
+                <th>Name</th>
+                <th>Gross Salary</th>
+                <th>Net Salary</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for employee in salary_data %}
+            <tr>
+                <td>{{ employee.employee_code }}</td>
+                <td>{{ employee.name }}</td>
+                <td>{{ employee.gross_salary }}</td>
+                <td>{{ employee.net_salary }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

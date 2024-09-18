@@ -10,30 +10,41 @@ def employee_list(request):
 
 
 def generate_salary(request):
-    employees = Employee.objects.all()
     if request.method == 'POST':
-        month = datetime.now()
+        # Get the number of days worked and number of days in the month from the form
+        days_worked = int(request.POST.get('days_worked'))
+        days_in_month = int(request.POST.get('days_in_month'))
+
+        employees = Employee.objects.all()
+        salary_data = []
+
         for employee in employees:
-            days_worked = int(request.POST.get(f'days_worked_{employee.id}', 0))
-            total_salary = (employee.basic / 30) * days_worked + employee.transport - employee.canteen
-            advance_deducted = employee.advance
-            final_salary = total_salary - advance_deducted
+            basic = employee.basic
+            transport = employee.transport
+            canteen = employee.canteen
+            pf_percentage = employee.pf  # Assume `pf` is the percentage (e.g., 12 for 12%)
+            esic_percentage = employee.esic  # Assume `esic` is the percentage (e.g., 1 for 1%)
 
-            Salary.objects.create(
-                employee=employee,
-                month=month,
-                days_worked=days_worked,
-                total_salary=total_salary,
-                advance_deducted=advance_deducted,
-                final_salary=final_salary
-            )
-            employee.advance = 0
-            employee.save()
+            # Gross Salary Calculation: ((basic + transport) / days_in_month) * days_worked
+            gross_salary = ((basic + transport) / days_in_month) * days_worked
 
-        return redirect('salary_list')
+            # PF and ESIC calculation
+            pf_amount = (pf_percentage / 100) * basic
+            esic_amount = (esic_percentage / 100) * basic
 
-    return render(request, 'employees/generate_salary.html', {'employees': employees})
+            # Net Salary Calculation: Gross Salary - (canteen + pf + esic)
+            net_salary = gross_salary - (canteen + pf_amount + esic_amount)
 
+            salary_data.append({
+                'employee_code': employee.employee_code,
+                'name': employee.name,
+                'gross_salary': gross_salary,
+                'net_salary': net_salary
+            })
+
+        return render(request, 'employees/salary_report.html', {'salary_data': salary_data})
+
+    return render(request, 'employees/generate_salary.html')  # Display the form initially
 
 def home(request):
     return render(request, 'employees/home.html')

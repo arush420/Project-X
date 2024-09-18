@@ -4,11 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e6dbd0ca-4a40-421b-a54d-6efd19655733" name="Changes" comment="Version 1.1 webpage stated working">
-      <change afterPath="$PROJECT_DIR$/salary_management/employees/forms.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/salary_management/employees/templates/employees/add_employee.html" afterDir="false" />
+    <list default="true" id="e6dbd0ca-4a40-421b-a54d-6efd19655733" name="Changes" comment="Version 1.2 Add employess button added">
+      <change afterPath="$PROJECT_DIR$/salary_management/employees/templates/employees/salary_report.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/salary_management/employees/templates/employees/home.html" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/employees/templates/employees/home.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/salary_management/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/db.sqlite3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/salary_management/employees/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/employees/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/salary_management/employees/templates/employee_list.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/salary_management/employees/templates/generate_salary.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/salary_management/employees/templates/home.html" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/salary_management/employees/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/employees/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/salary_management/employees/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/employees/views.py" afterDir="false" />
     </list>
@@ -102,12 +105,21 @@
       <option name="project" value="LOCAL" />
       <updated>1726648351096</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Version 1.2 Add employess button added">
+      <option name="closed" value="true" />
+      <created>1726649937155</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1726649937155</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Version 1.0 creating basic framework" />
     <MESSAGE value="Version 1.1 webpage stated working" />
-    <option name="LAST_COMMIT_MESSAGE" value="Version 1.1 webpage stated working" />
+    <MESSAGE value="Version 1.2 Add employess button added" />
+    <option name="LAST_COMMIT_MESSAGE" value="Version 1.2 Add employess button added" />
   </component>
 </project>
