@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Salary Report</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        .total-container {
+            text-align: right;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Salary Report</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Employee Code</th>
+                <th>Name</th>
+                <th>Gross Salary</th>
+                <th>Net Salary</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in salary_data %}
+            <tr>
+                <td>{{ data.employee_code }}</td>
+                <td>{{ data.name }}</td>
+                <td>{{ data.gross_salary }}</td>
+                <td>{{ data.net_salary }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-container">
+        <strong>Total Net Salary: {{ total_net_salary }}</strong>
+    </div>
+</body>
+</html>

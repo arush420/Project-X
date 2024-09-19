@@ -4,23 +4,39 @@
     <title>Generate Salary</title>
 </head>
 <body>
-    <h1>Generate Salary</h1>
-    <form method="POST">
+    <h1>Generate Salary for Employees</h1>
+
+    <!-- Display error message if there's any -->
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    <form method="post">
         {% csrf_token %}
+        <label for="days_in_month">Number of Days in the Month:</label>
+        <input type="number" id="days_in_month" name="days_in_month" required><br>
+
         <table border="1">
-            <tr>
-                <th>Employee</th>
-                <th>Days Worked</th>
-            </tr>
-            {% for employee in employees %}
-            <tr>
-                <td>{{ employee.name }}</td>
-                <td>
-                    <input type="number" name="days_worked_{{ employee.id }}" min="0" max="30">
-                </td>
-            </tr>
-            {% endfor %}
+            <thead>
+                <tr>
+                    <th>Employee Code</th>
+                    <th>Name</th>
+                    <th>Days Worked</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee in employees %}
+                <tr>
+                    <td>{{ employee.employee_code }}</td>
+                    <td>{{ employee.name }}</td>
+                    <td>
+                        <input type="number" name="days_worked_{{ employee.id }}" required>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
+
         <button type="submit">Generate Salary</button>
     </form>
 </body>
