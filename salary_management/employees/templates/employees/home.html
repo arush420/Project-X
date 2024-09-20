@@ -12,8 +12,8 @@
     <p>Total Employees: {{ total_employees|default:"Not available" }}</p>  <!-- Use default filter to handle missing variables -->
 
     <!-- Ensure URLs match those in your urlpatterns -->
-    <a href="{% url 'employee_list' %}">View Employees</a>
-    <a href="{% url 'generate_salary' %}">Generate Salary</a>
-    <a href="{% url 'add_employee' %}">Add Employee</a>
+    <a href="{% url 'employees:employee_list' %}">View Employees</a>
+    <a href="{% url 'employees:generate_salary' %}">Generate Salary</a>
+    <a href="{% url 'employees:add_employee' %}">Add Employee</a>
 </body>
 </html>
