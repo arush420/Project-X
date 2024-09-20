@@ -30,6 +30,7 @@ class EmployeeListView(ListView):
 class GenerateSalaryView(View):
     template_name = 'employees/generate_salary.html'
 
+
     def get(self, request):
         return self.render_salary_form()
 
@@ -91,6 +92,9 @@ class GenerateSalaryView(View):
                 days_worked = 0
 
             gross_salary, net_salary = self.calculate_salary(employee, days_worked, days_in_month)
+
+            print(Salary.objects)
+            print(employee,month,year)
             Salary.objects.update_or_create(
                 employee=employee, month=month, year=year,
                 defaults={
@@ -132,7 +136,7 @@ def add_employee(request):
         form = EmployeeForm(request.POST)
         if form.is_valid():
             form.save()  # Save the new employee to the database
-            return redirect('employee_list')  # Redirect to employee list after successful addition
+            return redirect('employees:employee_list')  # Redirect to employee list after successful addition
     else:
         form = EmployeeForm()
 
