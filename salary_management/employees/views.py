@@ -93,8 +93,6 @@ class GenerateSalaryView(View):
 
             gross_salary, net_salary = self.calculate_salary(employee, days_worked, days_in_month)
 
-            print(Salary.objects)
-            print(employee,month,year)
             Salary.objects.update_or_create(
                 employee=employee, month=month, year=year,
                 defaults={
