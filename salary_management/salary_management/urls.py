@@ -14,16 +14,16 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, include
-from django.views.generic import RedirectView
-
-from employees import views  # This should work without any relative import
-
+from employees.views import home  # Ensure this import is correct
 
 urlpatterns = [
-    path('', views.home, name='home'),  # Set the homepage view
-    path('employees/', include('employees.urls')),  # Include the 'employees' app URL here
+    path('', home, name='home'),  # Route for the homepage
+    path('employees/', include(('employees.urls', 'employees'), namespace='employees')),  # Routes for the employees app with namespace
 ]
+
+
 
 

@@ -4,12 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e6dbd0ca-4a40-421b-a54d-6efd19655733" name="Changes" comment="Version 1.3.1 updated salary formula with calculation working broadly">
+    <list default="true" id="e6dbd0ca-4a40-421b-a54d-6efd19655733" name="Changes" comment="Version 1.3.2 updated search module on employee list">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/salary_management/employees/templates/employees/employee_list.html" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/employees/templates/employees/employee_list.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/salary_management/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/db.sqlite3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/salary_management/employees/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/employees/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/salary_management/employees/templates/employees/generate_salary.html" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/employees/templates/employees/generate_salary.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/salary_management/employees/templates/employees/home.html" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/employees/templates/employees/home.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/salary_management/employees/templates/employees/salary_report.html" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/employees/templates/employees/salary_report.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/salary_management/employees/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/employees/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/salary_management/employees/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/employees/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/salary_management/salary_management/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/salary_management/salary_management/urls.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -125,7 +129,15 @@
       <option name="project" value="LOCAL" />
       <updated>1726656348518</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Version 1.3.2 updated search module on employee list">
+      <option name="closed" value="true" />
+      <created>1726672131014</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1726672131014</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -134,6 +146,7 @@
     <MESSAGE value="Version 1.2 Add employess button added" />
     <MESSAGE value="Version 1.3 updated salary formula but thats not working properly" />
     <MESSAGE value="Version 1.3.1 updated salary formula with calculation working broadly" />
-    <option name="LAST_COMMIT_MESSAGE" value="Version 1.3.1 updated salary formula with calculation working broadly" />
+    <MESSAGE value="Version 1.3.2 updated search module on employee list" />
+    <option name="LAST_COMMIT_MESSAGE" value="Version 1.3.2 updated search module on employee list" />
   </component>
 </project>

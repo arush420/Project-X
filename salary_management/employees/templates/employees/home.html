@@ -1,18 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Salary Management Home</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
 </head>
 <body>
-    <h1>Welcome to the Salary Management System</h1>
-    <p>
-        <a href="{% url 'employee_list' %}">View Employees</a> |
-        <a href="{% url 'generate_salary' %}">Generate Salary</a>
-    </p>
-    <p>
-            <a href="{% url 'add_employee' %}">
-                <button>Add New Employee</button>
-            </a>
-        </p>
+    <h1>Welcome to the Employee Management System</h1>
+
+    <!-- Display total employees if the variable is passed -->
+    <p>Total Employees: {{ total_employees|default:"Not available" }}</p>  <!-- Use default filter to handle missing variables -->
+
+    <!-- Ensure URLs match those in your urlpatterns -->
+    <a href="{% url 'employee_list' %}">View Employees</a>
+    <a href="{% url 'generate_salary' %}">Generate Salary</a>
+    <a href="{% url 'add_employee' %}">Add Employee</a>
 </body>
 </html>

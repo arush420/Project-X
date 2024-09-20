@@ -1,68 +1,104 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, redirect
 from .models import Employee, Salary
-from datetime import datetime
+from django.db.models import Q
+from django.utils import timezone
 from .forms import EmployeeForm
-from django.db.models import Q  # For complex queries (like searching multiple fields)
+from django.views import View
+from django.views.generic import ListView
+from django.urls import reverse_lazy
 
 
-def employee_list(request):
-    search_query = request.GET.get('search', '')  # Get the search term from the request
+class EmployeeListView(ListView):
+    model = Employee
+    template_name = 'employees/employee_list.html'
+    context_object_name = 'employees'
 
-    # Filter the employees based on the search query (searching in both employee_code and name)
-    if search_query:
-        employees = Employee.objects.filter(
-            Q(employee_code__icontains=search_query) | Q(name__icontains=search_query)
-        )
-    else:
-        employees = Employee.objects.all()  # If no search query, return all employees
+    def get_queryset(self):
+        search_query = self.request.GET.get('search', '')
+        if search_query:
+            return Employee.objects.filter(
+                Q(employee_code__icontains=search_query) | Q(name__icontains=search_query)
+            )
+        return Employee.objects.all()
 
-    return render(request, 'employees/employee_list.html', {'employees': employees, 'search_query': search_query})
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get('search', '')
+        return context
 
 
-def generate_salary(request):
-    if request.method == 'POST':
-        days_in_month = request.POST.get('days_in_month')
+class GenerateSalaryView(View):
+    template_name = 'employees/generate_salary.html'
 
-        if not days_in_month:
-            return render(request, 'employees/generate_salary.html', {
-                'error': 'Please enter the number of days in the month.'
-            })
+    def get(self, request):
+        return self.render_salary_form()
+
+    def post(self, request):
+        month, year, days_in_month = self.get_salary_params(request)
+
+        if not month or not year or not days_in_month:
+            return self.render_error('Please provide all inputs: month, year, and days in the month.')
 
         try:
-            days_in_month = int(days_in_month)
+            month, year, days_in_month = int(month), int(year), int(days_in_month)
         except ValueError:
-            return render(request, 'employees/generate_salary.html', {
-                'error': 'Invalid input for number of days in the month.'
-            })
+            return self.render_error('Invalid input for month, year, or days in month.')
 
         employees = Employee.objects.all()
+        salary_data, total_net_salary = self.calculate_salaries(request, employees, days_in_month, month, year)
+
+        return render(request, 'employees/salary_report.html', {
+            'salary_data': salary_data,
+            'total_net_salary': f'{total_net_salary:.2f}',
+            'month': month,
+            'year': year
+        })
+
+    def get_salary_params(self, request):
+        """Helper function to extract and validate POST parameters."""
+        month = request.POST.get('month')
+        year = request.POST.get('year')
+        days_in_month = request.POST.get('days_in_month')
+        return month, year, days_in_month
+
+    def render_salary_form(self, error=None):
+        """Helper method to render the salary form with employees and months."""
+        employees = Employee.objects.all()
+        current_year = timezone.now().year
+        months = range(1, 13)
+        context = {
+            'employees': employees,
+            'current_year': current_year,
+            'months': months,
+        }
+        if error:
+            context['error'] = error
+        return render(self.request, self.template_name, context)
+
+    def render_error(self, error_message):
+        """Helper method to render an error message."""
+        return self.render_salary_form(error=error_message)
+
+    def calculate_salaries(self, request, employees, days_in_month, month, year):
         salary_data = []
         total_net_salary = 0
 
         for employee in employees:
-            days_worked = request.POST.get(f'days_worked_{employee.id}')
-
-            if not days_worked:
+            days_worked = request.POST.get(f'days_worked_{employee.id}', 0)
+            try:
+                days_worked = int(days_worked)
+            except ValueError:
                 days_worked = 0
-            else:
-                try:
-                    days_worked = int(days_worked)
-                except ValueError:
-                    days_worked = 0
 
-            basic = employee.basic
-            transport = employee.transport
-            canteen = employee.canteen
-            pf_percentage = employee.pf
-            esic_percentage = employee.esic
-
-            gross_salary = ((basic + transport) / days_in_month) * days_worked
-            pf_amount = (pf_percentage / 100) * basic
-            esic_amount = (esic_percentage / 100) * basic
-            net_salary = gross_salary - (canteen + pf_amount + esic_amount)
-
-            gross_salary = round(gross_salary, 2)
-            net_salary = round(net_salary, 2)
+            gross_salary, net_salary = self.calculate_salary(employee, days_worked, days_in_month)
+            Salary.objects.update_or_create(
+                employee=employee, month=month, year=year,
+                defaults={
+                    'gross_salary': gross_salary,
+                    'net_salary': net_salary,
+                    'date_generated': timezone.now()
+                }
+            )
 
             salary_data.append({
                 'employee_code': employee.employee_code,
@@ -73,23 +109,31 @@ def generate_salary(request):
 
             total_net_salary += net_salary
 
-        return render(request, 'employees/salary_report.html', {
-            'salary_data': salary_data,
-            'total_net_salary': f'{total_net_salary:.2f}'
-        })
+        return salary_data, total_net_salary
 
-    employees = Employee.objects.all()
-    return render(request, 'employees/generate_salary.html', {'employees': employees})
+    def calculate_salary(self, employee, days_worked, days_in_month):
+        basic, transport, canteen = employee.basic, employee.transport, employee.canteen
+        pf_percentage, esic_percentage = employee.pf, employee.esic
+
+        gross_salary = ((basic + transport) / days_in_month) * days_worked
+        pf_amount = (pf_percentage / 100) * basic
+        esic_amount = (esic_percentage / 100) * basic
+        net_salary = gross_salary - (canteen + pf_amount + esic_amount)
+
+        return round(gross_salary, 2), round(net_salary, 2)
+
+
 def home(request):
-    return render(request, 'employees/home.html')
-
+    total_employees = Employee.objects.count()  # Fetch the count of employees
+    return render(request, 'employees/home.html', {'total_employees': total_employees})
 
 def add_employee(request):
     if request.method == 'POST':
         form = EmployeeForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('employee_list')  # Redirect to the employee list after saving
+            form.save()  # Save the new employee to the database
+            return redirect('employee_list')  # Redirect to employee list after successful addition
     else:
         form = EmployeeForm()
+
     return render(request, 'employees/add_employee.html', {'form': form})
