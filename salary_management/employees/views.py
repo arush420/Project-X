@@ -30,6 +30,7 @@ class EmployeeListView(ListView):
 class GenerateSalaryView(View):
     template_name = 'employees/generate_salary.html'
 
+
     def get(self, request):
         return self.render_salary_form()
 
@@ -91,6 +92,7 @@ class GenerateSalaryView(View):
                 days_worked = 0
 
             gross_salary, net_salary = self.calculate_salary(employee, days_worked, days_in_month)
+
             Salary.objects.update_or_create(
                 employee=employee, month=month, year=year,
                 defaults={
