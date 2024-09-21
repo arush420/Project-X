@@ -132,7 +132,7 @@ def add_employee(request):
         form = EmployeeForm(request.POST)
         if form.is_valid():
             form.save()  # Save the new employee to the database
-            return redirect('employee_list')  # Redirect to employee list after successful addition
+            return redirect('employees:employee_list')  # Redirect to employee list after successful addition
     else:
         form = EmployeeForm()
 
