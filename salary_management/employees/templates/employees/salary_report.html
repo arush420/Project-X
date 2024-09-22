@@ -1,26 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Salary Report for {{ month }}/{{ year }}</title>
-    <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        table, th, td {
-            border: 1px solid black;
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-        }
-        .total-container {
-            text-align: right;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Salary Report{% endblock %}
+
+{% block content %}
     <h1>Salary Report for {{ month }}/{{ year }}</h1>
 
     <table>
@@ -47,5 +29,4 @@
     <div class="total-container">
         <strong>Total Net Salary: {{ total_net_salary }}</strong>
     </div>
-</body>
-</html>
+{% endblock %}

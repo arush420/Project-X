@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Generate Salary</title>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Generate Salary{% endblock %}
+
+{% block content %}
     <h1>Generate Salary</h1>
 
     <!-- Salary generation form -->
@@ -46,6 +45,4 @@
 
     <button type="submit">Generate Salary</button>
 </form>
-
-</body>
-</html>
+{% endblock %}

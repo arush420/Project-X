@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Employee List</title>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Employee List{% endblock %}
+
+{% block content %}
     <h1>Employee List</h1>
 
     <!-- Search form -->
@@ -50,5 +49,4 @@
             {% endif %}
         </tbody>
     </table>
-</body>
-</html>
+{% endblock %}
