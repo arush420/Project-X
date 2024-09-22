@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
-from .models import Employee, Salary
+from .models import Employee, Salary, Task
 from django.db.models import Q
 from django.utils import timezone
-from .forms import EmployeeForm
+from .forms import EmployeeForm, TaskForm
 from django.views import View
 from django.views.generic import ListView
 from django.urls import reverse_lazy
@@ -127,7 +127,25 @@ class GenerateSalaryView(View):
 
 def home(request):
     total_employees = Employee.objects.count()  # Fetch the count of employees
+    tasks = Task.objects.all()
+    if request.method == 'POST':
+        form = TaskForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('home')
+    else:
+        form = TaskForm()
+
+    context = {
+        'tasks': tasks,
+        'form': form
+    }
     return render(request, 'employees/home.html', {'total_employees': total_employees})
+
+def delete_task(request, task_id):
+    task = Task.objects.get(id=task_id)
+    task.delete()
+    return redirect('home')
 
 def add_employee(request):
     if request.method == 'POST':
