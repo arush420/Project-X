@@ -54,3 +54,13 @@ class Task(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Profile(models.Model):
+    organisation_name = models.CharField(max_length=255)
+    address = models.TextField()
+    account_number = models.CharField(max_length=20)
+    ifsc_code = models.CharField(max_length=11)
+
+    def __str__(self):
+        return self.organisation_name

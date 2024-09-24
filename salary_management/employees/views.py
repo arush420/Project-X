@@ -1,5 +1,5 @@
-from django.shortcuts import render, redirect
-from .models import Employee, Salary, Task
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Employee, Salary, Task, Profile
 from django.db.models import Q
 from django.utils import timezone
 from .forms import EmployeeForm, TaskForm, ExcelUploadForm
@@ -196,4 +196,10 @@ def upload_excel(request):
             return render(request, 'upload_success.html', {'total_salary': total_salary})
     else:
         form = ExcelUploadForm()
-    return render(request, 'upload_excel.html', {'form': form})
+    return render(request, 'employees/upload_excel.html', {'form': form})
+
+
+def profile_detail(request):
+    # Assuming there's only one profile; if there are many, you can modify the logic.
+    profile = get_object_or_404(Profile, id=1)  # Retrieve the profile with id=1 (modify as needed)
+    return render(request, 'profile_detail.html', {'profile': profile})
