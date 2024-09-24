@@ -7,4 +7,5 @@ urlpatterns = [
     path('delete/<int:task_id>/', views.delete_task, name='delete_task'),
     path('generate_salary/', GenerateSalaryView.as_view(), name='generate_salary'),
     path('add_employee/', add_employee, name='add_employee'),
+    path('upload-excel/', views.upload_excel, name='upload_excel')
 ]

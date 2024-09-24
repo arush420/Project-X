@@ -2,10 +2,11 @@ from django.shortcuts import render, redirect
 from .models import Employee, Salary, Task
 from django.db.models import Q
 from django.utils import timezone
-from .forms import EmployeeForm, TaskForm
+from .forms import EmployeeForm, TaskForm, ExcelUploadForm
 from django.views import View
 from django.views.generic import ListView
 from django.urls import reverse_lazy
+import pandas as pd
 
 
 class EmployeeListView(ListView):
@@ -113,13 +114,25 @@ class GenerateSalaryView(View):
 
         return salary_data, total_net_salary
 
+
     def calculate_salary(self, employee, days_worked, days_in_month):
+        if days_in_month <= 0:
+            raise ValueError("Days in month must be greater than 0.")
+        if days_worked > days_in_month:
+            days_worked = days_in_month # Cap days worked to days in month
+            print("Number of days work exceed working days in month. Hence days worked = working days ")
+
         basic, transport, canteen = employee.basic, employee.transport, employee.canteen
         pf_percentage, esic_percentage = employee.pf, employee.esic
 
+        # Calculate gross salary based on days worked
         gross_salary = ((basic + transport) / days_in_month) * days_worked
+
+        # Calculate PF and ESIC amounts
         pf_amount = (pf_percentage / 100) * basic
         esic_amount = (esic_percentage / 100) * basic
+
+        # Calculate net salary by subtracting deductions
         net_salary = gross_salary - (canteen + pf_amount + esic_amount)
 
         return round(gross_salary, 2), round(net_salary, 2)
@@ -157,3 +170,30 @@ def add_employee(request):
         form = EmployeeForm()
 
     return render(request, 'employees/add_employee.html', {'form': form})
+
+
+def handle_uploaded_file(f):
+    # Use Pandas to read the uploaded Excel file
+    df = pd.read_excel(f, engine='openpyxl')
+
+    # Perform predefined operations on the DataFrame (df)
+    # For example, summing up a specific column or filtering rows
+    # Example operation: Calculate the sum of a 'Salary' column
+    if 'Salary' in df.columns:
+        total_salary = df['Salary'].sum()
+    else:
+        total_salary = None
+
+    # Perform other operations as needed
+    return total_salary
+
+
+def upload_excel(request):
+    if request.method == 'POST':
+        form = ExcelUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            total_salary = handle_uploaded_file(request.FILES['excel_file'])
+            return render(request, 'upload_success.html', {'total_salary': total_salary})
+    else:
+        form = ExcelUploadForm()
+    return render(request, 'upload_excel.html', {'form': form})

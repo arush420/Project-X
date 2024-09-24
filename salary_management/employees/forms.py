@@ -14,3 +14,7 @@ class TaskForm(forms.ModelForm):
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Add new task'})
         }
+
+
+class ExcelUploadForm(forms.Form):
+    excel_file = forms.FileField()
