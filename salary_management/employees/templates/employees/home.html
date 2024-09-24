@@ -6,14 +6,17 @@
     <h1>Welcome to the Employee Management System</h1>
 
     <!-- Display total employees if the variable is passed -->
-    <p>Total Employees: {{ total_employees|default:"Not available" }}</p>  <!-- Use default filter to handle missing variables -->
+    <p>Total Employees: {{ total_employees|default:"Not available" }}</p>
 
     <!-- Ensure URLs match those in your urlpatterns -->
-    <a href="{% url 'employees:employee_list' %}">View Employees</a>
-    <a href="{% url 'employees:generate_salary' %}">Generate Salary</a>
-    <a href="{% url 'employees:add_employee' %}">Add Employee</a>
-    <a href="{% url 'employees:upload_excel' %}">Upload Excel</a>
-  <div class="container mt-4">
+    <a href="{% url 'employees:employee_list' %}" class="btn btn-primary btn-lg active" role="button" aria-pressed="true">View Employees</a>
+    <a href="{% url 'employees:generate_salary' %}" class="btn btn-primary btn-lg active" role="button" aria-pressed="true">Generate Salary</a>
+    <a href="{% url 'employees:add_employee' %}" class="btn btn-primary btn-lg active" role="button" aria-pressed="true">Add Employee</a>
+    <a href="{% url 'employees:payment_input' %}" class="btn btn-primary btn-lg active" role="button" aria-pressed="true">Payment Input</a>
+    <a href="{% url 'employees:upload_excel' %}" class="btn btn-primary btn-lg active" role="button" aria-pressed="true">Upload Excel</a>
+
+
+    <div class="container mt-4">
         <div class="row">
             <div class="col-9">
                 <h1>Home Page</h1>
@@ -21,25 +24,25 @@
             </div>
             <div class="col-3 todo-list">
                 <h3>To-Do List</h3>
-                <form method="POST" action="">
+
+                <!-- Form to add a new sticky note -->
+                <form method="POST" action="{% url 'employees:add_task' %}">
                     {% csrf_token %}
                     <div class="input-group mb-3">
-                        {{ form.title }}
+                        <input type="text" class="form-control" name="title" placeholder="Add a new task..." required>
                         <button class="btn btn-primary" type="submit">Add</button>
                     </div>
                 </form>
-                 <form method="POST" action="">
-                    {% csrf_token %}
-                    <div class="input-group mb-3">
-                        {{ form.title }}
-                        <button class="btn btn-primary" type="submit">Upload</button>
-                    </div>
-                </form>
 
+                <!-- To-do List with checkbox and delete option -->
                 <ul class="list-group">
                     {% for task in tasks %}
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            {{ task.title }}
+                            <form method="POST" action="{% url 'complete_task' task.id %}">
+                                {% csrf_token %}
+                                <input type="checkbox" name="completed" {% if task.completed %} checked {% endif %} onchange="this.form.submit();">
+                                {{ task.title }}
+                            </form>
                             <a href="{% url 'delete_task' task.id %}" class="btn btn-danger btn-sm">Remove</a>
                         </li>
                     {% empty %}

@@ -155,8 +155,20 @@ def home(request):
     }
     return render(request, 'employees/home.html', {'total_employees': total_employees})
 
+def add_task(request):
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        Task.objects.create(title=title)
+    return redirect('home')  # Redirect back to home after task is added
+
+def complete_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    task.completed = not task.completed  # Toggle the completion status
+    task.save()
+    return redirect('home')
+
 def delete_task(request, task_id):
-    task = Task.objects.get(id=task_id)
+    task = get_object_or_404(Task, id=task_id)
     task.delete()
     return redirect('home')
 
