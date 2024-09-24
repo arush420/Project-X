@@ -64,3 +64,14 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.organisation_name
+
+
+class Payment(models.Model):
+    company_name = models.CharField(max_length=255)
+    amount_received = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_date = models.DateField()
+    account_of_own_company = models.CharField(max_length=255)
+    payment_against_bill = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"Payment from {self.company_name} on {self.payment_date}"

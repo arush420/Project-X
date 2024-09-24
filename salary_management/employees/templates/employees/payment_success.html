@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Generate Salary{% endblock %}
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Success</title>
+</head>
+<body>
+    <h1>Payment Details Submitted Successfully!</h1>
+    <a href="{% url 'payment_input' %}">Enter Another Payment</a>
+</body>
+
+{% endblock %}
+

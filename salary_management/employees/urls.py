@@ -9,4 +9,6 @@ urlpatterns = [
     path('add_employee/', add_employee, name='add_employee'),
     path('upload-excel/', views.upload_excel, name='upload_excel'),
     path('profile/', views.profile_detail, name='profile_detail'),
+    path('payment-input/', views.payment_input, name='payment_input'),
+    path('payment-success/', views.payment_success, name='payment_success'),
 ]

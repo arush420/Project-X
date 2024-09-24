@@ -1,5 +1,5 @@
 from django import forms
-from .models import Employee, Task
+from .models import Employee, Task, Payment
 
 class EmployeeForm(forms.ModelForm):
     class Meta:
@@ -18,3 +18,11 @@ class TaskForm(forms.ModelForm):
 
 class ExcelUploadForm(forms.Form):
     excel_file = forms.FileField()
+
+
+class PaymentForm(forms.ModelForm):
+    payment_date = forms.DateField(widget=forms.SelectDateWidget)
+
+    class Meta:
+        model = Payment
+        fields = ['company_name', 'amount_received', 'payment_date', 'account_of_own_company', 'payment_against_bill']
