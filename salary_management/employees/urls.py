@@ -13,3 +13,4 @@ urlpatterns = [
     path('payment-input/', views.payment_input, name='payment_input'),
     path('payment-success/', views.payment_success, name='payment_success'),
 ]
+

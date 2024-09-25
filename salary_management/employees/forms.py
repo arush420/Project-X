@@ -22,7 +22,6 @@ class ExcelUploadForm(forms.Form):
 
 class PaymentForm(forms.ModelForm):
     payment_date = forms.DateField(widget=forms.SelectDateWidget)
-
     class Meta:
         model = Payment
         fields = ['company_name', 'amount_received', 'payment_date', 'account_of_own_company', 'payment_against_bill']

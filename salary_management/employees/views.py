@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Employee, Salary, Task, Profile
+from .models import Employee, Salary, Task, Profile, Payment
 from django.db.models import Q
 from django.utils import timezone
 from .forms import EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm
@@ -140,8 +140,7 @@ class GenerateSalaryView(View):
 
 def home(request):
     total_employees = Employee.objects.count()  # Fetch the count of employees
-    tasks = Task.objects.all()
-
+    tasks = Task.objects.all() #this ensures tasks are retrived from the database
     if request.method == 'POST':
         form = TaskForm(request.POST)
         if form.is_valid():
@@ -225,11 +224,10 @@ def payment_input(request):
         form = PaymentForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('payment_success')  # Redirect to a success page or somewhere else
+            return redirect('employees:payment_input')  # Redirect to a success page or somewhere else
     else:
         form = PaymentForm()
-
-    return render(request, 'payment_input.html', {'form': form})
+    return render(request, 'employees/payment_input.html', {'form': form })
 
 def payment_success(request):
-    return render(request, 'payment_success.html')
+    return render(request, 'employees/payment_success.html')
