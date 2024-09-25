@@ -213,8 +213,8 @@ def upload_excel(request):
 
 def profile_detail(request):
     # Assuming there's only one profile; if there are many, you can modify the logic.
-    profile = get_object_or_404(Profile, id=1)  # Retrieve the profile with id=1 (modify as needed)
-    return render(request, 'profile_detail.html', {'profile': profile})
+    profile = get_object_or_404(Employee, employee_code="001")  # Retrieve the profile with id=1 (modify as needed) 
+    return render(request, 'employees/profile_detail.html', {'profile': profile})
 
 
 def payment_input(request):
