@@ -141,6 +141,7 @@ class GenerateSalaryView(View):
 def home(request):
     total_employees = Employee.objects.count()  # Fetch the count of employees
     tasks = Task.objects.all()
+
     if request.method == 'POST':
         form = TaskForm(request.POST)
         if form.is_valid():
@@ -150,10 +151,12 @@ def home(request):
         form = TaskForm()
 
     context = {
+        'total_employees': total_employees,
         'tasks': tasks,
         'form': form
     }
-    return render(request, 'employees/home.html', {'total_employees': total_employees})
+
+    return render(request, 'employees/home.html', context)  # Pass the entire context
 
 def add_task(request):
     if request.method == 'POST':

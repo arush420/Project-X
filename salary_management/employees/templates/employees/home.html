@@ -35,6 +35,12 @@
                 </form>
 
                 <!-- To-do List with checkbox and delete option -->
+                <form method="POST" action="{% url 'employees:complete_task' task.id %}">
+                    {% csrf_token %}
+                    <input type="checkbox" name="completed" {% if task.completed %} checked {% endif %} onchange="this.form.submit();">
+                    {{ task.title }}
+                </form>
+
                 <ul class="list-group">
                     {% for task in tasks %}
                         <li class="list-group-item d-flex justify-content-between align-items-center">

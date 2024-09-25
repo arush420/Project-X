@@ -1,10 +1,9 @@
 from django.urls import path
 from .views import EmployeeListView, GenerateSalaryView, add_employee,home
 from . import views
-
 urlpatterns = [
     path('', EmployeeListView.as_view(), name='employee_list'),  # Correct name for the employee list
-    path('add_task/', views.add_task, name='add_task'),  # Ensure this exists
+    path('add_task/', views.add_task, name='add_task'),  # to add task
     path('complete_task/<int:task_id>/', views.complete_task, name='complete_task'),
     path('delete_task/<int:task_id>/', views.delete_task, name='delete_task'),
     path('generate_salary/', GenerateSalaryView.as_view(), name='generate_salary'),
