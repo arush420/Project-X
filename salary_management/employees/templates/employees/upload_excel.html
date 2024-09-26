@@ -1,19 +1,13 @@
 {% extends 'base.html' %}
-
-{% block title %}Salary Report{% endblock %}
+{% load static %}
+{% block title %}Upload Excel{% endblock %}
 
 {% block content %}
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Upload</button>
-</form>
-
-<h2>Upload Successful</h2>
-{% if total_salary %}
-    <p>Total Salary: {{ total_salary }}</p>
-{% else %}
-    <p>No Salary column found.</p>
-{% endif %}
-
+    <h1>Upload Excel File</h1>
+    <a href="{% static 'static/sample/sample_employee_data.xlsx' %}" download>Download Sample Excel File</a>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="excel_file" required>
+        <button type="submit">Upload</button>
+    </form>
 {% endblock %}

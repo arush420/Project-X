@@ -1,5 +1,6 @@
 from django import forms
 from .models import Employee, Task, Payment
+from django.contrib.auth.forms import AuthenticationForm
 
 class EmployeeForm(forms.ModelForm):
     class Meta:
@@ -25,3 +26,8 @@ class PaymentForm(forms.ModelForm):
     class Meta:
         model = Payment
         fields = ['company_name', 'amount_received', 'payment_date', 'account_of_own_company', 'payment_against_bill']
+
+
+class LoginForm(AuthenticationForm):
+    username = forms.CharField(max_length=254, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    password = forms.CharField(label="Password", widget=forms.PasswordInput(attrs={'class': 'form-control'}))

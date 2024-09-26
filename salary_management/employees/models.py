@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
+
 # Constants for salary fields
 CURRENCY_MAX_DIGITS = 10
 CURRENCY_DECIMAL_PLACES = 2

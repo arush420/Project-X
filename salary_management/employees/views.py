@@ -7,6 +7,9 @@ from django.views import View
 from django.views.generic import ListView
 from django.urls import reverse_lazy
 import pandas as pd
+from django.core.files.storage import FileSystemStorage
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import login, logout
 
 
 class EmployeeListView(ListView):
@@ -203,14 +206,33 @@ def handle_uploaded_file(f):
 
 
 def upload_excel(request):
-    if request.method == 'POST':
-        form = ExcelUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            total_salary = handle_uploaded_file(request.FILES['excel_file'])
-            return render(request, 'upload_success.html', {'total_salary': total_salary})
-    else:
-        form = ExcelUploadForm()
-    return render(request, 'employees/upload_excel.html', {'form': form})
+    if request.method == 'POST' and request.FILES['excel_file']:
+        excel_file = request.FILES['excel_file']
+        fs = FileSystemStorage()
+        filename = fs.save(excel_file.name, excel_file)
+        file_path = fs.path(filename)
+
+        # Read the Excel file
+        df = pd.read_excel(file_path)
+
+        # Process each row in the DataFrame
+        for index, row in df.iterrows():
+            employee, created = Employee.objects.get_or_create(
+                name=row['employee_name'],
+                defaults={'other_field': row['other_field']}  # Adjust fields as necessary
+            )
+            Salary.objects.create(
+                employee=employee,
+                month=row['month'],
+                year=row['year'],
+                gross_salary=row['gross_salary'],
+                net_salary=row['net_salary'],
+                date_generated=row['date_generated']
+            )
+
+        return redirect('employees:employee_list')  # Redirect to a success page
+
+    return render(request, 'employees/upload_excel.html')
 
 
 def profile_detail(request):
@@ -231,3 +253,40 @@ def payment_input(request):
 
 def payment_success(request):
     return render(request, 'employees/payment_success.html')
+
+#Registering a user
+def register_view(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('dashboard')
+    else:
+        initial_data = {'username':'', 'passowrd1':'', 'password2':''}
+        form = UserCreationForm(initial=initial_data)
+    return render(request, 'employees/register.html', {'form': form})
+
+
+
+def login_view(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect('dashboard')
+    else:
+        initial_data = {'username': '', 'passowrd': ''}
+        form = AuthenticationForm(initial=initial_data)
+    return render(request, 'employees/login.html', {'form': form})
+
+def dashboard_view(request):
+    return render(request, 'employees/dashboard.html')
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+
+
