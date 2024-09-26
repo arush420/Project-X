@@ -249,10 +249,10 @@ def payment_input(request):
             return redirect('employees:payment_input')  # Redirect to a success page or somewhere else
     else:
         form = PaymentForm()
-    return render(request, 'employees/payment_input.html', {'form': form })
 
-def payment_success(request):
-    return render(request, 'employees/payment_success.html')
+    payments = Payment.objects.all()  # Fetch all payment records
+
+    return render(request, 'employees/payment_input.html', {'form': form, 'payments': payments})
 
 #Registering a user
 def register_view(request):
