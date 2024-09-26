@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Purchase Item Input{% endblock %}
+
+{% block content %}
+    <h1>Enter Purchase Details</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit</button>
+    </form>
+
+    <h2>Saved Purchase Entries</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Organization Name</th>
+                <th>Purchased Item</th>
+                <th>Category</th>
+                <th>Date</th>
+                <th>CGST</th>
+                <th>SGST</th>
+                <th>IGST</th>
+                <th>Gross Total</th>
+                <th>Net Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for purchase in purchases %}
+                <tr>
+                    <td>{{ purchase.id }}</td>
+                    <td>{{ purchase.organization_name }}</td>
+                    <td>{{ purchase.purchased_item }}</td>
+                    <td>{{ purchase.category }}</td>
+                    <td>{{ purchase.date_of_purchase }}</td>
+                    <td>{{ purchase.cgst_amount }}</td>
+                    <td>{{ purchase.sgst_amount }}</td>
+                    <td>{{ purchase.igst_amount }}</td>
+                    <td>{{ purchase.gross_total }}</td>
+                    <td>{{ purchase.net_price }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="10">No purchase entries available.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

@@ -1,6 +1,7 @@
 from django import forms
-from .models import Employee, Task, Payment
+from .models import Employee, Task, Payment, PurchaseItem
 from django.contrib.auth.forms import AuthenticationForm
+
 
 class EmployeeForm(forms.ModelForm):
     class Meta:
@@ -31,3 +32,16 @@ class PaymentForm(forms.ModelForm):
 class LoginForm(AuthenticationForm):
     username = forms.CharField(max_length=254, widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label="Password", widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+
+
+class PurchaseItemForm(forms.ModelForm):
+    date_of_purchase = forms.DateField(widget=forms.SelectDateWidget)
+
+    class Meta:
+        model = PurchaseItem
+        fields = [
+            'organization_code', 'organization_name', 'gst_number', 'bill_number',
+            'purchased_item', 'category', 'hsn_code', 'date_of_purchase',
+            'per_unit_cost', 'units_bought', 'cgst_rate', 'sgst_rate', 'igst_rate'
+        ]
+

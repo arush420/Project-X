@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Employee, Salary, Task, Profile, Payment
+from .models import Employee, Salary, Task, Profile, Payment, PurchaseItem
 from django.db.models import Q
 from django.utils import timezone
-from .forms import EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm
+from .forms import EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm
 from django.views import View
 from django.views.generic import ListView
 from django.urls import reverse_lazy
@@ -10,6 +10,7 @@ import pandas as pd
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout
+from django.shortcuts import render, redirect
 
 
 class EmployeeListView(ListView):
@@ -287,6 +288,22 @@ def dashboard_view(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+
+def purchase_item_input(request):
+    if request.method == 'POST':
+        form = PurchaseItemForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('employees:purchase_item_input')  # Redirect after saving the form
+    else:
+        form = PurchaseItemForm()
+
+    # Retrieve all purchases from the database
+    purchases = PurchaseItem.objects.all()
+
+    return render(request, 'employees/purchase_item_input.html', {'form': form, 'purchases': purchases})
+
 
 
 
