@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block title %}Employee Search {% endblock %}
+
+{% block content %}
+<form method="POST" action="{% url 'employees:employee_search' %}">
+    {% csrf_token %}
+    <input type="text" name="employee_code" placeholder="Enter Employee Code">
+    <button type="submit">Search</button>
+</form>
+
+{% endblock %}

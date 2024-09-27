@@ -132,3 +132,9 @@ class VendorInformation(models.Model):
 
     def __str__(self):
         return self.vendor_name
+
+
+class Company(models.Model):
+    name = models.CharField(max_length=100)
+    def __str__(self):
+        return self.name

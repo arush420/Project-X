@@ -1,5 +1,5 @@
 from django import forms
-from .models import Employee, Task, Payment, PurchaseItem, VendorInformation
+from .models import Employee, Task, Payment, PurchaseItem, VendorInformation, Company
 from django.contrib.auth.forms import AuthenticationForm
 
 
@@ -53,4 +53,14 @@ class VendorInformationForm(forms.ModelForm):
             'vendor_ifsc_code', 'vendor_contact_person_name', 'vendor_contact_person_number'
         ]
 
+
+# Adding company name to the main list
+class CompanyForm(forms.ModelForm):
+    class Meta:
+        model = Company
+        fields = ['name']
+
+
+class AddCompanyForm(forms.Form):
+    new_company_name = forms.CharField(max_length=100)
 

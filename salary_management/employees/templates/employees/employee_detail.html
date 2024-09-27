@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ employee.name }}'s Profile{% endblock %}
+
+{% block content %}
+    <h1>{{ employee.name }}'s Profile</h1>
+    <p><strong>Employee Code:</strong> {{ employee.employee_code }}</p>
+    <p><strong>Father's Name:</strong> {{ employee.father_name }}</p>
+    <p><strong>Basic Salary:</strong> {{ employee.basic }}</p>
+    <p><strong>Transport Allowance:</strong> {{ employee.transport }}</p>
+    <p><strong>Canteen Deduction:</strong> {{ employee.canteen }}</p>
+    <p><strong>PF:</strong> {{ employee.pf }}%</p>
+    <p><strong>ESIC:</strong> {{ employee.esic }}%</p>
+    <p><strong>Advance:</strong> {{ employee.advance }}</p>
+
+{% endblock %}
+

@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation
 from django.db.models import Q
 from django.utils import timezone
-from .forms import EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm
+from .forms import EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm, \
+    CompanyForm, AddCompanyForm
 from django.views import View
 from django.views.generic import ListView
 from django.urls import reverse_lazy
@@ -10,7 +11,9 @@ import pandas as pd
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout
-from django.shortcuts import render, redirect
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+
 
 
 class EmployeeListView(ListView):
@@ -30,6 +33,17 @@ class EmployeeListView(ListView):
         context = super().get_context_data(**kwargs)
         context['search_query'] = self.request.GET.get('search', '')
         return context
+
+
+def employee_detail(request, employee_code):
+    employee = get_object_or_404(Employee, employee_code=employee_code)
+    return render(request, 'employee_detail.html', {'employee': employee})
+
+def employee_search(request):
+    if request.method == "POST":
+        employee_code = request.POST.get('employee_code')
+        return HttpResponseRedirect(reverse('employees:employee_detail', args=[employee_code]))
+    return render(request, 'employees/employee_search.html')
 
 
 class GenerateSalaryView(View):
@@ -320,4 +334,27 @@ def vendor_information_input(request):
     return render(request, 'employees/vendor_information_input.html', {'form': form, 'vendor_information': vendor_information})
 
 
+def company_list(request):
+    companies = Company.objects.all()
+    company_form = CompanyForm()
+    add_company_form = AddCompanyForm()
 
+    if request.method == 'POST':
+        if 'add_company' in request.POST:
+            add_company_form = AddCompanyForm(request.POST)
+            if add_company_form.is_valid():
+                new_company_name = add_company_form.cleaned_data['new_company_name']
+                Company.objects.create(name=new_company_name)
+                return redirect('company_list')
+        else:
+            company_form = CompanyForm(request.POST)
+            if company_form.is_valid():
+                company_form.save()
+                return redirect('company_list')
+
+    context = {
+        'companies': companies,
+        'company_form': company_form,
+        'add_company_form': add_company_form,
+    }
+    return render(request, 'companies/company_list.html', context)
