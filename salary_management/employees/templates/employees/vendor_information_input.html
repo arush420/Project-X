@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Vendor Details Input{% endblock %}
+
+{% block content %}
+    <h1>Enter Vendor Details</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit</button>
+    </form>
+
+    <h2>Saved Vendors</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Vendor ID</th>
+                <th>Firm Code</th>
+                <th>Vendor Name</th>
+                <th>Address</th>
+                <th>GST Number</th>
+                <th>Account Number</th>
+                <th>IFSC code</th>
+                <th>Contact Person</th>
+                <th>Contact Person's Number</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for vendor in vendor_information %}
+                <tr>
+                    <td>{{ vendor.vendor_id }}</td>
+                    <td>{{ vendor.firm_code }}</td>
+                    <td>{{ vendor.vendor_name }}</td>
+                    <td>{{ vendor.vendor_address }}</td>
+                    <td>{{ vendor.vendor_gst_number }}</td>
+                    <td>{{ vendor.vendor_account_number }}</td>
+                    <td>{{ vendor.vendor_ifsc_code }}</td>
+                    <td>{{ vendor.vendor_contact_person_name }}</td>
+                    <td>{{ vendor.vendor_contact_person_number }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="9">No vendor entries available.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

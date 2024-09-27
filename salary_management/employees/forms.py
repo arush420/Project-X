@@ -1,5 +1,5 @@
 from django import forms
-from .models import Employee, Task, Payment, PurchaseItem
+from .models import Employee, Task, Payment, PurchaseItem, VendorInformation
 from django.contrib.auth.forms import AuthenticationForm
 
 
@@ -44,4 +44,13 @@ class PurchaseItemForm(forms.ModelForm):
             'purchased_item', 'category', 'hsn_code', 'date_of_purchase',
             'per_unit_cost', 'units_bought', 'cgst_rate', 'sgst_rate', 'igst_rate'
         ]
+# Adding Vendor forms
+class VendorInformationForm(forms.ModelForm):
+    class Meta:
+        model = VendorInformation
+        fields = [
+            'vendor_id', 'firm_code', 'vendor_name', 'vendor_address', 'vendor_gst_number', 'vendor_account_number',
+            'vendor_ifsc_code', 'vendor_contact_person_name', 'vendor_contact_person_number'
+        ]
+
 

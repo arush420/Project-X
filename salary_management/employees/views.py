@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Employee, Salary, Task, Profile, Payment, PurchaseItem
+from .models import Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation
 from django.db.models import Q
 from django.utils import timezone
-from .forms import EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm
+from .forms import EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm
 from django.views import View
 from django.views.generic import ListView
 from django.urls import reverse_lazy
@@ -304,6 +304,20 @@ def purchase_item_input(request):
 
     return render(request, 'employees/purchase_item_input.html', {'form': form, 'purchases': purchases})
 
+
+def vendor_information_input(request):
+    if request.method == 'POST':
+        form = VendorInformationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('employees:vendor_information_input')  # Redirect after saving the form
+    else:
+        form = VendorInformationForm()
+
+    # Retrieve all vendor information from the database
+    vendor_information = VendorInformation.objects.all()
+
+    return render(request, 'employees/vendor_information_input.html', {'form': form, 'vendor_information': vendor_information})
 
 
 
