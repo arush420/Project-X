@@ -13,7 +13,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-
+from django.contrib import messages
 
 
 class EmployeeListView(ListView):
@@ -221,33 +221,32 @@ def handle_uploaded_file(f):
 
 
 def upload_excel(request):
-    if request.method == 'POST' and request.FILES['excel_file']:
-        excel_file = request.FILES['excel_file']
-        fs = FileSystemStorage()
-        filename = fs.save(excel_file.name, excel_file)
-        file_path = fs.path(filename)
+    if request.method == 'POST':
+        form = ExcelUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            excel_file = request.FILES['file']
 
-        # Read the Excel file
-        df = pd.read_excel(file_path)
+            # Load the Excel file using pandas
+            try:
+                df = pd.read_excel(excel_file)
 
-        # Process each row in the DataFrame
-        for index, row in df.iterrows():
-            employee, created = Employee.objects.get_or_create(
-                name=row['employee_name'],
-                defaults={'other_field': row['other_field']}  # Adjust fields as necessary
-            )
-            Salary.objects.create(
-                employee=employee,
-                month=row['month'],
-                year=row['year'],
-                gross_salary=row['gross_salary'],
-                net_salary=row['net_salary'],
-                date_generated=row['date_generated']
-            )
+                # Iterate over the rows and create Employee objects
+                for _, row in df.iterrows():
+                    Employee.objects.create(
+                        employee_code=row['employee_code'],
+                        name=row['name'],
+                        designation=row['designation'],
+                        salary=row['salary'],
+                        department=row['department'],
+                    )
+                messages.success(request, 'Employees added successfully!')
+                return redirect('employees:employee_list')
+            except Exception as e:
+                messages.error(request, f'Error processing file: {e}')
+    else:
+        form = ExcelUploadForm()
 
-        return redirect('employees:employee_list')  # Redirect to a success page
-
-    return render(request, 'employees/upload_excel.html')
+    return render(request, 'employees/upload_excel.html', {'form': form})
 
 
 def profile_detail(request):

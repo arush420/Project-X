@@ -1,13 +1,13 @@
+<!-- upload_excel.html -->
 {% extends 'base.html' %}
-{% load static %}
-{% block title %}Upload Excel{% endblock %}
 
 {% block content %}
-    <h1>Upload Excel File</h1>
-    <a href="{% static 'static/sample/sample_employee_data.xlsx' %}" download>Download Sample Excel File</a>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <input type="file" name="excel_file" required>
-        <button type="submit">Upload</button>
-    </form>
+<h2>Upload Employee Excel File</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Upload</button>
+</form>
+
 {% endblock %}

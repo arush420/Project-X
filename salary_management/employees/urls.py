@@ -2,6 +2,9 @@ from django.urls import path
 from .views import ( EmployeeListView, GenerateSalaryView, add_employee, home,
     login_view, logout_view, register_view )
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
+
 
 urlpatterns = [
     path('', EmployeeListView.as_view(), name='employee_list'),
@@ -22,4 +25,4 @@ urlpatterns = [
     path('employees/<str:employee_code>/', views.employee_detail, name='employee_detail'),
     path('employee/search/', views.employee_search, name='employee_search'),
     path('companies/', views.company_list, name='company_list'),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

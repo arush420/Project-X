@@ -19,7 +19,7 @@ class TaskForm(forms.ModelForm):
 
 
 class ExcelUploadForm(forms.Form):
-    excel_file = forms.FileField()
+    file = forms.FileField()
 
 
 class PaymentForm(forms.ModelForm):
