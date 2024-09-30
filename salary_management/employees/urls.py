@@ -25,4 +25,5 @@ urlpatterns = [
     path('employees/<str:employee_code>/', views.employee_detail, name='employee_detail'),
     path('employee/search/', views.employee_search, name='employee_search'),
     path('companies/', views.company_list, name='company_list'),
+    path('salary/list/', views.salary_list, name='salary_list'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

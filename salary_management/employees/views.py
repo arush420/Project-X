@@ -356,4 +356,12 @@ def company_list(request):
         'company_form': company_form,
         'add_company_form': add_company_form,
     }
-    return render(request, 'companies/company_list.html', context)
+    return render(request, 'employees/company_list.html', context)
+
+
+def salary_list(request):
+    salaries = Salary.objects.select_related('employee').all()  # Fetching all salary records
+    context = {
+        'salaries': salaries
+    }
+    return render(request, 'employees/salary_list.html', context)

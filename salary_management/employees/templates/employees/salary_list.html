@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salary List</title>
+</head>
+<body>
+    <h1>Generated Salaries</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Employee Name</th>
+                <th>Month</th>
+                <th>Year</th>
+                <th>Gross Salary</th>
+                <th>Net Salary</th>
+                <th>Date Generated</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for salary in salaries %}
+            <tr>
+                <td>{{ salary.employee.name }}</td>
+                <td>{{ salary.get_month_display }}</td>
+                <td>{{ salary.year }}</td>
+                <td>{{ salary.gross_salary }}</td>
+                <td>{{ salary.net_salary }}</td>
+                <td>{{ salary.date_generated }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">No salaries found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
