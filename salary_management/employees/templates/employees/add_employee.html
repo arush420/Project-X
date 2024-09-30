@@ -4,9 +4,20 @@
 
 {% block content %}
     <h1>Add Employee</h1>
-    <form method="post">
+
+    <!-- Add Employee Form -->
+    <form method="post" action="{% url 'add_employee' %}">
         {% csrf_token %}
-        {{ form.as_p }}
+        {{ add_employee_form.as_p }}
         <button type="submit">Add Employee</button>
+    </form>
+
+    <h1>Upload Employees via Excel</h1>
+
+    <!-- Excel Upload Form -->
+    <form method="POST" enctype="multipart/form-data" action="{% url 'upload_excel' %}">
+        {% csrf_token %}
+        {{ upload_form.as_p }}
+        <button type="submit" class="btn btn-primary">Upload</button>
     </form>
 {% endblock %}

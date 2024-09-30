@@ -197,12 +197,34 @@ def add_employee(request):
     if request.method == 'POST':
         form = EmployeeForm(request.POST)
         if form.is_valid():
-            form.save()  # Save the new employee to the database
-            return redirect('employees:employee_list')  # Redirect to employee list after successful addition
+            form.save()
+            return redirect('employees:employee_list')
     else:
         form = EmployeeForm()
 
     return render(request, 'employees/add_employee.html', {'form': form})
+
+def add_employee_and_upload(request):
+    if request.method == 'POST' and 'add_employee_form' in request.POST:
+        add_employee_form = EmployeeForm(request.POST)
+        if add_employee_form.is_valid():
+            add_employee_form.save()
+            return redirect('employees:employee_list')
+    else:
+        add_employee_form = EmployeeForm()
+
+    if request.method == 'POST' and 'upload_form' in request.FILES:
+        upload_form = ExcelUploadForm(request.POST, request.FILES)
+        if upload_form.is_valid():
+            # Handle file upload
+            pass
+    else:
+        upload_form = ExcelUploadForm()
+
+    return render(request, 'employees/add_employee.html', {
+        'add_employee_form': add_employee_form,
+        'upload_form': upload_form,
+    })
 
 
 def handle_uploaded_file(f):
@@ -233,21 +255,39 @@ def upload_excel(request):
 
                 # Iterate over the rows and create Employee objects
                 for _, row in df.iterrows():
-                    Employee.objects.create(
-                        employee_code=row['employee_code'],
-                        name=row['name'],
-                        designation=row['designation'],
-                        salary=row['salary'],
-                        department=row['department'],
-                    )
+                    try:
+                        # Check if employee already exists
+                        if Employee.objects.filter(employee_code=row['employee_code']).exists():
+                            messages.error(request, f"Employee with code {row['employee_code']} already exists.")
+                            continue  # Skip this employee if already exists
+
+                        # Create a new employee
+                        Employee.objects.create(
+                            employee_code=row['employee_code'],
+                            name=row['name'],
+                            father_name=row['father_name'],
+                            basic=float(row['basic']),
+                            transport=float(row['transport']),
+                            canteen=float(row['canteen']),
+                            pf=float(row['pf']),
+                            esic=float(row['esic']),
+                            advance=float(row['advance'])
+                        )
+
+                    except ValueError:
+                        messages.error(request, f"Invalid data format in row with employee code {row['employee_code']}")
+                        continue  # Skip this employee if data is invalid
+
                 messages.success(request, 'Employees added successfully!')
                 return redirect('employees:employee_list')
+
             except Exception as e:
                 messages.error(request, f'Error processing file: {e}')
     else:
         form = ExcelUploadForm()
 
     return render(request, 'employees/upload_excel.html', {'form': form})
+
 
 
 def profile_detail(request):
@@ -343,8 +383,18 @@ def company_list(request):
         if 'add_company' in request.POST:
             add_company_form = AddCompanyForm(request.POST)
             if add_company_form.is_valid():
-                new_company_name = add_company_form.cleaned_data['new_company_name']
-                Company.objects.create(name=new_company_name)
+                # Collect data from the form
+                new_company_data = {
+                    'company_code': add_company_form.cleaned_data['company_code'],
+                    'company_name': add_company_form.cleaned_data['company_name'],
+                    'company_address': add_company_form.cleaned_data['company_address'],
+                    'company_gst_number': add_company_form.cleaned_data['company_gst_number'],
+                    'company_account_number': add_company_form.cleaned_data['company_account_number'],
+                    'company_ifsc_code': add_company_form.cleaned_data['company_ifsc_code'],
+                    'company_contact_person_name': add_company_form.cleaned_data['company_contact_person_name'],
+                    'company_contact_person_number': add_company_form.cleaned_data['company_contact_person_number'],
+                }
+                Company.objects.create(**new_company_data)
                 return redirect('company_list')
         else:
             company_form = CompanyForm(request.POST)
@@ -358,7 +408,6 @@ def company_list(request):
         'add_company_form': add_company_form,
     }
     return render(request, 'employees/company_list.html', context)
-
 
 def salary_list(request):
     month = request.GET.get('month')

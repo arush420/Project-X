@@ -58,9 +58,16 @@ class VendorInformationForm(forms.ModelForm):
 class CompanyForm(forms.ModelForm):
     class Meta:
         model = Company
-        fields = ['name']
+        fields = ['company_code', 'company_name', 'company_address', 'company_gst_number', 'company_account_number',
+                  'company_ifsc_code', 'company_contact_person_name', 'company_contact_person_number']
 
 
 class AddCompanyForm(forms.Form):
-    new_company_name = forms.CharField(max_length=100)
-
+    company_code = forms.CharField(max_length=4)
+    company_name = forms.CharField(max_length=100)
+    company_address = forms.CharField(widget=forms.Textarea)
+    company_gst_number = forms.CharField(max_length=20)
+    company_account_number = forms.CharField(max_length=20)
+    company_ifsc_code = forms.CharField(max_length=11)
+    company_contact_person_name = forms.CharField(max_length=100)
+    company_contact_person_number = forms.CharField(max_length=100)

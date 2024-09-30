@@ -135,6 +135,14 @@ class VendorInformation(models.Model):
 
 
 class Company(models.Model):
-    name = models.CharField(max_length=100)
+    company_code = models.CharField(max_length=4, default="0000")
+    company_name = models.CharField(max_length=100, default="")
+    company_address = models.TextField()
+    company_gst_number = models.CharField(max_length=20)
+    company_account_number = models.CharField(max_length=20)
+    company_ifsc_code = models.CharField(max_length=11)
+    company_contact_person_name = models.CharField(max_length=100)
+    company_contact_person_number = models.CharField(max_length=100)
+
     def __str__(self):
-        return self.name
+        return self.company_name

@@ -6,6 +6,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 
+
 urlpatterns = [
     path('', EmployeeListView.as_view(), name='employee_list'),
     path('add_task/', views.add_task, name='add_task'),

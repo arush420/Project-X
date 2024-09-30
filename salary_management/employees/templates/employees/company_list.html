@@ -8,7 +8,7 @@
         {% csrf_token %}
         <select name="company">
             {% for company in companies %}
-                <option value="{{ company.id }}">{{ company.name }}</option>
+                <option value="{{ company.id }}">{{ company.company_name }}</option>
             {% endfor %}
         </select>
         <button type="submit">Select Company</button>
