@@ -7,7 +7,35 @@
 </head>
 <body>
     <h1>Generated Salaries</h1>
-    <table border="1">
+
+    <!-- Filter form -->
+    <form method="GET" action="">
+        <label for="month">Month:</label>
+        <select name="month" id="month">
+            <option value="">All</option>
+            {% for month_num, month_name in month_choices %}
+                <option value="{{ month_num }}" {% if month|default_if_none:'' == month_num|stringformat:"s" %}selected{% endif %}>
+                    {{ month_name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label for="year">Year:</label>
+        <input type="number" name="year" id="year" value="{{ year|default_if_none:'' }}" placeholder="Year">
+
+        <button type="submit">Filter</button>
+    </form>
+
+    <!-- Print and Download Buttons -->
+    <div style="margin-top: 20px;">
+        <button onclick="window.print()">Print</button>
+        <a href="/employees/salary/download-csv/?month={{ month }}&year={{ year }}" target="_blank">
+            <button type="button">Download CSV</button>
+        </a>
+    </div>
+
+    <!-- Salary Table -->
+    <table border="1" id="salaryTable">
         <thead>
             <tr>
                 <th>Employee Name</th>

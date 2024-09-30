@@ -26,4 +26,5 @@ urlpatterns = [
     path('employee/search/', views.employee_search, name='employee_search'),
     path('companies/', views.company_list, name='company_list'),
     path('salary/list/', views.salary_list, name='salary_list'),
+    path('salary/download-csv/', views.download_salary_csv, name='download_salary_csv'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

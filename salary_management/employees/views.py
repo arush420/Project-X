@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation
+from .models import Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, MONTH_CHOICES, Company
 from django.db.models import Q
 from django.utils import timezone
 from .forms import EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm, \
@@ -11,9 +11,10 @@ import pandas as pd
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django.contrib import messages
+import csv
 
 
 class EmployeeListView(ListView):
@@ -360,8 +361,58 @@ def company_list(request):
 
 
 def salary_list(request):
-    salaries = Salary.objects.select_related('employee').all()  # Fetching all salary records
+    month = request.GET.get('month')
+    year = request.GET.get('year')
+
+    # Start with all salaries
+    salaries = Salary.objects.select_related('employee').all()
+
+    # Apply filters if month and year are provided
+    if month:
+        salaries = salaries.filter(month=month)
+    if year:
+        salaries = salaries.filter(year=year)
+
     context = {
-        'salaries': salaries
+        'salaries': salaries,
+        'month': month,
+        'year': year,
+        'month_choices': MONTH_CHOICES,  # Pass the MONTH_CHOICES to the template
     }
+
     return render(request, 'employees/salary_list.html', context)
+
+# to download salary report
+def download_salary_csv(request):
+    month = request.GET.get('month')
+    year = request.GET.get('year')
+
+    # Start with all salaries
+    salaries = Salary.objects.select_related('employee').all()
+
+    # Apply filters if month and year are provided
+    if month:
+        salaries = salaries.filter(month=month)
+    if year:
+        salaries = salaries.filter(year=year)
+
+    # Create the HttpResponse object with CSV header
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="salaries.csv"'
+
+    writer = csv.writer(response)
+    # Write header row
+    writer.writerow(['Employee Name', 'Month', 'Year', 'Gross Salary', 'Net Salary', 'Date Generated'])
+
+    # Write data rows
+    for salary in salaries:
+        writer.writerow([
+            salary.employee.name,
+            salary.get_month_display(),
+            salary.year,
+            salary.gross_salary,
+            salary.net_salary,
+            salary.date_generated
+        ])
+
+    return response
