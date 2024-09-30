@@ -3,7 +3,7 @@ from .models import Employee, Salary, Task, Profile, Payment, PurchaseItem, Vend
 from django.db.models import Q
 from django.utils import timezone
 from .forms import EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm, \
-    CompanyForm, AddCompanyForm
+    CompanyForm, AddCompanyForm, EmployeeSearchForm
 from django.views import View
 from django.views.generic import ListView
 from django.urls import reverse_lazy
@@ -465,3 +465,26 @@ def download_salary_csv(request):
         ])
 
     return response
+
+
+def employee_profile(request):
+    form = EmployeeSearchForm()
+    employee = None
+    salaries = None
+
+    if request.method == 'GET':
+        query = request.GET.get('employee_code_or_name')
+        if query:
+            # Search for employee by code or name
+            employee = Employee.objects.filter(employee_code__iexact=query).first() or Employee.objects.filter(name__iexact=query).first()
+
+            if employee:
+                # Get all salary records for the employee
+                salaries = Salary.objects.filter(employee=employee).order_by('-month')
+
+    context = {
+        'form': form,
+        'employee': employee,
+        'salaries': salaries
+    }
+    return render(request, 'employees/employee_profile.html', context)

@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import ( EmployeeListView, GenerateSalaryView, add_employee, home,
-    login_view, logout_view, register_view )
+    login_view, logout_view, register_view, employee_profile )
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
@@ -28,4 +28,5 @@ urlpatterns = [
     path('companies/', views.company_list, name='company_list'),
     path('salary/list/', views.salary_list, name='salary_list'),
     path('salary/download-csv/', views.download_salary_csv, name='download_salary_csv'),
+    path('employee/profile/', employee_profile, name='employee_profile'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

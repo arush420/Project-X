@@ -71,3 +71,7 @@ class AddCompanyForm(forms.Form):
     company_ifsc_code = forms.CharField(max_length=11)
     company_contact_person_name = forms.CharField(max_length=100)
     company_contact_person_number = forms.CharField(max_length=100)
+
+
+class EmployeeSearchForm(forms.Form):
+    employee_code_or_name = forms.CharField(label='Employee Code or Name', max_length=100)
