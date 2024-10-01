@@ -1,0 +1,51 @@
+{% extends 'app.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+
+<h1>Admin Dashboard</h1>
+<p>Total Employees: {{ total_employees }}</p>
+<p>Total Salary Payout: {{ total_salary }}</p>
+
+<h2>Recent Salaries</h2>
+<table>
+    <tr>
+        <th>Employee</th>
+        <th>Month</th>
+        <th>Net Salary</th>
+    </tr>
+    {% for salary in recent_salaries %}
+    <tr>
+        <td>{{ salary.employee.name }}</td>
+        <td>{{ salary.month }}</td>
+        <td>{{ salary.net_salary }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<canvas id="salaryChart"></canvas>
+<script>
+    var ctx = document.getElementById('salaryChart').getContext('2d');
+    var salaryChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ months | safe }},
+            datasets: [{
+                label: 'Salary Payout',
+                data: {{ salary_data | safe }},
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

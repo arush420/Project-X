@@ -44,6 +44,11 @@ class Salary(models.Model):
     class Meta:
         unique_together = ('employee', 'month', 'year')
         ordering = ['-year', '-month']
+        permissions = [
+            ('can_generate_payroll', 'Can generate payroll'),
+            ('can_modify_salary', 'Can modify salary records'),
+            ('can_view_confidential_data', 'Can view confidential data'),
+        ]
 
     def get_month_display(self):
         return dict(MONTH_CHOICES).get(self.month)

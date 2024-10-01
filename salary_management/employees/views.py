@@ -488,3 +488,16 @@ def employee_profile(request):
         'salaries': salaries
     }
     return render(request, 'employees/employee_profile.html', context)
+
+#creating a custom admin dashboard
+def admin_dashboard(request):
+    total_employees = Employee.objects.count()
+    total_salary = Salary.objects.aggregate(Sum('net_salary'))['net_salary__sum']
+    recent_salaries = Salary.objects.order_by('-date_generated')[:10]
+
+    context = {
+        'total_employees': total_employees,
+        'total_salary': total_salary,
+        'recent_salaries': recent_salaries
+    }
+    return render(request, 'admin_dashboard.html', context)
