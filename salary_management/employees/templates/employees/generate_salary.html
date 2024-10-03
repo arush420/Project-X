@@ -28,6 +28,7 @@
                 <th>Employee Code</th>
                 <th>Employee Name</th>
                 <th>Days Worked</th>
+                <th>Advance Deduction</th>
             </tr>
         </thead>
         <tbody>
@@ -37,6 +38,7 @@
                 <td>{{ employee.name }}</td>
                 <td>
                     <input type="number" name="days_worked_{{ employee.id }}" value="0" required>
+                    <input type="number" name="advance_{{ employee.id }}" value="0"></td>
                 </td>
             </tr>
             {% endfor %}

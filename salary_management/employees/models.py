@@ -36,6 +36,8 @@ class Salary(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='salaries')
     month = models.PositiveSmallIntegerField(choices=MONTH_CHOICES)
     year = models.PositiveIntegerField()
+    # to add advance take by employee
+    advance = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES, default=0)
 
     basic_salary = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES,
                                        default=0)

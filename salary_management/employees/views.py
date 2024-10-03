@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, MONTH_CHOICES, Company
 from django.db.models import Q, Sum
@@ -105,6 +107,7 @@ class GenerateSalaryView(View):
 
         for employee in employees:
             days_worked = request.POST.get(f'days_worked_{employee.id}', 0)
+            advance = Decimal(request.POST.get(f'advance_{employee.id}', 0))
             try:
                 days_worked = int(days_worked)
             except ValueError:
@@ -112,11 +115,15 @@ class GenerateSalaryView(View):
 
             gross_salary, net_salary = self.calculate_salary(employee, days_worked, days_in_month)
 
+            # Deduct advance from net salary
+            net_salary -= advance
+
             Salary.objects.update_or_create(
                 employee=employee, month=month, year=year,
                 defaults={
                     'gross_salary': gross_salary,
                     'net_salary': net_salary,
+                    'advance': advance,
                     'date_generated': timezone.now()
                 }
             )
@@ -131,7 +138,7 @@ class GenerateSalaryView(View):
                 'canteen': employee.canteen,
                 'pf': employee.pf,
                 'esic': employee.esic,
-                'advance_deduction': employee.advance_deduction,  # If it's available
+                'advance': f'{advance:.2f}',  # If it's available
                 'gross_salary': f'{gross_salary:.2f}',
                 'net_salary': f'{net_salary:.2f}',
             })
