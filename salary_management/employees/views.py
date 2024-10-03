@@ -50,7 +50,6 @@ def employee_search(request):
 class GenerateSalaryView(View):
     template_name = 'employees/generate_salary.html'
 
-
     def get(self, request):
         return self.render_salary_form()
 
@@ -125,6 +124,14 @@ class GenerateSalaryView(View):
             salary_data.append({
                 'employee_code': employee.employee_code,
                 'name': employee.name,
+                'month': month,
+                'year': year,
+                'basic_salary': employee.basic,  # Assuming it's in the Employee model
+                'transport': employee.transport,
+                'canteen': employee.canteen,
+                'pf': employee.pf,
+                'esic': employee.esic,
+                'advance_deduction': employee.advance_deduction,  # If it's available
                 'gross_salary': f'{gross_salary:.2f}',
                 'net_salary': f'{net_salary:.2f}',
             })
