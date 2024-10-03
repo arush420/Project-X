@@ -70,7 +70,7 @@ class AddCompanyForm(forms.Form):
     company_account_number = forms.CharField(max_length=20)
     company_ifsc_code = forms.CharField(max_length=11)
     company_contact_person_name = forms.CharField(max_length=100)
-    company_contact_person_number = forms.CharField(max_length=100)
+    company_contact_person_number = forms.CharField(max_length=10)
 
 
 class EmployeeSearchForm(forms.Form):

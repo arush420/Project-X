@@ -147,7 +147,7 @@ class Company(models.Model):
     company_account_number = models.CharField(max_length=20)
     company_ifsc_code = models.CharField(max_length=11)
     company_contact_person_name = models.CharField(max_length=100)
-    company_contact_person_number = models.CharField(max_length=100)
+    company_contact_person_number = models.CharField(max_length=10)
 
     def __str__(self):
         return self.company_name

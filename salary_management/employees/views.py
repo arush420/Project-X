@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, MONTH_CHOICES, Company
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.utils import timezone
 from .forms import EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm, \
     CompanyForm, AddCompanyForm, EmployeeSearchForm
@@ -378,36 +378,51 @@ def company_list(request):
     companies = Company.objects.all()
     company_form = CompanyForm()
     add_company_form = AddCompanyForm()
+    selected_company = None
 
     if request.method == 'POST':
-        if 'add_company' in request.POST:
+        # Handle company selection
+        if 'company' in request.POST and request.POST['company']:
+            selected_company_id = request.POST['company']
+            selected_company = get_object_or_404(Company, id=selected_company_id)
+            company_form = CompanyForm(instance=selected_company)
+
+        # Handle adding a new company
+        elif 'add_company' in request.POST:
             add_company_form = AddCompanyForm(request.POST)
             if add_company_form.is_valid():
-                # Collect data from the form
-                new_company_data = {
-                    'company_code': add_company_form.cleaned_data['company_code'],
-                    'company_name': add_company_form.cleaned_data['company_name'],
-                    'company_address': add_company_form.cleaned_data['company_address'],
-                    'company_gst_number': add_company_form.cleaned_data['company_gst_number'],
-                    'company_account_number': add_company_form.cleaned_data['company_account_number'],
-                    'company_ifsc_code': add_company_form.cleaned_data['company_ifsc_code'],
-                    'company_contact_person_name': add_company_form.cleaned_data['company_contact_person_name'],
-                    'company_contact_person_number': add_company_form.cleaned_data['company_contact_person_number'],
-                }
-                Company.objects.create(**new_company_data)
-                return redirect('company_list')
-        else:
-            company_form = CompanyForm(request.POST)
+                # Manually create a new company instance
+                new_company = Company.objects.create(
+                    company_code=add_company_form.cleaned_data['company_code'],
+                    company_name=add_company_form.cleaned_data['company_name'],
+                    company_address=add_company_form.cleaned_data['company_address'],
+                    company_gst_number=add_company_form.cleaned_data['company_gst_number'],
+                    company_account_number=add_company_form.cleaned_data['company_account_number'],
+                    company_ifsc_code=add_company_form.cleaned_data['company_ifsc_code'],
+                    company_contact_person_name=add_company_form.cleaned_data['company_contact_person_name'],
+                    company_contact_person_number=add_company_form.cleaned_data['company_contact_person_number'],
+                )
+                messages.success(request, "Company added successfully!")
+                return redirect('employees:company_list')  # Corrected redirect
+
+        # Handle updating an existing company
+        elif 'update_company' in request.POST:
+            selected_company_id = request.POST['selected_company_id']
+            selected_company = get_object_or_404(Company, id=selected_company_id)
+            company_form = CompanyForm(request.POST, instance=selected_company)
             if company_form.is_valid():
                 company_form.save()
-                return redirect('company_list')
+                messages.success(request, "Company details updated successfully!")
+                return redirect('employees:company_list')  # Corrected redirect
 
     context = {
         'companies': companies,
         'company_form': company_form,
         'add_company_form': add_company_form,
+        'selected_company': selected_company,
     }
     return render(request, 'employees/company_list.html', context)
+
 
 def salary_list(request):
     month = request.GET.get('month')

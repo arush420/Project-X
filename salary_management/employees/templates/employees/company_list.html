@@ -4,9 +4,21 @@
 
 {% block content %}
     <h2>Company List</h2>
-    <form method="POST">
+
+    <!-- Display messages -->
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li style="color: {{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <!-- Form to select a company -->
+    <form method="POST" action="{% url 'employees:company_list' %}">
         {% csrf_token %}
         <select name="company">
+            <option value="">Select a company</option>
             {% for company in companies %}
                 <option value="{{ company.id }}">{{ company.company_name }}</option>
             {% endfor %}
@@ -14,8 +26,20 @@
         <button type="submit">Select Company</button>
     </form>
 
+    <!-- Display selected company details if available -->
+    {% if selected_company %}
+        <h3>Company Details</h3>
+        <form method="POST" action="{% url 'employees:company_list' %}">
+            {% csrf_token %}
+            {{ company_form.as_p }}
+            <input type="hidden" name="selected_company_id" value="{{ selected_company.id }}">
+            <button type="submit" name="update_company">Update Company</button>
+        </form>
+    {% endif %}
+
+    <!-- Form to add a new company -->
     <h3>Add New Company</h3>
-    <form method="POST">
+    <form method="POST" action="{% url 'employees:company_list' %}">
         {% csrf_token %}
         {{ add_company_form.as_p }}
         <button type="submit" name="add_company">Add Company</button>
