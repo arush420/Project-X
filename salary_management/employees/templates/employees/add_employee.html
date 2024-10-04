@@ -20,4 +20,7 @@
         {{ upload_form.as_p }}
         <button type="submit" class="btn btn-primary">Upload</button>
     </form>
+
+    <a href="{% url 'employees:download_template' %}">Download Employee Upload Template</a>
+
 {% endblock %}

@@ -73,7 +73,6 @@ class PurchaseItem(models.Model):
         ('Pantry', 'Pantry'),
         ('Miscellaneous', 'Miscellaneous'),
     ]
-
     organization_code = models.CharField(max_length=100)
     organization_name = models.CharField(max_length=255)
     gst_number = models.CharField(max_length=15)

@@ -19,6 +19,43 @@ from django.contrib import messages
 import csv
 
 
+def home(request):
+    total_employees = Employee.objects.count()  # Fetch the count of employees
+    tasks = Task.objects.all() #this ensures tasks are retrived from the database
+    if request.method == 'POST':
+        form = TaskForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('home')
+    else:
+        form = TaskForm()
+
+    context = {
+        'total_employees': total_employees,
+        'tasks': tasks,
+        'form': form
+    }
+
+    return render(request, 'employees/home.html', context)  # Pass the entire context
+
+def add_task(request):
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        Task.objects.create(title=title)
+    return redirect('home')  # Redirect back to home after task is added
+
+def complete_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    task.completed = not task.completed  # Toggle the completion status
+    task.save()
+    return redirect('home')
+
+def delete_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    task.delete()
+    return redirect('home')
+
+
 class EmployeeListView(ListView):
     model = Employee
     template_name = 'employees/employee_list.html'
@@ -171,42 +208,6 @@ class GenerateSalaryView(View):
         return round(gross_salary, 2), round(net_salary, 2)
 
 
-def home(request):
-    total_employees = Employee.objects.count()  # Fetch the count of employees
-    tasks = Task.objects.all() #this ensures tasks are retrived from the database
-    if request.method == 'POST':
-        form = TaskForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('home')
-    else:
-        form = TaskForm()
-
-    context = {
-        'total_employees': total_employees,
-        'tasks': tasks,
-        'form': form
-    }
-
-    return render(request, 'employees/home.html', context)  # Pass the entire context
-
-def add_task(request):
-    if request.method == 'POST':
-        title = request.POST.get('title')
-        Task.objects.create(title=title)
-    return redirect('home')  # Redirect back to home after task is added
-
-def complete_task(request, task_id):
-    task = get_object_or_404(Task, id=task_id)
-    task.completed = not task.completed  # Toggle the completion status
-    task.save()
-    return redirect('home')
-
-def delete_task(request, task_id):
-    task = get_object_or_404(Task, id=task_id)
-    task.delete()
-    return redirect('home')
-
 def add_employee(request):
     if request.method == 'POST':
         form = EmployeeForm(request.POST)
@@ -219,20 +220,47 @@ def add_employee(request):
     return render(request, 'employees/add_employee.html', {'form': form})
 
 def add_employee_and_upload(request):
-    if request.method == 'POST' and 'add_employee_form' in request.POST:
-        add_employee_form = EmployeeForm(request.POST)
-        if add_employee_form.is_valid():
-            add_employee_form.save()
-            return redirect('employees:employee_list')
+    if request.method == 'POST':
+        if 'add_employee_form' in request.POST:
+            add_employee_form = EmployeeForm(request.POST)
+            if add_employee_form.is_valid():
+                add_employee_form.save()
+                messages.success(request, 'Employee added successfully!')
+                return redirect('employees:employee_list')
+        else:
+            add_employee_form = EmployeeForm()
+
+        if 'upload_form' in request.FILES:
+            upload_form = ExcelUploadForm(request.POST, request.FILES)
+            if upload_form.is_valid():
+                excel_file = request.FILES['file']
+                try:
+                    # Process the uploaded file and create employees
+                    df = pd.read_excel(excel_file)
+                    for _, row in df.iterrows():
+                        if Employee.objects.filter(employee_code=row['employee_code']).exists():
+                            messages.error(request, f"Employee with code {row['employee_code']} already exists.")
+                            continue
+                        Employee.objects.create(
+                            employee_code=row['employee_code'],
+                            name=row['name'],
+                            father_name=row['father_name'],
+                            basic=row['basic'],
+                            transport=row['transport'],
+                            canteen=row['canteen'],
+                            pf=row['pf'],
+                            esic=row['esic'],
+                            advance=row['advance']
+                        )
+                    messages.success(request, 'Employees uploaded successfully!')
+                except Exception as e:
+                    messages.error(request, f"Error processing file: {e}")
+                return redirect('employees:employee_list')
+        else:
+            upload_form = ExcelUploadForm()
+
     else:
         add_employee_form = EmployeeForm()
-
-    if request.method == 'POST' and 'upload_form' in request.FILES:
-        upload_form = ExcelUploadForm(request.POST, request.FILES)
-        if upload_form.is_valid():
-            # Handle file upload
-            pass
-    else:
         upload_form = ExcelUploadForm()
 
     return render(request, 'employees/add_employee.html', {
@@ -303,25 +331,81 @@ def upload_excel(request):
     return render(request, 'employees/upload_excel.html', {'form': form})
 
 
+# to download salary report
+def download_template(request):
+    # Create a sample DataFrame to match the Employee model fields
+    data = {
+        'employee_code': ['E001', 'E002'],
+        'name': ['John Doe', 'Jane Doe'],
+        'father_name': ['Father1', 'Father2'],
+        'basic': [0000, 0000],
+        'transport': [000, 000],
+        'canteen': [000, 000],
+        'pf': [0, 0],
+        'esic': [0, 0],
+        'advance': [00, 0]
+    }
+    df = pd.DataFrame(data)
+
+    # Create an Excel file from the DataFrame
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="employee_template.xlsx"'
+    df.to_excel(response, index=False)
+
+    return response
+
+
+def employee_profile(request):
+    form = EmployeeSearchForm()
+    employee = None
+    salaries = None
+
+    if request.method == 'GET':
+        query = request.GET.get('employee_code_or_name')
+        if query:
+            # Search for employee by code or name
+            employee = Employee.objects.filter(employee_code__iexact=query).first() or Employee.objects.filter(name__iexact=query).first()
+
+            if employee:
+                # Get all salary records for the employee
+                salaries = Salary.objects.filter(employee=employee).order_by('-month')
+
+    context = {
+        'form': form,
+        'employee': employee,
+        'salaries': salaries
+    }
+    return render(request, 'employees/employee_profile.html', context)
+
 
 def profile_detail(request):
     # Assuming there's only one profile; if there are many, you can modify the logic.
-    profile = get_object_or_404(Employee, employee_code="001")  # Retrieve the profile with id=1 (modify as needed) 
+    profile = get_object_or_404(Employee, employee_code="001")  # Retrieve the profile with id=1 (modify as needed)
     return render(request, 'employees/profile_detail.html', {'profile': profile})
 
+def salary_list(request):
+    month = request.GET.get('month')
+    year = request.GET.get('year')
 
-def payment_input(request):
-    if request.method == 'POST':
-        form = PaymentForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('employees:payment_input')  # Redirect to a success page or somewhere else
-    else:
-        form = PaymentForm()
+    # Start with all salaries
+    salaries = Salary.objects.select_related('employee').all()
 
-    payments = Payment.objects.all()  # Fetch all payment records
+    # Apply filters if month and year are provided
+    if month:
+        salaries = salaries.filter(month=month)
+    if year:
+        salaries = salaries.filter(year=year)
 
-    return render(request, 'employees/payment_input.html', {'form': form, 'payments': payments})
+    context = {
+        'salaries': salaries,
+        'month': month,
+        'year': year,
+        'month_choices': MONTH_CHOICES,  # Pass the MONTH_CHOICES to the template
+    }
+
+    return render(request, 'employees/salary_list.html', context)
+
+
 
 #Registering a user
 def register_view(request):
@@ -337,7 +421,6 @@ def register_view(request):
     return render(request, 'employees/register.html', {'form': form})
 
 
-
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -350,12 +433,39 @@ def login_view(request):
         form = AuthenticationForm(initial=initial_data)
     return render(request, 'employees/login.html', {'form': form})
 
-def dashboard_view(request):
-    return render(request, 'employees/dashboard.html')
-
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+def dashboard_view(request):
+    return render(request, 'employees/dashboard.html')
+
+#creating a custom admin dashboard
+def admin_dashboard(request):
+    total_employees = Employee.objects.count()
+    total_salary = Salary.objects.aggregate(Sum('net_salary'))['net_salary__sum']
+    recent_salaries = Salary.objects.order_by('-date_generated')[:10]
+
+    context = {
+        'total_employees': total_employees,
+        'total_salary': total_salary,
+        'recent_salaries': recent_salaries
+    }
+    return render(request, 'admin_dashboard.html', context)
+
+
+def payment_input(request):
+    if request.method == 'POST':
+        form = PaymentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('employees:payment_input')  # Redirect to a success page or somewhere else
+    else:
+        form = PaymentForm()
+
+    payments = Payment.objects.all()  # Fetch all payment records
+
+    return render(request, 'employees/payment_input.html', {'form': form, 'payments': payments})
 
 
 def purchase_item_input(request):
@@ -436,97 +546,3 @@ def company_list(request):
         'selected_company': selected_company,
     }
     return render(request, 'employees/company_list.html', context)
-
-
-def salary_list(request):
-    month = request.GET.get('month')
-    year = request.GET.get('year')
-
-    # Start with all salaries
-    salaries = Salary.objects.select_related('employee').all()
-
-    # Apply filters if month and year are provided
-    if month:
-        salaries = salaries.filter(month=month)
-    if year:
-        salaries = salaries.filter(year=year)
-
-    context = {
-        'salaries': salaries,
-        'month': month,
-        'year': year,
-        'month_choices': MONTH_CHOICES,  # Pass the MONTH_CHOICES to the template
-    }
-
-    return render(request, 'employees/salary_list.html', context)
-
-# to download salary report
-def download_salary_csv(request):
-    month = request.GET.get('month')
-    year = request.GET.get('year')
-
-    # Start with all salaries
-    salaries = Salary.objects.select_related('employee').all()
-
-    # Apply filters if month and year are provided
-    if month:
-        salaries = salaries.filter(month=month)
-    if year:
-        salaries = salaries.filter(year=year)
-
-    # Create the HttpResponse object with CSV header
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="salaries.csv"'
-
-    writer = csv.writer(response)
-    # Write header row
-    writer.writerow(['Employee Name', 'Month', 'Year', 'Gross Salary', 'Net Salary', 'Date Generated'])
-
-    # Write data rows
-    for salary in salaries:
-        writer.writerow([
-            salary.employee.name,
-            salary.get_month_display(),
-            salary.year,
-            salary.gross_salary,
-            salary.net_salary,
-            salary.date_generated
-        ])
-
-    return response
-
-
-def employee_profile(request):
-    form = EmployeeSearchForm()
-    employee = None
-    salaries = None
-
-    if request.method == 'GET':
-        query = request.GET.get('employee_code_or_name')
-        if query:
-            # Search for employee by code or name
-            employee = Employee.objects.filter(employee_code__iexact=query).first() or Employee.objects.filter(name__iexact=query).first()
-
-            if employee:
-                # Get all salary records for the employee
-                salaries = Salary.objects.filter(employee=employee).order_by('-month')
-
-    context = {
-        'form': form,
-        'employee': employee,
-        'salaries': salaries
-    }
-    return render(request, 'employees/employee_profile.html', context)
-
-#creating a custom admin dashboard
-def admin_dashboard(request):
-    total_employees = Employee.objects.count()
-    total_salary = Salary.objects.aggregate(Sum('net_salary'))['net_salary__sum']
-    recent_salaries = Salary.objects.order_by('-date_generated')[:10]
-
-    context = {
-        'total_employees': total_employees,
-        'total_salary': total_salary,
-        'recent_salaries': recent_salaries
-    }
-    return render(request, 'admin_dashboard.html', context)
