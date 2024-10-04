@@ -7,50 +7,42 @@
 
     <!-- Salary generation form -->
     <form method="POST">
-    {% csrf_token %}
-    <label for="month">Select Month:</label>
-    <select name="month" id="month">
-        <option value="">Select Month</option>
-        {% for month in months %}
-            <option value="{{ month }}">{{ month }}</option>
-        {% endfor %}
-    </select>
-
-    <label for="year">Select Year:</label>
-    <input type="number" name="year" value="{{ current_year }}" required>
-
-    <label for="days_in_month">Number of Days in Month:</label>
-    <input type="number" name="days_in_month" required>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Employee Code</th>
-                <th>Employee Name</th>
-                <th>Days Worked</th>
-                <th>Advance Deduction</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for employee in employees %}
-            <tr>
-                <td>{{ employee.employee_code }}</td>
-                <td>{{ employee.name }}</td>
-                <td>
-                    <input type="number" name="days_worked_{{ employee.id }}" value="0" required>
-                    <input type="number" name="advance_{{ employee.id }}" value="0"></td>
-                </td>
-            </tr>
+        {% csrf_token %}
+        <label for="month">Select Month:</label>
+        <select name="month" id="month" required>
+            <option value="">Select Month</option>
+            {% for month in months %}
+                <option value="{{ month }}">{{ month }}</option>
             {% endfor %}
-        </tbody>
-    </table>
+        </select>
 
-    <button type="submit">Generate Salary</button>
-</form>
+        <label for="year">Select Year:</label>
+        <input type="number" name="year" value="{{ current_year }}" required>
 
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Upload</button>
-</form>
+        <label for="days_in_month">Number of Days in Month:</label>
+        <input type="number" name="days_in_month" required>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Employee Code</th>
+                    <th>Employee Name</th>
+                    <th>Days Worked</th>
+                    <th>Advance Deduction</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee in employees %}
+                <tr>
+                    <td>{{ employee.employee_code }}</td>
+                    <td>{{ employee.name }}</td>
+                    <td><input type="number" name="days_worked_{{ employee.id }}" value="0" required></td>
+                    <td><input type="number" name="advance_{{ employee.id }}" value="0"></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <button type="submit">Generate Salary</button>
+    </form>
 {% endblock %}

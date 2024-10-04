@@ -1,5 +1,5 @@
 from decimal import Decimal
-
+from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, MONTH_CHOICES, Company
 from django.db.models import Q, Sum
@@ -63,295 +63,189 @@ class EmployeeListView(ListView):
 
     def get_queryset(self):
         search_query = self.request.GET.get('search', '')
-        if search_query:
-            return Employee.objects.filter(
-                Q(employee_code__icontains=search_query) | Q(name__icontains=search_query)
-            )
-        return Employee.objects.all()
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['search_query'] = self.request.GET.get('search', '')
-        return context
+        return Employee.objects.filter(
+            Q(employee_code__icontains=search_query) | Q(name__icontains=search_query)
+        ) if search_query else Employee.objects.all()
 
 
 def employee_detail(request, employee_code):
     employee = get_object_or_404(Employee, employee_code=employee_code)
     return render(request, 'employee_detail.html', {'employee': employee})
 
-def employee_search(request):
-    if request.method == "POST":
-        employee_code = request.POST.get('employee_code')
-        return HttpResponseRedirect(reverse('employees:employee_detail', args=[employee_code]))
-    return render(request, 'employees/employee_search.html')
+
+def handle_file_upload(file):
+    df = pd.read_excel(file)
+    for _, row in df.iterrows():
+        if Employee.objects.filter(employee_code=row['employee_code']).exists():
+            continue
+        Employee.objects.create(
+            employee_code=row['employee_code'],
+            name=row['name'],
+            father_name=row['father_name'],
+            basic=row['basic'],
+            transport=row['transport'],
+            canteen=row['canteen'],
+            pf=row['pf'],
+            esic=row['esic'],
+            advance=row['advance']
+        )
+
+
+import pandas as pd
+from decimal import Decimal
+from django.core.exceptions import ValidationError
+
+def handle_file_upload(file):
+    try:
+        df = pd.read_excel(file)
+
+        # Required columns in the uploaded Excel file
+        required_columns = ['employee_code', 'name', 'father_name', 'basic', 'transport', 'canteen', 'pf', 'esic', 'advance']
+
+        # Check if all required columns are present in the file
+        for col in required_columns:
+            if col not in df.columns:
+                raise ValidationError(f"Missing required column: {col}")
+
+        # Iterate through the rows and save employees
+        for _, row in df.iterrows():
+            # Validate and convert data before saving
+            try:
+                employee_code = str(row['employee_code']).strip()
+                name = str(row['name']).strip()
+                father_name = str(row['father_name']).strip()
+                basic = Decimal(row['basic'])
+                transport = Decimal(row.get('transport', 0))
+                canteen = Decimal(row.get('canteen', 0))
+                pf = Decimal(row.get('pf', 0))
+                esic = Decimal(row.get('esic', 0))
+                advance = Decimal(row.get('advance', 0))
+
+                # Skip if employee already exists
+                if Employee.objects.filter(employee_code=employee_code).exists():
+                    continue
+
+                # Create a new employee object
+                Employee.objects.create(
+                    employee_code=employee_code,
+                    name=name,
+                    father_name=father_name,
+                    basic=basic,
+                    transport=transport,
+                    canteen=canteen,
+                    pf=pf,
+                    esic=esic,
+                    advance=advance
+                )
+            except Exception as e:
+                print(f"Error processing row: {row}. Error: {e}")
+                continue
+
+    except Exception as e:
+        raise ValidationError(f"Error processing file: {e}")
+
+
+class AddEmployeeAndUploadView(View):
+    def get(self, request):
+        return render(request, 'employees/add_employee.html', {
+            'add_employee_form': EmployeeForm(),
+            'upload_form': ExcelUploadForm(),
+        })
+
+    def post(self, request):
+        if 'add_employee_form' in request.POST:
+            form = EmployeeForm(request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Employee added successfully!')
+                return redirect('employees:employee_list')
+            else:
+                messages.error(request, 'Failed to add employee. Please check the form.')
+
+        elif 'upload_form' in request.FILES:
+            form = ExcelUploadForm(request.POST, request.FILES)
+            if form.is_valid():
+                try:
+                    handle_file_upload(request.FILES['file'])
+                    messages.success(request, 'Employees uploaded successfully!')
+                except ValidationError as e:
+                    messages.error(request, f"File upload failed: {e}")
+                return redirect('employees:employee_list')
+
+        return self.get(request)
+
 
 
 class GenerateSalaryView(View):
-    template_name = 'employees/generate_salary.html'
-
     def get(self, request):
-        return self.render_salary_form()
+        return render(request, 'employees/generate_salary.html', {
+            'employees': Employee.objects.all(),
+            'months': range(1, 13),
+            'current_year': timezone.now().year
+        })
 
     def post(self, request):
         month, year, days_in_month = self.get_salary_params(request)
-
         if not month or not year or not days_in_month:
-            return self.render_error('Please provide all inputs: month, year, and days in the month.')
-
-        try:
-            month, year, days_in_month = int(month), int(year), int(days_in_month)
-        except ValueError:
-            return self.render_error('Invalid input for month, year, or days in month.')
+            return self.render_error(request, 'Please provide all inputs.')
 
         employees = Employee.objects.all()
-        salary_data, total_net_salary = self.calculate_salaries(request, employees, days_in_month, month, year)
+        salary_data, total_net_salary = self.calculate_salaries(request, employees, int(days_in_month), int(month),
+                                                                int(year))
 
         return render(request, 'employees/salary_report.html', {
             'salary_data': salary_data,
-            'total_net_salary': f'{total_net_salary:.2f}',
+            'total_net_salary': total_net_salary,
             'month': month,
             'year': year
         })
 
     def get_salary_params(self, request):
-        """Helper function to extract and validate POST parameters."""
-        month = request.POST.get('month')
-        year = request.POST.get('year')
-        days_in_month = request.POST.get('days_in_month')
-        return month, year, days_in_month
-
-    def render_salary_form(self, error=None):
-        """Helper method to render the salary form with employees and months."""
-        employees = Employee.objects.all()
-        current_year = timezone.now().year
-        months = range(1, 13)
-        context = {
-            'employees': employees,
-            'current_year': current_year,
-            'months': months,
-        }
-        if error:
-            context['error'] = error
-        return render(self.request, self.template_name, context)
-
-    def render_error(self, error_message):
-        """Helper method to render an error message."""
-        return self.render_salary_form(error=error_message)
+        return request.POST.get('month'), request.POST.get('year'), request.POST.get('days_in_month')
 
     def calculate_salaries(self, request, employees, days_in_month, month, year):
-        salary_data = []
-        total_net_salary = 0
-
+        salary_data, total_net_salary = [], Decimal(0)
         for employee in employees:
-            days_worked = request.POST.get(f'days_worked_{employee.id}', 0)
+            days_worked = int(request.POST.get(f'days_worked_{employee.id}', 0))
             advance = Decimal(request.POST.get(f'advance_{employee.id}', 0))
-            try:
-                days_worked = int(days_worked)
-            except ValueError:
-                days_worked = 0
 
             gross_salary, net_salary = self.calculate_salary(employee, days_worked, days_in_month)
-
-            # Deduct advance from net salary
             net_salary -= advance
 
             Salary.objects.update_or_create(
                 employee=employee, month=month, year=year,
-                defaults={
-                    'gross_salary': gross_salary,
-                    'net_salary': net_salary,
-                    'advance': advance,
-                    'date_generated': timezone.now()
-                }
+                defaults={'gross_salary': gross_salary, 'net_salary': net_salary, 'advance': advance}
             )
 
             salary_data.append({
                 'employee_code': employee.employee_code,
                 'name': employee.name,
-                'month': month,
-                'year': year,
-                'basic_salary': employee.basic,  # Assuming it's in the Employee model
-                'transport': employee.transport,
-                'canteen': employee.canteen,
-                'pf': employee.pf,
-                'esic': employee.esic,
-                'advance': f'{advance:.2f}',  # If it's available
-                'gross_salary': f'{gross_salary:.2f}',
-                'net_salary': f'{net_salary:.2f}',
+                'gross_salary': gross_salary,
+                'net_salary': net_salary,
             })
 
             total_net_salary += net_salary
-
         return salary_data, total_net_salary
 
-
     def calculate_salary(self, employee, days_worked, days_in_month):
-        if days_in_month <= 0:
-            raise ValueError("Days in month must be greater than 0.")
-        if days_worked > days_in_month:
-            days_worked = days_in_month # Cap days worked to days in month
-            print("Number of days work exceed working days in month. Hence days worked = working days ")
-
         basic, transport, canteen = employee.basic, employee.transport, employee.canteen
-        pf_percentage, esic_percentage = employee.pf, employee.esic
-
-        # Calculate gross salary based on days worked
-        gross_salary = ((basic + transport) / days_in_month) * days_worked
-
-        # Calculate PF and ESIC amounts
-        pf_amount = (pf_percentage / 100) * basic
-        esic_amount = (esic_percentage / 100) * basic
-
-        # Calculate net salary by subtracting deductions
-        net_salary = gross_salary - (canteen + pf_amount + esic_amount)
-
+        gross_salary = (basic + transport) / days_in_month * days_worked
+        pf = employee.pf / 100 * basic
+        esic = employee.esic / 100 * basic
+        net_salary = gross_salary - (canteen + pf + esic)
         return round(gross_salary, 2), round(net_salary, 2)
 
 
-def add_employee(request):
-    if request.method == 'POST':
-        form = EmployeeForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('employees:employee_list')
-    else:
-        form = EmployeeForm()
-
-    return render(request, 'employees/add_employee.html', {'form': form})
-
-def add_employee_and_upload(request):
-    if request.method == 'POST':
-        if 'add_employee_form' in request.POST:
-            add_employee_form = EmployeeForm(request.POST)
-            if add_employee_form.is_valid():
-                add_employee_form.save()
-                messages.success(request, 'Employee added successfully!')
-                return redirect('employees:employee_list')
-        else:
-            add_employee_form = EmployeeForm()
-
-        if 'upload_form' in request.FILES:
-            upload_form = ExcelUploadForm(request.POST, request.FILES)
-            if upload_form.is_valid():
-                excel_file = request.FILES['file']
-                try:
-                    # Process the uploaded file and create employees
-                    df = pd.read_excel(excel_file)
-                    for _, row in df.iterrows():
-                        if Employee.objects.filter(employee_code=row['employee_code']).exists():
-                            messages.error(request, f"Employee with code {row['employee_code']} already exists.")
-                            continue
-                        Employee.objects.create(
-                            employee_code=row['employee_code'],
-                            name=row['name'],
-                            father_name=row['father_name'],
-                            basic=row['basic'],
-                            transport=row['transport'],
-                            canteen=row['canteen'],
-                            pf=row['pf'],
-                            esic=row['esic'],
-                            advance=row['advance']
-                        )
-                    messages.success(request, 'Employees uploaded successfully!')
-                except Exception as e:
-                    messages.error(request, f"Error processing file: {e}")
-                return redirect('employees:employee_list')
-        else:
-            upload_form = ExcelUploadForm()
-
-    else:
-        add_employee_form = EmployeeForm()
-        upload_form = ExcelUploadForm()
-
-    return render(request, 'employees/add_employee.html', {
-        'add_employee_form': add_employee_form,
-        'upload_form': upload_form,
-    })
-
-
-def handle_uploaded_file(f):
-    # Use Pandas to read the uploaded Excel file
-    df = pd.read_excel(f, engine='openpyxl')
-
-    # Perform predefined operations on the DataFrame (df)
-    # For example, summing up a specific column or filtering rows
-    # Example operation: Calculate the sum of a 'Salary' column
-    if 'Salary' in df.columns:
-        total_salary = df['Salary'].sum()
-    else:
-        total_salary = None
-
-    # Perform other operations as needed
-    return total_salary
-
-
-def upload_excel(request):
-    if request.method == 'POST':
-        form = ExcelUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            excel_file = request.FILES['file']
-
-            # Load the Excel file using pandas
-            try:
-                df = pd.read_excel(excel_file)
-
-                # Iterate over the rows and create Employee objects
-                for _, row in df.iterrows():
-                    try:
-                        # Check if employee already exists
-                        if Employee.objects.filter(employee_code=row['employee_code']).exists():
-                            messages.error(request, f"Employee with code {row['employee_code']} already exists.")
-                            continue  # Skip this employee if already exists
-
-                        # Create a new employee
-                        Employee.objects.create(
-                            employee_code=row['employee_code'],
-                            name=row['name'],
-                            father_name=row['father_name'],
-                            basic=float(row['basic']),
-                            transport=float(row['transport']),
-                            canteen=float(row['canteen']),
-                            pf=float(row['pf']),
-                            esic=float(row['esic']),
-                            advance=float(row['advance'])
-                        )
-
-                    except ValueError:
-                        messages.error(request, f"Invalid data format in row with employee code {row['employee_code']}")
-                        continue  # Skip this employee if data is invalid
-
-                messages.success(request, 'Employees added successfully!')
-                return redirect('employees:employee_list')
-
-            except Exception as e:
-                messages.error(request, f'Error processing file: {e}')
-    else:
-        form = ExcelUploadForm()
-
-    return render(request, 'employees/upload_excel.html', {'form': form})
-
-
-# to download salary report
 def download_template(request):
-    # Create a sample DataFrame to match the Employee model fields
     data = {
-        'employee_code': ['E001', 'E002'],
-        'name': ['John Doe', 'Jane Doe'],
-        'father_name': ['Father1', 'Father2'],
-        'basic': [0000, 0000],
-        'transport': [000, 000],
-        'canteen': [000, 000],
-        'pf': [0, 0],
-        'esic': [0, 0],
-        'advance': [00, 0]
+        'employee_code': ['E001', 'E002'], 'name': ['John Doe', 'Jane Doe'],
+        'father_name': ['Father1', 'Father2'], 'basic': [0, 0], 'transport': [0, 0],
+        'canteen': [0, 0], 'pf': [0, 0], 'esic': [0, 0], 'advance': [0, 0]
     }
     df = pd.DataFrame(data)
-
-    # Create an Excel file from the DataFrame
     response = HttpResponse(content_type='application/ms-excel')
     response['Content-Disposition'] = 'attachment; filename="employee_template.xlsx"'
     df.to_excel(response, index=False)
-
     return response
 
 
@@ -377,11 +271,6 @@ def employee_profile(request):
     }
     return render(request, 'employees/employee_profile.html', context)
 
-
-def profile_detail(request):
-    # Assuming there's only one profile; if there are many, you can modify the logic.
-    profile = get_object_or_404(Employee, employee_code="001")  # Retrieve the profile with id=1 (modify as needed)
-    return render(request, 'employees/profile_detail.html', {'profile': profile})
 
 def salary_list(request):
     month = request.GET.get('month')
@@ -439,6 +328,11 @@ def logout_view(request):
 
 def dashboard_view(request):
     return render(request, 'employees/dashboard.html')
+
+def user_profile_detail(request):
+    # Assuming there's only one profile; if there are many, you can modify the logic.
+    profile = get_object_or_404(Employee, employee_code="001")  # Retrieve the profile with id=1 (modify as needed)
+    return render(request, 'employees/user_profile_detail.html', {'profile': profile})
 
 #creating a custom admin dashboard
 def admin_dashboard(request):

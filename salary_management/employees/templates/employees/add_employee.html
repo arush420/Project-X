@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
-{% block title %}Add Employee {% endblock %}
+{% block title %}Add Employee{% endblock %}
 
 {% block content %}
     <h1>Add Employee</h1>
 
     <!-- Add Employee Form -->
-    <form method="post" action="{% url 'employees:add_employee' %}">
+    <form method="post">
         {% csrf_token %}
         {{ add_employee_form.as_p }}
         <button type="submit">Add Employee</button>
@@ -15,12 +15,11 @@
     <h1>Upload Employees via Excel</h1>
 
     <!-- Excel Upload Form -->
-    <form method="POST" enctype="multipart/form-data" action="{% url 'employees:upload_excel' %}">
+    <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         {{ upload_form.as_p }}
         <button type="submit" class="btn btn-primary">Upload</button>
     </form>
 
     <a href="{% url 'employees:download_template' %}">Download Employee Upload Template</a>
-
 {% endblock %}

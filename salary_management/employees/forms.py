@@ -8,10 +8,8 @@ class EmployeeForm(forms.ModelForm):
         model = Employee
         fields = ['employee_code', 'name', 'father_name', 'basic', 'transport', 'canteen', 'pf', 'esic', 'advance']
 
-
 class ExcelUploadForm(forms.Form):
     file = forms.FileField()
-
 
 class EmployeeSearchForm(forms.Form):
     employee_code_or_name = forms.CharField(label='Employee Code or Name', max_length=100)

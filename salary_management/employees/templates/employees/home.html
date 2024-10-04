@@ -12,16 +12,12 @@
     <div class="btn-group" role="group">
         <a href="{% url 'employees:employee_list' %}" class="btn btn-primary">View Employees</a>
         <a href="{% url 'employees:generate_salary' %}" class="btn btn-primary">Generate Salary</a>
-        <a href="{% url 'employees:add_employee' %}" class="btn btn-primary">Add Employee</a>
+        <a href="{% url 'employees:add_employee_and_upload' %}" class="btn btn-primary">Add Employee / Upload Excel</a>
         <a href="{% url 'employees:payment_input' %}" class="btn btn-primary">Payment Input</a>
-        <a href="{% url 'employees:upload_excel' %}" class="btn btn-primary">Upload Excel</a>
-        <a href="{% url 'employees:register' %}" class="btn btn-primary">Register</a>
         <a href="{% url 'employees:purchase_item_input' %}" class="btn btn-primary">Purchase Item</a>
         <a href="{% url 'employees:vendor_information_input' %}" class="btn btn-primary">Vendor Information</a>
-        <a href="{% url 'employees:employee_search' %}" class="btn btn-primary">Employee Search</a>
-        <a href="{% url 'employees:company_list' %}" class="btn btn-primary">Company List</a>
-        <a href="{% url 'employees:salary_list' %}" class="btn btn-primary">Salary List</a>
         <a href="{% url 'employees:employee_profile' %}" class="btn btn-primary">Employee Profile</a>
+        <a href="{% url 'employees:company_list' %}" class="btn btn-primary">Company List</a>
         <a href="{% url 'employees:admin_dashboard' %}" class="btn btn-primary">Admin Dashboard</a>
     </div>
 
@@ -34,7 +30,7 @@
             <div class="col-3 todo-list">
                 <h3>To-Do List</h3>
 
-                <!-- Form to add a new sticky note -->
+                <!-- Form to add a new task -->
                 <form method="POST" action="{% url 'employees:add_task' %}">
                     {% csrf_token %}
                     <div class="input-group mb-3">

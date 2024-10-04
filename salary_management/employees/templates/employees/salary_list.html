@@ -1,27 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salary List</title>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Salary List{% endblock %}
+
+{% block content %}
     <h1>Generated Salaries</h1>
 
     <!-- Filter form -->
-    <form method="GET" action="">
+    <form method="GET">
         <label for="month">Month:</label>
         <select name="month" id="month">
             <option value="">All</option>
             {% for month_num, month_name in month_choices %}
-                <option value="{{ month_num }}" {% if month|default_if_none:'' == month_num|stringformat:"s" %}selected{% endif %}>
+                <option value="{{ month_num }}" {% if month == month_num|stringformat:"s" %}selected{% endif %}>
                     {{ month_name }}
                 </option>
             {% endfor %}
         </select>
 
         <label for="year">Year:</label>
-        <input type="number" name="year" id="year" value="{{ year|default_if_none:'' }}" placeholder="Year">
+        <input type="number" name="year" value="{{ year|default_if_none:'' }}" placeholder="Year">
 
         <button type="submit">Filter</button>
     </form>
@@ -35,7 +32,7 @@
     </div>
 
     <!-- Salary Table -->
-    <table border="1" id="salaryTable">
+    <table border="1">
         <thead>
             <tr>
                 <th>Employee Name</th>
@@ -70,10 +67,9 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6">No salaries found.</td>
+                <td colspan="12">No salaries found.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-</body>
-</html>
+{% endblock %}

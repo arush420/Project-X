@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import ( EmployeeListView, GenerateSalaryView, add_employee, home,
-    login_view, logout_view, register_view, employee_profile )
+from .views import ( EmployeeListView, AddEmployeeAndUploadView, GenerateSalaryView, download_template, home,
+    login_view, logout_view, register_view, employee_profile, user_profile_detail )
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
@@ -12,19 +12,15 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('user-profile/', views.user_profile_detail, name='user_profile_detail'),
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('add_task/', views.add_task, name='add_task'),
     path('complete_task/<int:task_id>/', views.complete_task, name='complete_task'),
     path('delete_task/<int:task_id>/', views.delete_task, name='delete_task'),
-    path('add_employee/', add_employee, name='add_employee'),
-    path('upload-excel/', views.upload_excel, name='upload_excel'),
-    path('profile/', views.profile_detail, name='profile_detail'),
-    path('employees/<str:employee_code>/', views.employee_detail, name='employee_detail'),
-    path('employee/search/', views.employee_search, name='employee_search'),
-    path('employee/profile/', employee_profile, name='employee_profile'),
+    path('add_employee/', AddEmployeeAndUploadView.as_view(), name='add_employee_and_upload'),
+    path('employee_profile/', views.employee_profile, name='employee_profile'),
     path('generate_salary/', GenerateSalaryView.as_view(), name='generate_salary'),
-    path('salary/list/', views.salary_list, name='salary_list'),
-    path('download-template/', views.download_template, name='download_template'),
+    path('download-template/', download_template, name='download_template'),
     path('payment-input/', views.payment_input, name='payment_input'),
     path('purchase-item-input/', views.purchase_item_input, name='purchase_item_input'),
     path('vendor-information-input/', views.vendor_information_input, name='vendor_information_input'),
