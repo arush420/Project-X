@@ -218,3 +218,103 @@ input[type="checkbox"]:checked + label
   clear: both
 .cf
   *zoom: 1
+
+
+/* General Styling */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    margin-top: 50px;
+}
+
+/* Card Styling */
+.card {
+    border-radius: 10px;
+    border: none;
+    background-color: #fff;
+}
+
+.card-header {
+    background-color: #343a40;
+    color: #fff;
+    padding: 15px;
+    text-align: center;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.card-header h2 {
+    margin: 0;
+}
+
+.card-body {
+    padding: 30px;
+}
+
+.form-control {
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+    padding: 10px;
+    margin-bottom: 20px;
+}
+
+/* Button Styling */
+.btn-dark {
+    background-color: #343a40;
+    color: #fff;
+    border-radius: 5px;
+    padding: 10px 15px;
+    border: none;
+    width: 100%;
+}
+
+.btn-dark:hover {
+    background-color: #23272b;
+    color: #fff;
+}
+
+.btn-default {
+    background-color: transparent;
+    color: #343a40;
+    border: none;
+    margin-top: 10px;
+    text-align: center;
+    display: block;
+    width: 100%;
+}
+
+.btn-default:hover {
+    color: #23272b;
+    text-decoration: underline;
+}
+
+/* Form Styling */
+form {
+    margin-top: 20px;
+}
+
+input[type="submit"] {
+    background-color: #343a40;
+    color: white;
+    border-radius: 5px;
+    border: none;
+    padding: 10px;
+    width: 100%;
+    margin-top: 10px;
+}
+
+input[type="submit"]:hover {
+    background-color: #23272b;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .col-md-6 {
+        width: 90%;
+    }
+}

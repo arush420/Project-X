@@ -3,140 +3,23 @@
 {% block title %}Register{% endblock %}
 
 {% block content %}
-<style>
-    /* Apply gradient background to body and html */
-    body, html {
-        height: 100%;
-        font-family: 'Poppins', sans-serif;
-        background: linear-gradient(to right, #a1c4fd, #c2e9fb); /* Light blue gradient */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    /* Centered card styling with transparency */
-    .container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-    }
-
-    .card {
-        background: rgba(255, 255, 255, 0.2); /* Semi-transparent background */
-        border: none;
-        border-radius: 10px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-    }
-
-    .card-header {
-        background-color: rgba(0, 0, 0, 0.8); /* Dark transparent background for header */
-    }
-
-    .card-header h2 {
-        font-size: 28px;
-        color: #fff;
-        font-weight: bold;
-        text-align: center;
-    }
-
-    /* Form input field styles */
-    .form-control {
-        background: rgba(255, 255, 255, 0.8); /* Lighter input background */
-        border: none;
-        border-radius: 5px;
-        padding: 10px;
-    }
-
-    .input-group-text {
-        background: rgba(255, 255, 255, 0.8); /* Same lighter background for input icons */
-        border: none;
-        border-radius: 5px 0 0 5px;
-    }
-
-    /* Buttons */
-    .btn-dark {
-        background-color: #3498db;
-        border: none;
-        color: white;
-        font-size: 16px;
-        width: 100%;
-        padding: 10px;
-        border-radius: 5px;
-        margin-bottom: 10px;
-    }
-
-    .btn-dark:hover {
-        background-color: #2980b9;
-    }
-
-    .btn-default {
-        background-color: #fff;
-        border: 1px solid #3498db;
-        color: #3498db;
-        font-size: 16px;
-        width: 100%;
-        padding: 10px;
-        border-radius: 5px;
-        text-align: center;
-    }
-
-    .btn-default:hover {
-        background-color: #3498db;
-        color: white;
-    }
-</style>
-
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="card shadow-sm">
-                <div class="card-header bg-dark text-white">
-                    <h2 class="text-center">Register</h2>
+                <div class="card-header">
+                    <h2>Register</h2>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{% url 'employees:register' %}">
                         {% csrf_token %}
-                        <div class="form-group mb-3">
-                            <label for="{{ form.username.id_for_label }}">Username:</label>
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
-                                </div>
-                                <input type="text" id="{{ form.username.id_for_label }}" name="{{ form.username }}" class="form-control" value="{{ form.username.value }}" />
-                            </div>
-                            <span class="text-danger">{{ form.username.errors }}</span>
-                        </div>
-
-                        <div class="form-group mb-3">
-                            <label for="{{ form.password1.id_for_label }}">Password:</label>
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                </div>
-                                <input type="password" id="{{ form.password1.id_for_label }}" name="{{ form.password1 }}" class="form-control" value="{{ form.password1.value }}" />
-                            </div>
-                            <span class="text-danger">{{ form.password1.errors }}</span>
-                        </div>
-
-                        <div class="form-group mb-3">
-                            <label for="{{ form.password2.id_for_label }}">Confirm Password:</label>
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                </div>
-                                <input type="password" id="{{ form.password2.id_for_label }}" name="{{ form.password2 }}" class="form-control" value="{{ form.password2.value }}" />
-                            </div>
-                            <span class="text-danger">{{ form.password2.errors }}</span>
-                        </div>
-
-                        <button type="submit" class="btn btn-dark btn-block">Submit</button>
-                        <a href="{% url 'employees:login' %}" class="btn btn-default">Login</a>
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-dark btn-block">Register</button>
+                        <a href="{% url 'employees:login' %}" class="btn btn-default">Already have an account? Login</a>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 {% endblock %}

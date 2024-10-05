@@ -2,6 +2,7 @@ from os import times
 from django.db import models
 from django.utils import timezone
 from decimal import Decimal
+from django.contrib.auth.models import User
 
 
 # Constants for salary fields
@@ -106,8 +107,9 @@ class Task(models.Model):
     def __str__(self):
         return self.title
 
-
+# User Profile details
 class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     organisation_name = models.CharField(max_length=255)
     address = models.TextField()
     account_number = models.CharField(max_length=20)

@@ -1,4 +1,6 @@
 from decimal import Decimal
+from sqlite3 import IntegrityError
+
 from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, MONTH_CHOICES, Company
@@ -17,6 +19,67 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django.contrib import messages
 import csv
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+
+
+# Registering a user with unique username validation
+def register_view(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            try:
+                user = form.save()
+                Profile.objects.create(user=user)  # Create a profile for the user
+                login(request, user)
+                return redirect('home')  # Redirect to home page after registration
+            except IntegrityError:
+                form.add_error('username', 'Username already exists. Please try another.')
+    else:
+        form = UserCreationForm()
+
+    return render(request, 'employees/register.html', {'form': form})
+
+
+# Logging in a user
+def login_view(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect('employees:home')  # Redirect to home page after login
+    else:
+        form = AuthenticationForm()
+
+    return render(request, 'employees/login.html', {'form': form})
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+# Dashboard (can be customized for both admin and user dashboards)
+def dashboard_view(request):
+    return render(request, 'employees/dashboard.html')
+
+# Profile Detail View (show data entered during registration)
+def user_profile_detail(request):
+    profile = get_object_or_404(Profile, user=request.user)
+    return render(request, 'employees/user_profile_detail.html', {'profile': profile})
+
+#creating a custom admin dashboard
+def admin_dashboard(request):
+    total_employees = Employee.objects.count()
+    total_salary = Salary.objects.aggregate(Sum('net_salary'))['net_salary__sum']
+    recent_salaries = Salary.objects.order_by('-date_generated')[:10]
+    context = {
+        'total_employees': total_employees,
+        'total_salary': total_salary,
+        'recent_salaries': recent_salaries
+    }
+    return render(request, 'admin_dashboard.html', context)
 
 
 def home(request):
@@ -293,59 +356,6 @@ def salary_list(request):
     }
 
     return render(request, 'employees/salary_list.html', context)
-
-
-
-#Registering a user
-def register_view(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect('dashboard')
-    else:
-        initial_data = {'username':'', 'passowrd1':'', 'password2':''}
-        form = UserCreationForm(initial=initial_data)
-    return render(request, 'employees/register.html', {'form': form})
-
-
-def login_view(request):
-    if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect('dashboard')
-    else:
-        initial_data = {'username': '', 'passowrd': ''}
-        form = AuthenticationForm(initial=initial_data)
-    return render(request, 'employees/login.html', {'form': form})
-
-def logout_view(request):
-    logout(request)
-    return redirect('login')
-
-def dashboard_view(request):
-    return render(request, 'employees/dashboard.html')
-
-def user_profile_detail(request):
-    # Assuming there's only one profile; if there are many, you can modify the logic.
-    profile = get_object_or_404(Employee, employee_code="001")  # Retrieve the profile with id=1 (modify as needed)
-    return render(request, 'employees/user_profile_detail.html', {'profile': profile})
-
-#creating a custom admin dashboard
-def admin_dashboard(request):
-    total_employees = Employee.objects.count()
-    total_salary = Salary.objects.aggregate(Sum('net_salary'))['net_salary__sum']
-    recent_salaries = Salary.objects.order_by('-date_generated')[:10]
-
-    context = {
-        'total_employees': total_employees,
-        'total_salary': total_salary,
-        'recent_salaries': recent_salaries
-    }
-    return render(request, 'admin_dashboard.html', context)
 
 
 def payment_input(request):

@@ -1,197 +1,25 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-   <head>
-      <meta charset="utf-8">
-      <title>Login Form with Light Blue Gradient</title>
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"/>
-      <script src ="https://kit.fontawesom.com/a076d05399.js"></script>
-      <style>
-         /* Resetting default margin and padding */
-         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-         }
+{% extends 'app.html' %}
 
-         /* Apply height and gradient to the body */
-         body, html {
-            height: 100%;
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(to right, #a1c4fd, #c2e9fb); /* Light blue gradient for the entire page */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-         }
+{% block title %}Login{% endblock %}
 
-         /* Centered login form with transparent background */
-         .content {
-            background: rgba(255, 255, 255, 0.2); /* Semi-transparent form */
-            padding: 60px 40px;
-            border-radius: 10px;
-            box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
-            width: 350px;
-            text-align: center;
-         }
-
-         /* Style the header */
-         .content header {
-            font-size: 28px;
-            color: #fff;
-            font-weight: bold;
-            margin-bottom: 20px;
-         }
-
-         /* Input fields with icons */
-         .field {
-            position: relative;
-            margin-bottom: 20px;
-         }
-
-         .field input {
-            width: 100%;
-            padding: 10px;
-            padding-left: 40px;
-            border: none;
-            border-radius: 5px;
-            outline: none;
-            background: rgba(255, 255, 255, 0.8); /* Lighter background for inputs */
-            font-size: 14px;
-         }
-
-         .field span {
-            position: absolute;
-            top: 50%;
-            left: 10px;
-            transform: translateY(-50%);
-            color: #3498db;
-         }
-
-         .field.space {
-            margin-bottom: 20px;
-         }
-
-         /* Show password button */
-         .show {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #3498db;
-            font-size: 12px;
-         }
-
-         /* Submit button */
-         input[type="submit"] {
-            background: #3498db;
-            border: none;
-            padding: 10px;
-            width: 100%;
-            border-radius: 5px;
-            color: #fff;
-            font-size: 16px;
-            cursor: pointer;
-         }
-
-         input[type="submit"]:hover {
-            background: #2980b9;
-         }
-
-         /* Forgot password and sign up links */
-         .pass, .signup {
-            margin: 10px 0;
-         }
-
-         .pass a, .signup a {
-            color: #fff;
-            text-decoration: none;
-            font-size: 14px;
-         }
-
-         .pass a:hover, .signup a:hover {
-            text-decoration: underline;
-         }
-
-         /* Social login buttons */
-         .links {
-            margin: 20px 0;
-         }
-
-         .facebook, .instagram {
-            display: inline-block;
-            margin: 5px;
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.2); /* Semi-transparent background for social buttons */
-            color: #fff;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-         }
-
-         .facebook:hover {
-            background: #3b5998;
-         }
-
-         .instagram:hover {
-            background: #e4405f;
-         }
-
-         /* Icon sizes */
-         .facebook i, .instagram i {
-            margin-right: 10px;
-         }
-      </style>
-   </head>
-   <body>
-
-      <div class="content">
-         <header>Login Form</header>
-         <form action="#">
-            <div class="field">
-               <span class="fa fa-user"></span>
-               <input type="text" required placeholder="Email or Phone">
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2>Login</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% url 'employees:login' %}">
+                        {% csrf_token %}  <!-- Ensure this is here -->
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-dark btn-block">Login</button>
+                        <a href="{% url 'employees:register' %}" class="btn btn-default">Don't have an account? Register</a>
+                    </form>
+                </div>
             </div>
-            <div class="field space">
-               <span class="fa fa-lock"></span>
-               <input type="password" class="pass-key" required placeholder="Password">
-               <span class="show">SHOW</span>
-            </div>
-            <div class="pass">
-               <a href="#">Forgot Password?</a>
-            </div>
-            <div class="field">
-               <input type="submit" value="LOGIN">
-            </div>
-         </form>
-         <div class="login">
-            Or login with
-         </div>
-         <div class="links">
-            <div class="facebook">
-               <i class="fab fa-facebook-f"></i> Facebook
-            </div>
-            <div class="instagram">
-               <i class="fab fa-instagram"></i> Instagram
-            </div>
-         </div>
-         <div class="signup">
-            Don't have an account? <a href="#">Signup Now</a>
-         </div>
-      </div>
-
-      <script>
-         const pass_field = document.querySelector('.pass-key');
-         const showBtn = document.querySelector('.show');
-         showBtn.addEventListener('click', function() {
-            if (pass_field.type === "password") {
-               pass_field.type = "text";
-               showBtn.textContent = "HIDE";
-            } else {
-               pass_field.type = "password";
-               showBtn.textContent = "SHOW";
-            }
-         });
-      </script>
-
-   </body>
-</html>
+        </div>
+    </div>
+</div>
+{% endblock %}
