@@ -12,6 +12,7 @@ urlpatterns = [
     path('home/', views.home, name='home'),
     path('user-profile/', views.user_profile_detail, name='user_profile_detail'),
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('manage-permissions/', views.manage_user_permissions, name='manage_user_permissions'),
     path('add_task/', views.add_task, name='add_task'),
     path('complete_task/<int:task_id>/', views.complete_task, name='complete_task'),
     path('delete_task/<int:task_id>/', views.delete_task, name='delete_task'),

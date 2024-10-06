@@ -1,0 +1,31 @@
+{% extends 'app.html' %}
+
+{% block title %}Manage Permissions{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Manage User Permissions</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="user_id">Select User:</label>
+            <select name="user_id" id="user_id" class="form-control">
+                {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="group_name">Select Permission Level:</label>
+            <select name="group_name" id="group_name" class="form-control">
+                {% for group in groups %}
+                    <option value="{{ group.name }}">{{ group.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-dark">Update Permissions</button>
+    </form>
+</div>
+{% endblock %}
