@@ -33,7 +33,7 @@ def register_view(request):
                 default_group = Group.objects.get(name='Read Only')  # Default to read-only
                 user.groups.add(default_group)
                 login(request, user)
-                return redirect('home')  # Redirect to home page after registration
+                return redirect('login')  # Redirect to home page after registration
             except IntegrityError:
                 form.add_error('username', 'Username already exists. Please try another.')
     else:

@@ -5,10 +5,10 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('employee_list/', views.EmployeeListView.as_view(), name='employee_list'),
-    path('', views.register_view, name='register'),  # Register page as the landing page
-    path('login/', views.login_view, name='login'),
+    path('', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
-    path('dashboard/', views.dashboard_view, name='register'),
+    path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('register/', views.register_view, name='register'),
     path('home/', views.home, name='home'),
     path('user-profile/', views.user_profile_detail, name='user_profile_detail'),
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
