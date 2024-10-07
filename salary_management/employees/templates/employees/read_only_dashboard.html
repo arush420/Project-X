@@ -1,0 +1,15 @@
+{% extends 'read_only.html' %}
+
+{% block title %}Read only{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>Employee Dashboard</h1>
+        <p>Welcome, {{ request.user.username }}! You have full access to all Employee details .</p>
+        <ul>
+            <li><a href="#">Admin Dashboard</a></li>
+            <li><a href="#">Manage User Permissions</a></li>
+            <!-- Add more superuser specific options here -->
+        </ul>
+    </div>
+{% endblock %}

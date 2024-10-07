@@ -22,6 +22,61 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 
 
+# For function-based views
+@user_passes_test(lambda user: user.is_superuser)
+def superuser_view(request):
+    return render(request, 'employees/superuser_dashboard.html')
+
+@user_passes_test(lambda user: user.groups.filter(name='Read and Write').exists())
+def read_write_view(request):
+    return render(request, 'employees/read_write_dashboard.html')
+
+@user_passes_test(lambda user: user.groups.filter(name='Read Only').exists())
+def read_only_view(request):
+    return render(request, 'employees/read_only_dashboard.html')
+
+@login_required
+def some_view(request):
+    if not request.user.groups.filter(name='Read and Write').exists():
+        raise PermissionDenied  # Block access if not in the correct group
+    # Continue with the rest of the view logic
+
+
+def manage_user_permissions(request):
+    if not request.user.is_superuser:
+        return redirect('home')  # Only superuser can access this view
+
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        group_name = request.POST.get('group_name')
+
+        try:
+            user = User.objects.get(id=user_id)
+            group = Group.objects.get(name=group_name)
+        except User.DoesNotExist:
+            messages.error(request, "User not found.")
+            return redirect('employees:manage_user_permissions')
+        except Group.DoesNotExist:
+            messages.error(request, "Group not found.")
+            return redirect('employees:manage_user_permissions')
+
+        # Remove from all groups
+        user.groups.clear()
+        # Assign new group
+        user.groups.add(group)
+
+        messages.success(request, f"Permissions updated for {user.username}")
+        return redirect('employees:manage_user_permissions')
+
+    users = User.objects.all()
+    groups = Group.objects.all()
+    context = {
+        'users': users,
+        'groups': groups
+    }
+    return render(request, 'employees/manage_permissions.html', context)
+
+
 # Registering a user with unique username validation
 def register_view(request):
     if request.method == 'POST':
@@ -49,7 +104,19 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('employees:home')  # Redirect to home page after login
+
+            # Redirect based on user's group
+            if user.is_superuser:
+                return redirect('employees:superuser_dashboard')  # Superuser dashboard
+
+            elif user.groups.filter(name='Read and Write').exists():
+                return redirect('employees:read_write_dashboard')  # Manager dashboard
+
+            elif user.groups.filter(name='Read Only').exists():
+                return redirect('employees:read_only_dashboard')  # Employee dashboard
+
+            return redirect('employees:home')  # Fallback to home if no group matched
+
     else:
         form = AuthenticationForm()
 
@@ -82,7 +149,7 @@ def admin_dashboard(request):
         'total_salary': total_salary,
         'recent_salaries': recent_salaries
     }
-    return render(request, 'admin_dashboard.html', context)
+    return render(request, 'employees/admin_dashboard.html', context)
 
 
 def home(request):
@@ -417,57 +484,3 @@ def company_list(request):
     }
     return render(request, 'employees/company_list.html', context)
 
-# For function-based views
-@user_passes_test(lambda user: user.is_superuser)
-def superuser_view(request):
-    return render(request, 'superuser_dashboard.html')
-
-@user_passes_test(lambda user: user.groups.filter(name='Read and Write').exists())
-def read_write_view(request):
-    return render(request, 'read_write_dashboard.html')
-
-@user_passes_test(lambda user: user.groups.filter(name='Read Only').exists())
-def read_only_view(request):
-    return render(request, 'read_only_dashboard.html')
-
-@login_required
-def some_view(request):
-    if not request.user.groups.filter(name='Read and Write').exists():
-        raise PermissionDenied  # Block access if not in the correct group
-    # Continue with the rest of the view logic
-
-
-
-def manage_user_permissions(request):
-    if not request.user.is_superuser:
-        return redirect('home')  # Only superuser can access this view
-
-    if request.method == 'POST':
-        user_id = request.POST.get('user_id')
-        group_name = request.POST.get('group_name')
-
-        try:
-            user = User.objects.get(id=user_id)
-            group = Group.objects.get(name=group_name)
-        except User.DoesNotExist:
-            messages.error(request, "User not found.")
-            return redirect('manage_user_permissions')
-        except Group.DoesNotExist:
-            messages.error(request, "Group not found.")
-            return redirect('manage_user_permissions')
-
-        # Remove from all groups
-        user.groups.clear()
-        # Assign new group
-        user.groups.add(group)
-
-        messages.success(request, f"Permissions updated for {user.username}")
-        return redirect('manage_user_permissions')
-
-    users = User.objects.all()
-    groups = Group.objects.all()
-    context = {
-        'users': users,
-        'groups': groups
-    }
-    return render(request, 'employees/manage_permissions.html', context)

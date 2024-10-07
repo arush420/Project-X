@@ -21,6 +21,37 @@ MONTH_CHOICES = [
     (9, 'September'), (10, 'October'), (11, 'November'), (12, 'December')
 ]
 
+
+@receiver(post_migrate)
+def create_user_groups(sender, **kwargs):
+    # Create groups
+    superuser_group, superuser_created = Group.objects.get_or_create(name='Superuser')
+    read_write_group, rw_created = Group.objects.get_or_create(name='Read and Write')
+    read_only_group, ro_created = Group.objects.get_or_create(name='Read Only')
+
+    # Assign specific permissions to groups if they were just created
+    if rw_created or ro_created:
+        content_type = ContentType.objects.get_for_model(Employee)
+        read_only_permissions = Permission.objects.filter(content_type=content_type, codename__startswith='view')
+        read_write_permissions = Permission.objects.filter(content_type=content_type).exclude(codename__startswith='delete')
+
+        read_write_group.permissions.set(read_write_permissions)
+        read_only_group.permissions.set(read_only_permissions)
+
+# User Profile details
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True) # Temporarily allow null values
+    # other fields
+    organisation_name = models.CharField(max_length=255)
+    address = models.TextField()
+    account_number = models.CharField(max_length=20)
+    ifsc_code = models.CharField(max_length=11)
+
+    def __str__(self):
+        return self.organisation_name
+
+
+
 class Employee(models.Model):
     employee_code = models.CharField(max_length=10, unique=True)
     name = models.CharField(max_length=100)
@@ -111,18 +142,6 @@ class Task(models.Model):
     def __str__(self):
         return self.title
 
-# User Profile details
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True) # Temporarily allow null values
-    # other fields
-    organisation_name = models.CharField(max_length=255)
-    address = models.TextField()
-    account_number = models.CharField(max_length=20)
-    ifsc_code = models.CharField(max_length=11)
-
-    def __str__(self):
-        return self.organisation_name
-
 
 class Payment(models.Model):
     company_name = models.CharField(max_length=255)
@@ -162,20 +181,3 @@ class Company(models.Model):
 
     def __str__(self):
         return self.company_name
-
-
-@receiver(post_migrate)
-def create_user_groups(sender, **kwargs):
-    # Create groups
-    superuser_group, superuser_created = Group.objects.get_or_create(name='Superuser')
-    read_write_group, rw_created = Group.objects.get_or_create(name='Read and Write')
-    read_only_group, ro_created = Group.objects.get_or_create(name='Read Only')
-
-    # Assign specific permissions to groups if they were just created
-    if rw_created or ro_created:
-        content_type = ContentType.objects.get_for_model(Employee)
-        read_only_permissions = Permission.objects.filter(content_type=content_type, codename__startswith='view')
-        read_write_permissions = Permission.objects.filter(content_type=content_type).exclude(codename__startswith='delete')
-
-        read_write_group.permissions.set(read_write_permissions)
-        read_only_group.permissions.set(read_only_permissions)
