@@ -1,238 +1,64 @@
+/* General Styles */
 body {
-    font-family: "Open Sans", sans-serif;
-    background-image: linear-gradient(135deg, #FAB2FF 10%, #1904E5 100%);
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    color: #333333;
-}
-
-.navbar {
-    background-color: black;
-}
-.nav-link {
-    color: white;
-}
-.nav-link:hover {
-    color: black;
-    background-color: white;
-}
-
-.box-form {
-    margin: 0 auto;
-    width: 80%;
-    background: #FFFFFF;
-    border-radius: 10px;
-    display: flex;
-    align-items: stretch;
-    justify-content: space-between;
-    box-shadow: 0 0 20px 6px #090b6f85;
-}
-@media (max-width: 980px) {
-    .box-form {
-        flex-wrap: wrap;
-        text-align: center;
-    }
-}
-.box-form .left {
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-image: url("https://i.pinimg.com/736x/5d/73/ea/5d73eaabb25e3805de1f8cdea7df4a42--tumblr-backgrounds-iphone-phone-wallpapers-iphone-wallaper-tumblr.jpg");
-}
-.box-form .right {
-    padding: 40px;
-}
-
-.box-form .right button {
-    float: right;
-    color: #fff;
-    padding: 12px 35px;
-    border-radius: 50px;
-    box-shadow: 0px 4px 20px 0px #49c628a6;
-    background-image: linear-gradient(135deg, #70F570 10%, #49C628 100%);
-}
-
-# transparent login form
-vendor(prop, args)
-  -webkit-{prop} args
-  -moz-{prop} args
-  {prop} args
-
-
-font_color = #fff
-ui_accent = #538a9a
-gradient_start = #4e7a89
-graident_end = #2e3441
-
-html, body
-  min-height: 100%
-  font-family: Oxygen
-  font-weight: 300
-  font-size: 1em
-  color: font_color
-
-body
-  background: graident_end
-  background-image: -webkit-radial-gradient(top, circle cover, gradient_start, graident_end 80%)
-  background-image: -moz-radial-gradient(top, circle cover, gradient_start, graident_end 80%)
-  background-image: -o-radial-gradient(top, circle cover, gradient_start, graident_end 80%)
-  background-image: radial-gradient(top, circle cover, gradient_start, graident_end 80%)
-  -webkit-font-smoothing: antialiased
-  -moz-osx-font-smoothing: grayscale
-
-.signin
-  avatar_size = 100px
-  profile_padding = 20px
-  display: block
-  position: relative
-  width: 250px
-  margin: 20px auto
-  padding: profile_padding
-  background-color: rgba(0,0,0, 0.1)
-  vendor(border-radius, 5px)
-  shadows = inset 1px 1px 0 0 rgba(255,255,255, 0.2), inset -1px -1px 0 0 rgba(0,0,0, 0.2)
-  vendor(box-shadow, shadows)
-
-  .avatar
-    width: avatar_size
-    height: avatar_size
-    margin: 0 auto 35px auto
-    border: 5px solid #fff
-    vendor(border-radius, 100%)
-    vendor(pointer-events, none)
-
-    &:before
-      content: "\f272"
-      text-align: center
-      font-family: Ionicons
-      display: block
-      height: 100%
-      line-height: avatar_size
-      font-size: 5em
-
-  .inputrow
-    position: relative
-
-    label
-      position: absolute
-      top: 12px
-      left: 10px
-
-      &:before
-        color: ui_accent
-        opacity: 0.4
-        vendor(transition, opacity 300ms 0 ease)
-
-  input[type="text"], input[type="password"]
-    padding: 10px 12px 10px 32px
-    display: block
-    width: 100%
-    margin-bottom: 10px
-    border: 1px solid rgba(255,255,255, 0.5)
-    background-color: rgba(255,255,255, 1)
-    color: #333
-    font-size: 1em
-    font-weight: 300
-    outline: none
-    vendor(border-radius, 5px)
-    vendor(transition, border-color 300ms 0 ease)
-    vendor(box-sizing, border-box)
-
-    &:focus + label:before
-      opacity: 1
-
-  input[type="submit"]
-    -webkit-appearance: none
-    height: 40px
-    padding: 10px 12px
-    margin-bottom: 10px
-    background-color: ui_accent
-    text-transform: uppercase
-    color: #fff
-    border: 0px
-    float: right
-    margin: 0
-    outline: none
-    vendor(border-radius, 5px)
-
-    &:hover
-      background-color: lighten(ui_accent, 5)
-
-    &:active
-      background-color darken(ui_accent, 5)
-
-
-// Checkbox Styling
-dot_container_width = 30px
-dot_container_height = 16px
-dot_height_difference = 4px
-font_offset = 2px
-
-input[type="checkbox"]
-  display: none
-
-  & + label
-    position: relative
-    padding-left: 36px
-    font-size: 0.6em
-    font-weight: normal
-    line-height: dot_container_height
-    opacity: 0.8
-    text-transform: uppercase
-    vendor(user-select, none)
-
-    &:before, &:after
-      content: ""
-      position: absolute
-      display: block
-      height: dot_container_height
-      vendor(border-radius, 30px)
-
-    &:before
-      left: 0
-      top: 0 - font_offset
-      width: dot_container_width
-      background: rgba(0,0,0,0.3)
-      vendor(box-shadow, inset 1px 1px 1px 1px rgba(0,0,0,0.3))
-
-    &:after
-      opacity: 0.3
-      background: #fff
-      top: (dot_height_difference / 2) - font_offset
-      left: (dot_height_difference / 2)
-      height: dot_container_height - dot_height_difference
-      width: dot_container_height - dot_height_difference
-      vendor(transition, all 200ms 0 ease)
-
-input[type="checkbox"]:checked + label
-  opacity: 1
-
-  &:after
-    opacity: 1
-    left: dot_container_width - (dot_container_height - dot_height_difference) - (dot_height_difference / 2)
-
-.cf:before, .cf:after
-  content: " "
-  display: table
-.cf:after
-  clear: both
-.cf
-  *zoom: 1
-
-
-/* General Styling */
-body {
-    font-family: 'Arial', sans-serif;
+    font-family: 'Open Sans', sans-serif;
     background-color: #f8f9fa;
     margin: 0;
     padding: 0;
+    color: #333;
 }
 
 .container {
     margin-top: 50px;
 }
 
-/* Card Styling */
+/* Header */
+header {
+    background-color: #343a40;
+    color: white;
+    padding: 10px;
+    text-align: center;
+}
+
+h1 {
+    color: #343a40;
+}
+
+/* Navigation Buttons */
+.btn-group {
+    margin-bottom: 20px;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border: none;
+    padding: 10px 20px;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+/* To-Do List */
+.todo-list h3 {
+    color: #343a40;
+    margin-bottom: 20px;
+}
+
+.todo-list ul {
+    padding-left: 0;
+}
+
+.todo-list .list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.todo-list .btn-danger {
+    font-size: 0.8em;
+}
+
+/* Card Styles */
 .card {
     border-radius: 10px;
     border: none;
@@ -241,80 +67,33 @@ body {
 
 .card-header {
     background-color: #343a40;
-    color: #fff;
+    color: white;
     padding: 15px;
     text-align: center;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
 }
 
-.card-header h2 {
-    margin: 0;
-}
-
 .card-body {
     padding: 30px;
 }
 
-.form-control {
-    border-radius: 5px;
-    border: 1px solid #ced4da;
-    padding: 10px;
+.card-body .form-control {
     margin-bottom: 20px;
 }
 
-/* Button Styling */
-.btn-dark {
-    background-color: #343a40;
-    color: #fff;
-    border-radius: 5px;
-    padding: 10px 15px;
-    border: none;
-    width: 100%;
-}
-
-.btn-dark:hover {
-    background-color: #23272b;
-    color: #fff;
-}
-
-.btn-default {
-    background-color: transparent;
-    color: #343a40;
-    border: none;
-    margin-top: 10px;
-    text-align: center;
-    display: block;
-    width: 100%;
-}
-
-.btn-default:hover {
-    color: #23272b;
-    text-decoration: underline;
-}
-
-/* Form Styling */
-form {
-    margin-top: 20px;
-}
-
-input[type="submit"] {
-    background-color: #343a40;
-    color: white;
-    border-radius: 5px;
-    border: none;
-    padding: 10px;
-    width: 100%;
-    margin-top: 10px;
-}
-
-input[type="submit"]:hover {
-    background-color: #23272b;
-}
-
-/* Responsive Design */
+/* Responsive Styles */
 @media (max-width: 768px) {
-    .col-md-6 {
-        width: 90%;
+    .col-md-9 {
+        width: 100%;
+    }
+
+    .col-md-3 {
+        width: 100%;
+    }
+
+    .btn-group {
+        flex-direction: column;
+        align-items: stretch;
     }
 }

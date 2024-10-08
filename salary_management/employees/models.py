@@ -7,6 +7,7 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
+from django.core.validators import RegexValidator
 
 
 # Constants for salary fields
@@ -21,6 +22,11 @@ MONTH_CHOICES = [
     (9, 'September'), (10, 'October'), (11, 'November'), (12, 'December')
 ]
 
+phone_regex = RegexValidator(regex=r'^\+?1?\d{9,15}$', message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.")
+
+class MyModel(models.Model):
+    created_at = models.DateTimeField(default=timezone.now)
+
 
 @receiver(post_migrate)
 def create_user_groups(sender, **kwargs):
@@ -31,24 +37,58 @@ def create_user_groups(sender, **kwargs):
 
     # Assign specific permissions to groups if they were just created
     if rw_created or ro_created:
-        content_type = ContentType.objects.get_for_model(Employee)
-        read_only_permissions = Permission.objects.filter(content_type=content_type, codename__startswith='view')
-        read_write_permissions = Permission.objects.filter(content_type=content_type).exclude(codename__startswith='delete')
+        content_types = [
+            ContentType.objects.get_for_model(Employee),
+            ContentType.objects.get_for_model(Salary),
+            ContentType.objects.get_for_model(Profile),
+            ContentType.objects.get_for_model(Payment),
+            ContentType.objects.get_for_model(VendorInformation),
+            ContentType.objects.get_for_model(PurchaseItem),
+        ]
 
-        read_write_group.permissions.set(read_write_permissions)
-        read_only_group.permissions.set(read_only_permissions)
+        for content_type in content_types:
+            read_only_permissions = Permission.objects.filter(content_type=content_type, codename__startswith='view')
+            read_write_permissions = Permission.objects.filter(content_type=content_type).exclude(codename__startswith='delete')
+
+            read_write_group.permissions.add(*read_write_permissions)
+            read_only_group.permissions.add(*read_only_permissions)
+
+
+
+class Company(models.Model):
+    company_code = models.CharField(max_length=4, default="0000")
+    company_name = models.CharField(max_length=100, default="")
+    company_address = models.TextField()
+    company_gst_number = models.CharField(max_length=20)
+    company_account_number = models.CharField(max_length=20)
+    company_ifsc_code = models.CharField(max_length=11)
+    company_contact_person_name = models.CharField(max_length=100)
+    company_contact_person_number = models.CharField(validators=[phone_regex], max_length=10)
+
+    def __str__(self):
+        return self.company_name
 
 # User Profile details
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True) # Temporarily allow null values
-    # other fields
-    organisation_name = models.CharField(max_length=255)
-    address = models.TextField()
-    account_number = models.CharField(max_length=20)
-    ifsc_code = models.CharField(max_length=11)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)  # Linking to the User model
+    USER_TYPE_CHOICES = [
+        ('Owner', 'Owner'),
+        ('Manager', 'Manager'),
+        ('Employee', 'Employee'),
+    ]
+    user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='Employee')
+    company = models.ForeignKey(Company, null=True, blank=True, on_delete=models.SET_NULL)
+
+    # Owner-specific fields
+    organisation_name = models.CharField(max_length=255, blank=True, null=True)
+    organisation_address = models.TextField(blank=True, null=True)
+    contact_number = models.CharField(max_length=15, blank=True, null=True)
+    account_number = models.CharField(max_length=20, blank=True, null=True)
+    ifsc_code = models.CharField(max_length=11, blank=True, null=True)
+    gst_number = models.CharField(max_length=15, blank=True, null=True)
 
     def __str__(self):
-        return self.organisation_name
+        return f"{self.user.username} - {self.user_type}"
 
 
 
@@ -56,7 +96,7 @@ class Employee(models.Model):
     employee_code = models.CharField(max_length=10, unique=True)
     name = models.CharField(max_length=100)
     father_name = models.CharField(max_length=100)
-    basic = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES)
+    basic = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES, default=0.00)
     transport = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES, default=0.00)
     canteen = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES, default=0.00)
     pf = models.DecimalField(max_digits=PERCENTAGE_MAX_DIGITS, decimal_places=PERCENTAGE_DECIMAL_PLACES, default=0.00)
@@ -83,7 +123,9 @@ class Salary(models.Model):
     date_generated = models.DateTimeField(default=timezone.now)
 
     class Meta:
-        unique_together = ('employee', 'month', 'year')
+        constraints = [
+                models.UniqueConstraint(fields=['employee', 'month', 'year'], name='unique_salary_per_month_year')
+            ]
         ordering = ['-year', '-month']
         permissions = [
             ('can_generate_payroll', 'Can generate payroll'),
@@ -163,21 +205,8 @@ class VendorInformation(models.Model):
     vendor_account_number = models.CharField(max_length=20)
     vendor_ifsc_code = models.CharField(max_length=11)
     vendor_contact_person_name = models.CharField(max_length=100)
-    vendor_contact_person_number = models.CharField(max_length=100)
+    vendor_contact_person_number = models.CharField(validators=[phone_regex], max_length=10)
 
     def __str__(self):
         return self.vendor_name
 
-
-class Company(models.Model):
-    company_code = models.CharField(max_length=4, default="0000")
-    company_name = models.CharField(max_length=100, default="")
-    company_address = models.TextField()
-    company_gst_number = models.CharField(max_length=20)
-    company_account_number = models.CharField(max_length=20)
-    company_ifsc_code = models.CharField(max_length=11)
-    company_contact_person_name = models.CharField(max_length=100)
-    company_contact_person_number = models.CharField(max_length=10)
-
-    def __str__(self):
-        return self.company_name

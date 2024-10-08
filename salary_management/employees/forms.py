@@ -1,7 +1,58 @@
 from django import forms
-from .models import Employee, Task, Payment, PurchaseItem, VendorInformation, Company
-from django.contrib.auth.forms import AuthenticationForm
+from .models import Employee, Task, Payment, PurchaseItem, VendorInformation, Company, Profile
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.models import User
 
+
+USER_TYPE_CHOICES = [
+    ('Owner', 'Owner'),
+    ('Manager', 'Manager'),
+    ('Employee', 'Employee'),
+]
+
+
+class CustomUserCreationForm(UserCreationForm):
+    first_name = forms.CharField(max_length=30, required=True)
+    last_name = forms.CharField(max_length=30, required=True)
+    user_type = forms.ChoiceField(choices=USER_TYPE_CHOICES, required=True)
+
+    company_name = forms.ModelChoiceField(queryset=Company.objects.all(),
+                                          required=False, empty_label="Select Company")
+
+
+    class Meta:
+        model = User
+        fields = ('username', 'password1', 'password2', 'first_name', 'last_name', 'user_type', 'company_name')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Adding "Other" option manually to company_name
+        self.fields['company_name'].choices = list(self.fields['company_name'].choices) + [("Other", "Other")]
+
+    def clean_gst_number(self):
+        gst_number = self.cleaned_data.get('gst_number')
+        if gst_number and not re.match(r'\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[Z]{1}[A-Z\d]{1}', gst_number):
+            raise forms.ValidationError("Invalid GST number format.")
+        return gst_number
+
+    def clean_ifsc_code(self):
+        ifsc_code = self.cleaned_data.get('ifsc_code')
+        if ifsc_code and not re.match(r'^[A-Za-z]{4}\d{7}$', ifsc_code):
+            raise forms.ValidationError("Invalid IFSC code format.")
+        return ifsc_code
+
+    def clean(self):
+        cleaned_data = super().clean()
+        user_type = cleaned_data.get('user_type')
+
+        if user_type == 'Owner':
+            # Validate Owner-specific fields
+            organisation_name = cleaned_data.get('organisation_name')
+            account_number = cleaned_data.get('account_number')
+            confirm_account_number = cleaned_data.get('confirm_account_number')
+            if account_number and confirm_account_number and account_number != confirm_account_number:
+                self.add_error('confirm_account_number', 'Account numbers do not match.')
+        return cleaned_data
 
 
 class LoginForm(AuthenticationForm):
@@ -73,3 +124,15 @@ class AddCompanyForm(forms.Form):
     company_ifsc_code = forms.CharField(max_length=11)
     company_contact_person_name = forms.CharField(max_length=100)
     company_contact_person_number = forms.CharField(max_length=10)
+
+    def clean_company_gst_number(self):
+        gst_number = self.cleaned_data.get('company_gst_number')
+        if gst_number and not re.match(r'\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[Z]{1}[A-Z\d]{1}', gst_number):
+            raise forms.ValidationError("Invalid GST number format.")
+        return gst_number
+
+    def clean_company_ifsc_code(self):
+        ifsc_code = self.cleaned_data.get('company_ifsc_code')
+        if ifsc_code and not re.match(r'^[A-Za-z]{4}\d{7}$', ifsc_code):
+            raise forms.ValidationError("Invalid IFSC code format.")
+        return ifsc_code

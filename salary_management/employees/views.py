@@ -2,24 +2,26 @@ from decimal import Decimal
 from sqlite3 import IntegrityError
 from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company
 from django.db.models import Q, Sum
 from django.utils import timezone
-from .forms import EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm, CompanyForm, AddCompanyForm, EmployeeSearchForm
-from django.views import View
-from django.views.generic import ListView
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.contrib.auth import login, logout
 from django.http import HttpResponse
 from django.contrib import messages
-import pandas as pd
-import csv
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import login, logout
 from django.contrib.auth.models import Group, User
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.db import IntegrityError
+from django.db import transaction
+import pandas as pd
+from django.views import View
+from django.views.generic import ListView
+
+# Import your models and forms
+from .models import Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company
+from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm,
+                    CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm)
 
 
 # For function-based views
@@ -42,9 +44,14 @@ def some_view(request):
     # Continue with the rest of the view logic
 
 
+@permission_required('employees.can_generate_payroll', raise_exception=True)
+def generate_salary_view(request):
+    pass  # Logic to generate salary
+
+
 def manage_user_permissions(request):
     if not request.user.is_superuser:
-        return redirect('home')  # Only superuser can access this view
+        return redirect('employees:manage_user_permissions')  # Only superuser can access this view
 
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
@@ -60,86 +67,114 @@ def manage_user_permissions(request):
             messages.error(request, "Group not found.")
             return redirect('employees:manage_user_permissions')
 
-        # Remove from all groups
-        user.groups.clear()
-        # Assign new group
-        user.groups.add(group)
+        # Option to grant superuser status
+        if request.POST.get('superuser_status') == 'on':
+            user.is_superuser = True
+            user.is_staff = True
+        else:
+            user.is_superuser = False
+            user.is_staff = False  # Optionally revoke admin access
+            user.save()
+
+        try:
+            user.groups.clear()  # Remove from all groups
+            user.groups.add(group)  # Assign new group
+        except Exception as e:
+            messages.error(request, f"An error occurred: {e}")
+            return redirect('employees:manage_user_permissions')
 
         messages.success(request, f"Permissions updated for {user.username}")
         return redirect('employees:manage_user_permissions')
 
     users = User.objects.all()
     groups = Group.objects.all()
-    context = {
-        'users': users,
-        'groups': groups
-    }
+    context = {'users': users, 'groups': groups}
     return render(request, 'employees/manage_permissions.html', context)
 
 
 # Registering a user with unique username validation
 def register_view(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             try:
                 user = form.save()
-                Profile.objects.create(user=user)  # Create a profile for the user
-                default_group = Group.objects.get(name='Read Only')  # Default to read-only
-                user.groups.add(default_group)
+
+                # Profile creation and assigning group based on user type
+                user_type = form.cleaned_data['user_type']
+                company = form.cleaned_data.get('company_name', None)
+                profile = Profile.objects.create(user=user, user_type=user_type, company_name=company)
+
+                if user_type == 'Owner':
+                    profile.organisation_name = form.cleaned_data['organisation_name']
+                    profile.organisation_address = form.cleaned_data['organisation_address']
+                    profile.contact_number = form.cleaned_data['contact_number']
+                    profile.account_number = form.cleaned_data['account_number']
+                    profile.ifsc_code = form.cleaned_data['ifsc_code']
+                    profile.gst_number = form.cleaned_data['gst_number']
+                    profile.save()
+
+                    # Add default owner permissions (or custom group)
+                    owner_group = Group.objects.get(name='Owner')
+                    user.groups.add(owner_group)
+                elif user_type == 'Manager':
+                    manager_group = Group.objects.get(name='Manager')
+                    user.groups.add(manager_group)
+                else:
+                    employee_group = Group.objects.get(name='Employee')
+                    user.groups.add(employee_group)
+
                 login(request, user)
-                return redirect('login')  # Redirect to home page after registration
+                return redirect('login')
             except IntegrityError:
                 form.add_error('username', 'Username already exists. Please try another.')
     else:
-        form = UserCreationForm()
+        form = CustomUserCreationForm()
 
     return render(request, 'employees/register.html', {'form': form})
-
 
 # Logging in a user
 def login_view(request):
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
+        form = AuthenticationForm(request, data=request.POST or None)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
 
             # Redirect based on user's group
             if user.is_superuser:
-                return redirect('employees:superuser_dashboard')  # Superuser dashboard
+                return redirect('employees:superuser_dashboard')
 
             elif user.groups.filter(name='Read and Write').exists():
-                return redirect('employees:read_write_dashboard')  # Manager dashboard
+                return redirect('employees:read_write_dashboard')
 
             elif user.groups.filter(name='Read Only').exists():
-                return redirect('employees:read_only_dashboard')  # Employee dashboard
+                return redirect('employees:read_only_dashboard')
 
-            return redirect('employees:home')  # Fallback to home if no group matched
+            return redirect('employees:home')  # Fallback if no group matched
 
     else:
         form = AuthenticationForm()
 
     return render(request, 'employees/login.html', {'form': form})
 
-
 def logout_view(request):
     logout(request)
     return redirect('employees:login')
 
 
-# Dashboard
-def dashboard_view(request):
-    return render(request, 'employees/dashboard.html')
-
-
-# Profile Detail View (show data entered during registration)
 def user_profile_detail(request):
-    profile = get_object_or_404(Profile, user=request.user)
-    return render(request, 'employees/user_profile_detail.html', {'profile': profile})
+    profile = request.user.profile  # Assuming a OneToOne relationship with User
+    context = {
+        'profile': profile,
+        'is_superuser': request.user.groups.filter(name='Superuser').exists(),
+        'is_read_write': request.user.groups.filter(name='Read-Write').exists(),
+        'is_read_only': request.user.groups.filter(name='Read-Only').exists(),
+    }
+    return render(request, 'user_profile_detail.html', context)
 
 
-# Creating a custom admin dashboard
+# Admin Dashboard
 def admin_dashboard(request):
     total_employees = Employee.objects.count()
     total_salary = Salary.objects.aggregate(Sum('net_salary'))['net_salary__sum']
@@ -152,6 +187,7 @@ def admin_dashboard(request):
     return render(request, 'employees/admin_dashboard.html', context)
 
 
+# Home page with tasks
 def home(request):
     total_employees = Employee.objects.count()
     tasks = Task.objects.all()
@@ -159,7 +195,7 @@ def home(request):
         form = TaskForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('home')
+            return redirect('employees:home')
     else:
         form = TaskForm()
 
@@ -168,7 +204,6 @@ def home(request):
         'tasks': tasks,
         'form': form
     }
-
     return render(request, 'employees/home.html', context)
 
 
@@ -176,45 +211,53 @@ def add_task(request):
     if request.method == 'POST':
         title = request.POST.get('title')
         Task.objects.create(title=title)
-    return redirect('home')
-
+    return redirect('employees:home')
 
 def complete_task(request, task_id):
     task = get_object_or_404(Task, id=task_id)
-    task.completed = not task.completed  # Toggle the completion status
+    task.completed = not task.completed
     task.save()
-    return redirect('home')
-
+    return redirect('employees:home')
 
 def delete_task(request, task_id):
     task = get_object_or_404(Task, id=task_id)
     task.delete()
-    return redirect('home')
+    return redirect('employees:home')
 
 
 class EmployeeListView(ListView):
     model = Employee
-    template_name = 'employees/employee_list.html'
+    template_name = 'employee_list.html'
     context_object_name = 'employees'
+    paginate_by = 10 # number of employees shown on each page
 
     def get_queryset(self):
         search_query = self.request.GET.get('search', '')
-        return Employee.objects.filter(
-            Q(employee_code__icontains=search_query) | Q(name__icontains=search_query)
-        ) if search_query else Employee.objects.all()
+        queryset = Employee.objects.all()
 
+        if search_query:
+            queryset = queryset.filter(
+                Q(employee_code__icontains=search_query) |
+                Q(name__icontains=search_query)
+            )
+        return queryset
 
-def employee_detail(request, employee_code):
-    employee = get_object_or_404(Employee, employee_code=employee_code)
-    return render(request, 'employee_detail.html', {'employee': employee})
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get('search', '')
+        return context
+
+def employee_detail(request, id):
+    employee = get_object_or_404(Employee, id=id)
+    return render(request, 'employee_details.html', {'employee': employee})
 
 
 def handle_file_upload(file):
+    errors = []
     try:
         df = pd.read_excel(file)
 
         required_columns = ['employee_code', 'name', 'father_name', 'basic', 'transport', 'canteen', 'pf', 'esic', 'advance']
-
         for col in required_columns:
             if col not in df.columns:
                 raise ValidationError(f"Missing required column: {col}")
@@ -246,11 +289,29 @@ def handle_file_upload(file):
                     advance=advance
                 )
             except Exception as e:
-                print(f"Error processing row: {row}. Error: {e}")
+                errors.append(f"Error processing row: {row}. Error: {e}")
                 continue
-
     except Exception as e:
         raise ValidationError(f"Error processing file: {e}")
+
+    if errors:
+        raise ValidationError(errors)
+
+
+def handle_form_submission(request, form_class, redirect_url, template_name, context={}):
+    if request.method == 'POST':
+        form = form_class(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Form submitted successfully!')
+            return redirect(redirect_url)
+        else:
+            messages.error(request, 'Please check the form for errors.')
+    else:
+        form = form_class()
+
+    context['form'] = form
+    return render(request, template_name, context)
 
 
 class AddEmployeeAndUploadView(View):
@@ -277,28 +338,22 @@ class AddEmployeeAndUploadView(View):
                     handle_file_upload(request.FILES['file'])
                     messages.success(request, 'Employees uploaded successfully!')
                 except ValidationError as e:
-                    messages.error(request, f"File upload failed: {e}")
+                    messages.error(request, f"File upload failed: {', '.join(e.messages)}")
                 return redirect('employees:employee_list')
 
         return self.get(request)
 
 
 class GenerateSalaryView(View):
-    def get(self, request):
-        return render(request, 'employees/generate_salary.html', {
-            'employees': Employee.objects.all(),
-            'months': range(1, 13),
-            'current_year': timezone.now().year
-        })
-
+    @transaction.atomic
     def post(self, request):
         month, year, days_in_month = self.get_salary_params(request)
         if not month or not year or not days_in_month:
-            return self.render_error(request, 'Please provide all inputs.')
+            messages.error(request, 'Please provide all inputs.')
+            return redirect('employees:generate_salary')
 
         employees = Employee.objects.all()
-        salary_data, total_net_salary = self.calculate_salaries(request, employees, int(days_in_month), int(month),
-                                                                int(year))
+        salary_data, total_net_salary = self.calculate_salaries(request, employees, int(days_in_month), int(month), int(year))
 
         return render(request, 'employees/salary_report.html', {
             'salary_data': salary_data,
@@ -319,6 +374,7 @@ class GenerateSalaryView(View):
             gross_salary, net_salary = self.calculate_salary(employee, days_worked, days_in_month)
             net_salary -= advance
 
+            # Update or create salary record
             Salary.objects.update_or_create(
                 employee=employee, month=month, year=year,
                 defaults={'gross_salary': gross_salary, 'net_salary': net_salary, 'advance': advance}
@@ -335,6 +391,9 @@ class GenerateSalaryView(View):
         return salary_data, total_net_salary
 
     def calculate_salary(self, employee, days_worked, days_in_month):
+        if days_worked == 0 or days_in_month == 0:
+            return Decimal(0), Decimal(0)
+
         basic, transport, canteen = employee.basic, employee.transport, employee.canteen
         gross_salary = (basic + transport) / days_in_month * days_worked
         pf = employee.pf / 100 * basic
@@ -356,7 +415,7 @@ def download_template(request):
     return response
 
 
-def employee_profile(request):
+def employee_detail(request):
     form = EmployeeSearchForm()
     employee = None
     salaries = None
@@ -374,7 +433,7 @@ def employee_profile(request):
         'employee': employee,
         'salaries': salaries
     }
-    return render(request, 'employees/employee_profile.html', context)
+    return render(request, 'employees/employee_detail.html', context)
 
 
 def salary_list(request):
@@ -393,36 +452,17 @@ def salary_list(request):
         'month': month,
         'year': year,
     }
-
     return render(request, 'employees/salary_list.html', context)
 
 
 def payment_input(request):
-    if request.method == 'POST':
-        form = PaymentForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('employees:payment_input')
-    else:
-        form = PaymentForm()
-
     payments = Payment.objects.all()
-
-    return render(request, 'employees/payment_input.html', {'form': form, 'payments': payments})
+    return handle_form_submission(request, PaymentForm, 'employees:payment_input', 'employees/payment_input.html', {'payments': payments})
 
 
 def purchase_item_input(request):
-    if request.method == 'POST':
-        form = PurchaseItemForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('employees:purchase_item_input')
-    else:
-        form = PurchaseItemForm()
-
     purchases = PurchaseItem.objects.all()
-
-    return render(request, 'employees/purchase_item_input.html', {'form': form, 'purchases': purchases})
+    return handle_form_submission(request, PurchaseItemForm, 'employees:purchase_item_input', 'employees/purchase_item_input.html', {'purchases': purchases})
 
 
 def vendor_information_input(request):
@@ -454,7 +494,7 @@ def company_list(request):
         elif 'add_company' in request.POST:
             add_company_form = AddCompanyForm(request.POST)
             if add_company_form.is_valid():
-                new_company = Company.objects.create(
+                Company.objects.create(
                     company_code=add_company_form.cleaned_data['company_code'],
                     company_name=add_company_form.cleaned_data['company_name'],
                     company_address=add_company_form.cleaned_data['company_address'],
@@ -483,4 +523,3 @@ def company_list(request):
         'selected_company': selected_company,
     }
     return render(request, 'employees/company_list.html', context)
-

@@ -6,6 +6,8 @@
 </head>
 <body>
 <h1> Dashboard: {{request.user.username}}</h1>
+<li><a href="#">Admin Dashboard</a></li>
+<li><a href="{% url 'employees:manage_user_permissions' %}">Manage User Permissions</a></li>
 <a href="{% url 'employees:logout' %}" class="btn btn-dark">Logout</a>
 </body>
 </html>

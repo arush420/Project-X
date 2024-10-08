@@ -31,7 +31,7 @@
             {% if employees %}
                 {% for employee in employees %}
                 <tr>
-                    <td>{{ employee.employee_code }}</td>
+                    <td><a href="{% url 'employees:employee_details' employee.id %}">{{ employee.employee_code }}</a></td>
                     <td>{{ employee.name }}</td>
                     <td>{{ employee.father_name }}</td>
                     <td>{{ employee.basic }}</td>
@@ -49,4 +49,16 @@
             {% endif %}
         </tbody>
     </table>
+
+    <!-- Pagination controls (if needed) -->
+    <div>
+        {% if employees.has_previous %}
+            <a href="?search={{ search_query }}&page={{ employees.previous_page_number }}">&laquo; Previous</a>
+        {% endif %}
+        <span>Page {{ employees.number }} of {{ employees.paginator.num_pages }}</span>
+        {% if employees.has_next %}
+            <a href="?search={{ search_query }}&page={{ employees.next_page_number }}">Next &raquo;</a>
+        {% endif %}
+    </div>
+
 {% endblock %}

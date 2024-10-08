@@ -3,31 +3,31 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-    <h1>Welcome to the Employee Management System</h1>
+    <div class="container mt-5">
+        <h1>Welcome to the Employee Management System</h1>
 
-    <!-- Display total employees if the variable is passed -->
-    <p>Total Employees: {{ total_employees|default:"Not available" }}</p>
+        <!-- Display total employees if the variable is passed -->
+        <p>Total Employees: {{ total_employees|default:"Not available" }}</p>
 
-    <!-- Ensure URLs match those in your urlpatterns -->
-    <div class="btn-group" role="group">
-        <a href="{% url 'employees:employee_list' %}" class="btn btn-primary">View Employees</a>
-        <a href="{% url 'employees:generate_salary' %}" class="btn btn-primary">Generate Salary</a>
-        <a href="{% url 'employees:add_employee_and_upload' %}" class="btn btn-primary">Add Employee / Upload Excel</a>
-        <a href="{% url 'employees:payment_input' %}" class="btn btn-primary">Payment Input</a>
-        <a href="{% url 'employees:purchase_item_input' %}" class="btn btn-primary">Purchase Item</a>
-        <a href="{% url 'employees:vendor_information_input' %}" class="btn btn-primary">Vendor Information</a>
-        <a href="{% url 'employees:employee_profile' %}" class="btn btn-primary">Employee Profile</a>
-        <a href="{% url 'employees:company_list' %}" class="btn btn-primary">Company List</a>
-        <a href="{% url 'employees:admin_dashboard' %}" class="btn btn-primary">Admin Dashboard</a>
-    </div>
+        <!-- Buttons for navigation -->
+        <div class="btn-group mb-4" role="group">
+            <a href="{% url 'employees:employee_list' %}" class="btn btn-primary">View Employees</a>
+            <a href="{% url 'employees:generate_salary' %}" class="btn btn-primary">Generate Salary</a>
+            <a href="{% url 'employees:add_employee_and_upload' %}" class="btn btn-primary">Add Employee / Upload Excel</a>
+            <a href="{% url 'employees:payment_input' %}" class="btn btn-primary">Payment Input</a>
+            <a href="{% url 'employees:purchase_item_input' %}" class="btn btn-primary">Purchase Item</a>
+            <a href="{% url 'employees:vendor_information_input' %}" class="btn btn-primary">Vendor Information</a>
+            <a href="{% url 'employees:employee_detail' %}" class="btn btn-primary">Employee Detail</a>
+            <a href="{% url 'employees:company_list' %}" class="btn btn-primary">Company List</a>
+            <a href="{% url 'employees:admin_dashboard' %}" class="btn btn-primary">Admin Dashboard</a>
+        </div>
 
-    <div class="container mt-4">
         <div class="row">
-            <div class="col-9">
-                <h1>Hey Mohit</h1>
-                <p>Ready to rock today...</p>
+            <div class="col-md-9">
+                <h2>Hello, {{ request.user.first_name }}</h2>
+                <p>Ready to tackle today's tasks?</p>
             </div>
-            <div class="col-3 todo-list">
+            <div class="col-md-3 todo-list">
                 <h3>To-Do List</h3>
 
                 <!-- Form to add a new task -->
@@ -39,7 +39,7 @@
                     </div>
                 </form>
 
-                <!-- To-do List with checkbox and delete option -->
+                <!-- Display tasks with checkbox and delete button -->
                 <ul class="list-group">
                     {% for task in tasks %}
                         <li class="list-group-item d-flex justify-content-between align-items-center">

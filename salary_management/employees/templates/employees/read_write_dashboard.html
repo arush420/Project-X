@@ -8,7 +8,8 @@
         <p>Welcome, {{ request.user.username }}! You have full access to all Managerial functionalities.</p>
         <ul>
             <li><a href="#">Admin Dashboard</a></li>
-            <li><a href="#">Manage User Permissions</a></li>
+            <li><a href="{% url 'employees:manage_user_permissions' %}">Manage User Permissions</a></li>
+            <a href="{% url 'employees:logout' %}" class="btn btn-dark">Logout</a>
             <!-- Add more superuser specific options here -->
         </ul>
     </div>

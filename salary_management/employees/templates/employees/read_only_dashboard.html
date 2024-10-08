@@ -1,15 +1,59 @@
-{% extends 'read_only.html' %}
+{% extends 'base.html' %}
 
-{% block title %}Read only{% endblock %}
+{% block title %}Read Only{% endblock %}
 
 {% block content %}
-    <div class="container">
-        <h1>Employee Dashboard</h1>
-        <p>Welcome, {{ request.user.username }}! You have full access to all Employee details .</p>
-        <ul>
-            <li><a href="#">Admin Dashboard</a></li>
-            <li><a href="#">Manage User Permissions</a></li>
-            <!-- Add more superuser specific options here -->
-        </ul>
-    </div>
+    <form method="GET" action="{% url 'employees:employee_detail' %}">
+        {{ form.as_p }}
+        <button type="submit">Search</button>
+    </form>
+
+    {% if employee %}
+        <h2>Employee Details</h2>
+        <p><strong>Employee Code:</strong> {{ employee.employee_code }}</p>
+        <p><strong>Name:</strong> {{ employee.name }}</p>
+        <p><strong>Father's Name:</strong> {{ employee.father_name }}</p>
+
+        <h3>Salary History</h3>
+        {% if salaries %}
+            <p><strong>Salary records found:</strong> {{ salaries.count }}</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Year</th>
+                        <th>Basic Salary</th>
+                        <th>Transport</th>
+                        <th>Canteen</th>
+                        <th>PF</th>
+                        <th>ESIC</th>
+                        <th>Advance Deduction</th>
+                        <th>Gross Salary</th>
+                        <th>Net Salary</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for salary in salaries %}
+                        <tr>
+                            <td>{{ salary.get_month_display }}</td>
+                            <td>{{ salary.year }}</td>
+                            <td>{{ salary.basic_salary }}</td>
+                            <td>{{ salary.transport }}</td>
+                            <td>{{ salary.canteen }}</td>
+                            <td>{{ salary.pf }}</td>
+                            <td>{{ salary.esic }}</td>
+                            <td>{{ salary.advance_deduction }}</td>
+                            <td>{{ salary.gross_salary }}</td>
+                            <td>{{ salary.net_salary }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No salary history found for this employee.</p>
+        {% endif %}
+    {% else %}
+        <p>Enter an employee code or name to search for their profile.</p>
+    {% endif %}
+<a href="{% url 'employees:logout' %}" class="btn btn-dark">Logout</a>
 {% endblock %}
