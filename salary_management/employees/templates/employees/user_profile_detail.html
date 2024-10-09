@@ -1,11 +1,22 @@
 {% extends 'base.html' %}
 
-{% block title %}Salary Report{% endblock %}
+{% block title %}User Profile{% endblock %}
 
 {% block content %}
-    <h1>Organisation Profile</h1>
-    <p><strong>Name:</strong> {{ profile.name }}</p>
-    <!-- <p><strong>Address:</strong> {{ profile.address }}</p>
-    <p><strong>Account Number:</strong> {{ profile.account_number }}</p>
-    <p><strong>IFSC Code:</strong> {{ profile.ifsc_code }}</p> -->
+    <h1>User Profile</h1>
+<p>Username: {{ request.user.username }}</p>
+<p>First Name: {{ profile.user.first_name }}</p>
+<p>Last Name: {{ profile.user.last_name }}</p>
+<p>User Type: {{ profile.user_type }}</p>
+
+{% if profile.user_type == 'Owner' %}
+    <h2>Owner Details</h2>
+    <p>Organisation Name: {{ profile.organisation_name }}</p>
+    <p>Organisation Address: {{ profile.organisation_address }}</p>
+    <p>Contact Number: {{ profile.contact_number }}</p>
+    <p>Account Number: {{ profile.account_number }}</p>
+    <p>IFSC Code: {{ profile.ifsc_code }}</p>
+    <p>GST Number: {{ profile.gst_number }}</p>
+{% endif %}
+
 {% endblock %}

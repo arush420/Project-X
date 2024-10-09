@@ -5,21 +5,83 @@
 {% block content %}
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-6">
+        <!-- Column adjusted for smaller screens -->
+        <div class="col-lg-6 col-md-8 col-sm-10 col-12">
             <div class="card shadow-sm">
-                <div class="card-header">
+                <div class="card-header text-center">
                     <h2>Register</h2>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{% url 'employees:register' %}">
+                    <form method="POST">
                         {% csrf_token %}
+                        <!-- Form fields rendered from Django form -->
                         {{ form.as_p }}
-                        <button type="submit" class="btn btn-dark btn-block">Register</button>
-                        <a href="{% url 'employees:login' %}" class="btn btn-default">Already have an account? Login</a>
+
+                        <!-- Hidden fields for company registration details -->
+                        <div id="company-details" style="display:none;">
+                            <div class="form-group owner-field mb-3">
+                                <label for="id_organisation_name">Organisation Name</label>
+                                <input type="text" name="organisation_name" id="id_organisation_name" class="form-control">
+                            </div>
+                            <div class="form-group owner-field mb-3">
+                                <label for="id_organisation_address">Organisation Address</label>
+                                <input type="text" name="organisation_address" id="id_organisation_address" class="form-control">
+                            </div>
+                            <div class="form-group owner-field mb-3">
+                                <label for="id_contact_number">Contact Number</label>
+                                <input type="text" name="contact_number" id="id_contact_number" class="form-control">
+                            </div>
+                            <div class="form-group owner-field mb-3">
+                                <label for="id_account_number">Account Number</label>
+                                <input type="text" name="account_number" id="id_account_number" class="form-control">
+                            </div>
+                            <div class="form-group owner-field mb-3">
+                                <label for="id_ifsc_code">IFSC Code</label>
+                                <input type="text" name="ifsc_code" id="id_ifsc_code" class="form-control">
+                            </div>
+                            <div class="form-group owner-field mb-3">
+                                <label for="id_gst_number">GST Number</label>
+                                <input type="text" name="gst_number" id="id_gst_number" class="form-control">
+                            </div>
+                        </div>
+
+                        <!-- Submit button -->
+                        <button type="submit" class="btn btn-primary w-100">Register</button>
                     </form>
+
+                    <!-- Link to login -->
+                    <div class="text-center mt-3">
+                        <a href="{% url 'employees:login' %}" class="btn btn-link">Already have an account? Login</a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const userTypeField = document.querySelector('#id_user_type');
+        const companyField = document.querySelector('#id_company_name');
+        const companyDetails = document.querySelector('#company-details');
+
+        function toggleFields() {
+            const isOwner = userTypeField.value === 'Owner';
+            const isOtherCompany = companyField.value === 'Other';
+
+            if (isOwner && isOtherCompany) {
+                companyDetails.style.display = 'block';
+            } else {
+                companyDetails.style.display = 'none';
+            }
+        }
+
+        // Event listeners for field changes
+        userTypeField.addEventListener('change', toggleFields);
+        companyField.addEventListener('change', toggleFields);
+
+        // Initial check on page load
+        toggleFields();
+    });
+</script>
 {% endblock %}

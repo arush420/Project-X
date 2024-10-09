@@ -1,17 +1,64 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ employee.name }}'s Profile{% endblock %}
+{% block title %}Employee Profile{% endblock %}
 
 {% block content %}
-    <h1>{{ employee.name }}'s Profile</h1>
+<!-- employee_profile.html -->
+
+<form method="GET" action="{% url 'employees:employee_detail' %}">
+    {{ form.as_p }}
+    <button type="submit">Search</button>
+</form>
+
+{% if employee %}
+    <h2>Employee Details</h2>
     <p><strong>Employee Code:</strong> {{ employee.employee_code }}</p>
-    <p><strong>Father's Name:</strong> {{ employee.father_name }}</p>
-    <p><strong>Basic Salary:</strong> {{ employee.basic }}</p>
-    <p><strong>Transport Allowance:</strong> {{ employee.transport }}</p>
-    <p><strong>Canteen Deduction:</strong> {{ employee.canteen }}</p>
-    <p><strong>PF:</strong> {{ employee.pf }}%</p>
-    <p><strong>ESIC:</strong> {{ employee.esic }}%</p>
-    <p><strong>Advance:</strong> {{ employee.advance }}</p>
+    <p><strong>Name:</strong> {{ employee.name }}</p>
+    <p><strong>Father Name:</strong> {{ employee.father_name }}</p>
 
+    <h3>Salary History</h3>
+    {% if salaries %}
+    <p>Salary records found: {{ salaries.count }}</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Year</th>
+                <th>Basic Salary</th>
+                <th>Transport</th>
+                <th>Canteen</th>
+                <th>PF</th>
+                <th>ESIC</th>
+                <th>Advance Deduction</th>
+                <th>Gross Salary</th>
+                <th>Net Salary</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for salary in salaries %}
+            <tr>
+                <td>{{ salary.get_month_display }}</td>
+                <td>{{ salary.year }}</td>
+                <td>{{ salary.basic_salary }}</td>
+                <td>{{ salary.transport }}</td>
+                <td>{{ salary.canteen }}</td>
+                <td>{{ salary.pf }}</td>
+                <td>{{ salary.esic }}</td>
+                <td>{{ salary.advance_deduction }}</td>
+                <td>{{ salary.gross_salary }}</td>
+                <td>{{ salary.net_salary }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No salary history found for this employee.</p>
+{% endif %}
+
+{% else %}
+    <p>Enter an employee code or name to search for their profile.</p>
+{% endif %}
+
+    <!-- Add back button or edit button -->
+    <a href="{% url 'employees:employee_list' %}" class="btn btn-primary">Back to Employee List</a>
 {% endblock %}
-

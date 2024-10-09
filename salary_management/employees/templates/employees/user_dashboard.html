@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Welcome, {{ request.user.username }}</h1>
+
+    {% if request.user.groups.filter(name='Superuser').exists %}
+        <h2>Superuser Dashboard</h2>
+        <ul>
+            <li><a href="{% url 'add_employee' %}">Add Employee</a></li>
+            <li><a href="{% url 'delete_employee' %}">Delete Employee</a></li>
+            <li><a href="{% url 'update_employee' %}">Update Employee Details</a></li>
+        </ul>
+    {% elif request.user.groups.filter(name='Read-Write').exists %}
+        <h2>Read-Write Dashboard</h2>
+        <ul>
+            <li><a href="{% url 'view_employee' %}">View Employee</a></li>
+            <li><a href="{% url 'update_employee' %}">Update Employee Details</a></li>
+        </ul>
+    {% elif request.user.groups.filter(name='Read-Only').exists %}
+        <h2>Read-Only Dashboard</h2>
+        <ul>
+            <li><a href="{% url 'view_employee' %}">View Employee</a></li>
+        </ul>
+    {% else %}
+        <p>You do not have access to any features on this page.</p>
+    {% endif %}
+{% endblock %}
