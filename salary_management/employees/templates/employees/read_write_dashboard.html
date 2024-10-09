@@ -1,15 +1,21 @@
-{% extends 'read_write.html' %}
+{% extends 'base.html' %}
 
-{% block title %}Read-Write{% endblock %}
+{% block title %}Read-Write Dashboard{% endblock %}
 
 {% block content %}
-    <div class="container">
+    <div class="container my-5">
         <h1>Manager Dashboard</h1>
         <p>Welcome, {{ request.user.username }}! You have full access to all Managerial functionalities.</p>
-        <ul>
-            <li><a href="#">Admin Dashboard</a></li>
-            <li><a href="#">Manage User Permissions</a></li>
-            <!-- Add more superuser specific options here -->
-        </ul>
+
+        <div class="btn-group-vertical w-100" role="group">
+            <a href="{% url 'employees:employee_list' %}" class="btn btn-primary my-2">View Employees</a>
+            <a href="{% url 'employees:generate_salary' %}" class="btn btn-primary my-2">Generate Salary</a>
+            <a href="{% url 'employees:add_employee_and_upload' %}" class="btn btn-primary my-2">Add Employee / Upload Excel</a>
+            <a href="{% url 'employees:payment_input' %}" class="btn btn-primary my-2">Payment Input</a>
+            <a href="{% url 'employees:purchase_item_input' %}" class="btn btn-primary my-2">Purchase Item</a>
+            <a href="{% url 'employees:vendor_information_input' %}" class="btn btn-primary my-2">Vendor Information</a>
+            <a href="{% url 'employees:employee_profile' %}" class="btn btn-primary my-2">Employee Profile</a>
+            <a href="{% url 'employees:company_list' %}" class="btn btn-primary my-2">Company List</a>
+        </div>
     </div>
 {% endblock %}

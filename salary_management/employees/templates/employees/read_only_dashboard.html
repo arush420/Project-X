@@ -1,4 +1,4 @@
-{% extends 'read_only.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Read only{% endblock %}
 
@@ -7,9 +7,11 @@
         <h1>Employee Dashboard</h1>
         <p>Welcome, {{ request.user.username }}! You have full access to all Employee details .</p>
         <ul>
-            <li><a href="#">Admin Dashboard</a></li>
-            <li><a href="#">Manage User Permissions</a></li>
-            <!-- Add more superuser specific options here -->
+        <div class="btn-group" role="group">
+            <a href="{% url 'employees:employee_list' %}" class="btn btn-primary">View Employees</a>
+            <a href="{% url 'employees:employee_profile' %}" class="btn btn-primary">Employee Profile</a>
+            <a href="{% url 'employees:company_list' %}" class="btn btn-primary">Company List</a>
+        </div>
         </ul>
     </div>
 {% endblock %}
