@@ -189,10 +189,11 @@ def user_profile_detail(request):
     context = {
         'profile': profile,
         'is_superuser': request.user.groups.filter(name='Superuser').exists(),
-        'is_read_write': request.user.groups.filter(name='Read-Write').exists(),
-        'is_read_only': request.user.groups.filter(name='Read-Only').exists(),
+        'is_read_write': request.user.groups.filter(name='Read and Write').exists(),  # Match group name
+        'is_read_only': request.user.groups.filter(name='Read Only').exists(),  # Match group name
     }
     return render(request, 'user_profile_detail.html', context)
+
 
 
 # Admin Dashboard
@@ -278,6 +279,20 @@ class EmployeeListView(ListView):
             )
         return queryset
 
+        # Pagination logic
+        page = self.request.GET.get('page', 1)
+        paginator = Paginator(self.get_queryset(), self.paginate_by)
+
+        try:
+            employees = paginator.page(page)
+        except PageNotAnInteger:
+            employees = paginator.page(1)
+        except EmptyPage:
+            employees = paginator.page(paginator.num_pages)
+
+        context['employees'] = employees
+        return context
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search_query'] = self.request.GET.get('search', '')
@@ -287,6 +302,35 @@ def employee_detail(request, id):
     employee = get_object_or_404(Employee, id=id)
     return render(request, 'employee_details.html', {'employee': employee})
 
+
+class AddEmployeeAndUploadView(View):
+    def get(self, request):
+        return render(request, 'employees/add_employee.html', {
+            'add_employee_form': EmployeeForm(),
+            'upload_form': ExcelUploadForm(),
+        })
+
+    def post(self, request):
+        if request.POST.get('submit_type') == 'add_employee':
+            form = EmployeeForm(request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Employee added successfully!')
+                return redirect('employees:employee_list')
+            else:
+                messages.error(request, 'Failed to add employee. Please check the form.')
+
+        elif request.POST.get('submit_type') == 'upload_employees':
+            form = ExcelUploadForm(request.POST, request.FILES)
+            if form.is_valid():
+                try:
+                    handle_file_upload(request.FILES['file'])
+                    messages.success(request, 'Employees uploaded successfully!')
+                except ValidationError as e:
+                    messages.error(request, f"File upload failed: {', '.join(e.messages)}")
+                return redirect('employees:employee_list')
+
+        return self.get(request)
 
 def handle_file_upload(file):
     errors = []
@@ -334,50 +378,57 @@ def handle_file_upload(file):
         raise ValidationError(errors)
 
 
-def handle_form_submission(request, form_class, redirect_url, template_name, context={}):
-    if request.method == 'POST':
-        form = form_class(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Form submitted successfully!')
-            return redirect(redirect_url)
-        else:
-            messages.error(request, 'Please check the form for errors.')
-    else:
-        form = form_class()
+from django.core.exceptions import ValidationError
 
-    context['form'] = form
-    return render(request, template_name, context)
+def handle_file_upload(file):
+    errors = []
+    try:
+        df = pd.read_excel(file)
 
+        required_columns = ['employee_code', 'name', 'father_name', 'basic', 'transport', 'canteen', 'pf', 'esic', 'advance']
+        for col in required_columns:
+            if col not in df.columns:
+                raise ValidationError(f"Missing required column: {col}")
 
-class AddEmployeeAndUploadView(View):
-    def get(self, request):
-        return render(request, 'employees/add_employee.html', {
-            'add_employee_form': EmployeeForm(),
-            'upload_form': ExcelUploadForm(),
-        })
+        for _, row in df.iterrows():
+            try:
+                # Basic validation for each row
+                employee_code = str(row['employee_code']).strip()
+                name = str(row['name']).strip()
+                father_name = str(row['father_name']).strip()
 
-    def post(self, request):
-        if 'add_employee_form' in request.POST:
-            form = EmployeeForm(request.POST)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Employee added successfully!')
-                return redirect('employees:employee_list')
-            else:
-                messages.error(request, 'Failed to add employee. Please check the form.')
+                basic = Decimal(row['basic']) if pd.notnull(row['basic']) else Decimal('0.00')
+                transport = Decimal(row.get('transport', 0))
+                canteen = Decimal(row.get('canteen', 0))
+                pf = Decimal(row.get('pf', 0))
+                esic = Decimal(row.get('esic', 0))
+                advance = Decimal(row.get('advance', 0))
 
-        elif 'upload_form' in request.FILES:
-            form = ExcelUploadForm(request.POST, request.FILES)
-            if form.is_valid():
-                try:
-                    handle_file_upload(request.FILES['file'])
-                    messages.success(request, 'Employees uploaded successfully!')
-                except ValidationError as e:
-                    messages.error(request, f"File upload failed: {', '.join(e.messages)}")
-                return redirect('employees:employee_list')
+                if Employee.objects.filter(employee_code=employee_code).exists():
+                    errors.append(f"Employee with code {employee_code} already exists.")
+                    continue
 
-        return self.get(request)
+                Employee.objects.create(
+                    employee_code=employee_code,
+                    name=name,
+                    father_name=father_name,
+                    basic=basic,
+                    transport=transport,
+                    canteen=canteen,
+                    pf=pf,
+                    esic=esic,
+                    advance=advance
+                )
+            except ValueError as ve:
+                errors.append(f"Invalid value in row: {row}. Error: {ve}")
+            except Exception as e:
+                errors.append(f"Error processing row: {row}. Error: {e}")
+                continue
+    except Exception as e:
+        raise ValidationError(f"Error processing file: {e}")
+
+    if errors:
+        raise ValidationError(errors)
 
 
 class GenerateSalaryView(View):
@@ -439,14 +490,15 @@ class GenerateSalaryView(View):
 
 
 def download_template(request):
-    data = {
-        'employee_code': ['E001', 'E002'], 'name': ['John Doe', 'Jane Doe'],
-        'father_name': ['Father1', 'Father2'], 'basic': [0, 0], 'transport': [0, 0],
-        'canteen': [0, 0], 'pf': [0, 0], 'esic': [0, 0], 'advance': [0, 0]
-    }
-    df = pd.DataFrame(data)
-    response = HttpResponse(content_type='application/ms-excel')
-    response['Content-Disposition'] = 'attachment; filename="employee_template.xlsx"'
+    # Define columns for the template
+    columns = ['employee_code', 'name', 'father_name', 'basic', 'transport', 'canteen', 'pf', 'esic', 'advance']
+    df = pd.DataFrame(columns=columns)
+
+    # Create a response object for downloading the Excel file
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=employee_upload_template.xlsx'
+
+    # Write the empty dataframe to Excel and serve as a download
     df.to_excel(response, index=False)
     return response
 

@@ -9,7 +9,7 @@
     <form method="post">
         {% csrf_token %}
         {{ add_employee_form.as_p }}
-        <button type="submit">Add Employee</button>
+        <button type="submit" name="submit_type" value="add_employee">Add Employee</button>
     </form>
 
     <h1>Upload Employees via Excel</h1>
@@ -18,7 +18,7 @@
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         {{ upload_form.as_p }}
-        <button type="submit" class="btn btn-primary">Upload</button>
+        <button type="submit" name="submit_type" value="upload_employees" class="btn btn-primary">Upload</button>
     </form>
 
     <a href="{% url 'employees:download_template' %}">Download Employee Upload Template</a>

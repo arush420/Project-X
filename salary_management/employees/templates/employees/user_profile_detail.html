@@ -4,19 +4,30 @@
 
 {% block content %}
     <h1>User Profile</h1>
-<p>Username: {{ request.user.username }}</p>
-<p>First Name: {{ profile.user.first_name }}</p>
-<p>Last Name: {{ profile.user.last_name }}</p>
-<p>User Type: {{ profile.user_type }}</p>
+    <p>Username: {{ request.user.username }}</p>
+    <p>First Name: {{ profile.user.first_name }}</p>
+    <p>Last Name: {{ profile.user.last_name }}</p>
+    <p>User Type: {{ profile.user_type }}</p>
 
-{% if profile.user_type == 'Owner' %}
-    <h2>Owner Details</h2>
-    <p>Organisation Name: {{ profile.organisation_name }}</p>
-    <p>Organisation Address: {{ profile.organisation_address }}</p>
-    <p>Contact Number: {{ profile.contact_number }}</p>
-    <p>Account Number: {{ profile.account_number }}</p>
-    <p>IFSC Code: {{ profile.ifsc_code }}</p>
-    <p>GST Number: {{ profile.gst_number }}</p>
-{% endif %}
-
+    {% if profile.user_type == 'Owner' %}
+        <h2>Owner Details</h2>
+        {% if profile.organisation_name %}
+            <p>Organisation Name: {{ profile.organisation_name }}</p>
+        {% endif %}
+        {% if profile.organisation_address %}
+            <p>Organisation Address: {{ profile.organisation_address }}</p>
+        {% endif %}
+        {% if profile.contact_number %}
+            <p>Contact Number: {{ profile.contact_number }}</p>
+        {% endif %}
+        {% if profile.account_number %}
+            <p>Account Number: {{ profile.account_number }}</p>
+        {% endif %}
+        {% if profile.ifsc_code %}
+            <p>IFSC Code: {{ profile.ifsc_code }}</p>
+        {% endif %}
+        {% if profile.gst_number %}
+            <p>GST Number: {{ profile.gst_number }}</p>
+        {% endif %}
+    {% endif %}
 {% endblock %}
