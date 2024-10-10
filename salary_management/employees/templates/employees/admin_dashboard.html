@@ -1,16 +1,13 @@
-{% extends 'app.html' %}
-
+{% extends 'base.html' %}
 {% block title %}Admin Dashboard{% endblock %}
-
 {% block content %}
-
 <h1>Admin Dashboard</h1>
 <p>Total Employees: {{ total_employees }}</p>
-<p>Total Salary Payout: {{ total_salary }}</p>
+<p>Total Salary Payout: {{ total_salary| floatformat:2 }}</p>
 
-<div class="dashboard-container" style="display: flex;">
-    <!-- Left-hand side: Chart -->
-    <div class="chart-container" style="width: 60%;">
+<div class="dashboard-container" style="display: flex; flex-direction: column;">
+    <!-- Bar Graph -->
+    <div class="chart-container" style="width: 100%; margin-bottom: 20px;">
         <canvas id="adminChart"></canvas>
         <!-- Buttons to select dataset -->
         <div>
@@ -20,8 +17,8 @@
         </div>
     </div>
 
-    <!-- Right-hand side: Table -->
-    <div class="table-container" style="width: 40%; margin-left: 20px;">
+    <!-- Table -->
+    <div class="table-container" style="width: 100%; margin-top: 20px;">
         <h2>Recent Salaries</h2>
         <table border="1">
             <thead>
@@ -90,5 +87,4 @@
         adminChart.update();
     }
 </script>
-
 {% endblock %}
