@@ -23,35 +23,53 @@ from .models import Employee, Salary, Task, Profile, Payment, PurchaseItem, Vend
 from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm,
                     CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm)
 
+def get_user_role_flags(user):
+    """
+    Helper function to check user role flags.
+    Returns a dictionary with boolean flags for `is_superuser`, `is_read_write`, and `is_read_only`.
+    """
+    is_superuser = user.is_superuser
+    is_read_write = user.groups.filter(name='Read and Write').exists()
+    is_read_only = user.groups.filter(name='Read Only').exists()
 
-# For function-based views
-@user_passes_test(lambda user: user.is_superuser)
-def superuser_view(request):
-    return render(request, 'employees/superuser_dashboard.html')
-
-@user_passes_test(lambda user: user.groups.filter(name='Read and Write').exists())
-def read_write_view(request):
-    return render(request, 'employees/read_write_dashboard.html')
-
-@user_passes_test(lambda user: user.groups.filter(name='Read Only').exists())
-def read_only_view(request):
-    return render(request, 'employees/read_only_dashboard.html')
+    return {
+        'is_superuser': is_superuser,
+        'is_read_write': is_read_write,
+        'is_read_only': is_read_only
+    }
 
 @login_required
-def some_view(request):
-    if not request.user.groups.filter(name='Read and Write').exists():
-        raise PermissionDenied  # Block access if not in the correct group
-    # Continue with the rest of the view logic
+def superuser_view(request):
+    role_flags = get_user_role_flags(request.user)
+
+    if not role_flags['is_superuser']:
+        raise PermissionDenied  # Restrict access to non-superusers
+
+    return render(request, 'employees/home.html', role_flags)
+
+@login_required
+def read_write_view(request):
+    role_flags = get_user_role_flags(request.user)
+
+    if not role_flags['is_read_write']:
+        raise PermissionDenied  # Restrict access to non-read-write users
+
+    return render(request, 'employees/read_write_dashboard.html', role_flags)
+
+@login_required
+def read_only_view(request):
+    role_flags = get_user_role_flags(request.user)
+
+    if not role_flags['is_read_only']:
+        raise PermissionDenied  # Restrict access to non-read-only users
+
+    return render(request, 'employees/read_only_dashboard.html', role_flags)
 
 
-@permission_required('employees.can_generate_payroll', raise_exception=True)
-def generate_salary_view(request):
-    pass  # Logic to generate salary
-
-
+@login_required
 def manage_user_permissions(request):
     if not request.user.is_superuser:
-        return redirect('employees:manage_user_permissions')  # Only superuser can access this view
+        return redirect('employees:home')  # Only superuser can access this view
 
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
@@ -67,18 +85,20 @@ def manage_user_permissions(request):
             messages.error(request, "Group not found.")
             return redirect('employees:manage_user_permissions')
 
-        # Option to grant superuser status
+        # Option to grant/revoke superuser status
         if request.POST.get('superuser_status') == 'on':
             user.is_superuser = True
             user.is_staff = True
         else:
             user.is_superuser = False
-            user.is_staff = False  # Optionally revoke admin access
-            user.save()
+            user.is_staff = False
 
+        user.save()  # Save user status changes
+
+        # Update user's groups
         try:
             user.groups.clear()  # Remove from all groups
-            user.groups.add(group)  # Assign new group
+            user.groups.add(group)  # Assign the new group
         except Exception as e:
             messages.error(request, f"An error occurred: {e}")
             return redirect('employees:manage_user_permissions')
@@ -141,22 +161,23 @@ def login_view(request):
             user = form.get_user()
             login(request, user)
 
-            # Redirect based on user's group
-            if user.is_superuser:
+            # Use role flags to decide the redirect
+            role_flags = get_user_role_flags(user)
+
+            if role_flags['is_superuser']:
                 return redirect('employees:superuser_dashboard')
-
-            elif user.groups.filter(name='Read and Write').exists():
+            elif role_flags['is_read_write']:
                 return redirect('employees:read_write_dashboard')
-
-            elif user.groups.filter(name='Read Only').exists():
+            elif role_flags['is_read_only']:
                 return redirect('employees:read_only_dashboard')
-
-            return redirect('employees:home')  # Fallback if no group matched
+            else:
+                return redirect('employees:home')  # Default fallback
 
     else:
         form = AuthenticationForm()
 
     return render(request, 'employees/login.html', {'form': form})
+
 
 def logout_view(request):
     logout(request)
@@ -176,14 +197,29 @@ def user_profile_detail(request):
 
 # Admin Dashboard
 def admin_dashboard(request):
+    # Total employees, total salary, and data for chart
     total_employees = Employee.objects.count()
     total_salary = Salary.objects.aggregate(Sum('net_salary'))['net_salary__sum']
-    recent_salaries = Salary.objects.order_by('-date_generated')[:10]
+
+    months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
+              'November', 'December']
+
+    salary_data = [...]  # Salary data per month
+    employees_data = [...]  # Employees count per month
+    purchases_data = [...]  # Purchases amount per month
+
+    recent_salaries = Salary.objects.order_by('-date_generated')[:10]  # Latest 10 salaries
+
     context = {
         'total_employees': total_employees,
         'total_salary': total_salary,
-        'recent_salaries': recent_salaries
+        'recent_salaries': recent_salaries,
+        'months': months,
+        'salary_data': salary_data,
+        'employees_data': employees_data,
+        'purchases_data': purchases_data
     }
+
     return render(request, 'employees/admin_dashboard.html', context)
 
 

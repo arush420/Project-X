@@ -8,37 +8,60 @@
 <p>Total Employees: {{ total_employees }}</p>
 <p>Total Salary Payout: {{ total_salary }}</p>
 
-<h2>Recent Salaries</h2>
-<table>
-    <tr>
-        <th>Employee</th>
-        <th>Month</th>
-        <th>Net Salary</th>
-    </tr>
-    {% for salary in recent_salaries %}
-    <tr>
-        <td>{{ salary.employee.name }}</td>
-        <td>{{ salary.month }}</td>
-        <td>{{ salary.net_salary }}</td>
-    </tr>
-    {% endfor %}
-</table>
+<div class="dashboard-container" style="display: flex;">
+    <!-- Left-hand side: Chart -->
+    <div class="chart-container" style="width: 60%;">
+        <canvas id="adminChart"></canvas>
+        <!-- Buttons to select dataset -->
+        <div>
+            <button onclick="updateChart('salary')">Salary</button>
+            <button onclick="updateChart('employees')">Employees</button>
+            <button onclick="updateChart('purchases')">Purchases</button>
+        </div>
+    </div>
 
-<canvas id="salaryChart"></canvas>
+    <!-- Right-hand side: Table -->
+    <div class="table-container" style="width: 40%; margin-left: 20px;">
+        <h2>Recent Salaries</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Month</th>
+                    <th>Net Salary</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for salary in recent_salaries %}
+                <tr>
+                    <td>{{ salary.employee.name }}</td>
+                    <td>{{ salary.month }}</td>
+                    <td>{{ salary.net_salary }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <script>
-    var ctx = document.getElementById('salaryChart').getContext('2d');
-    var salaryChart = new Chart(ctx, {
+    var ctx = document.getElementById('adminChart').getContext('2d');
+
+    // Initial data for Salary chart
+    var chartData = {
+        labels: {{ months | safe }},
+        datasets: [{
+            label: 'Salary Payout',
+            data: {{ salary_data | safe }},
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+        }]
+    };
+
+    var adminChart = new Chart(ctx, {
         type: 'bar',
-        data: {
-            labels: {{ months | safe }},
-            datasets: [{
-                label: 'Salary Payout',
-                data: {{ salary_data | safe }},
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
-            }]
-        },
+        data: chartData,
         options: {
             scales: {
                 y: {
@@ -47,5 +70,25 @@
             }
         }
     });
+
+    // Data for employees and purchases
+    var employeesData = {{ employees_data | safe }};
+    var purchasesData = {{ purchases_data | safe }};
+
+    // Function to update the chart based on the selected button
+    function updateChart(type) {
+        if (type === 'salary') {
+            adminChart.data.datasets[0].data = {{ salary_data | safe }};
+            adminChart.data.datasets[0].label = 'Salary Payout';
+        } else if (type === 'employees') {
+            adminChart.data.datasets[0].data = employeesData;
+            adminChart.data.datasets[0].label = 'Total Employees';
+        } else if (type === 'purchases') {
+            adminChart.data.datasets[0].data = purchasesData;
+            adminChart.data.datasets[0].label = 'Purchases';
+        }
+        adminChart.update();
+    }
 </script>
+
 {% endblock %}
