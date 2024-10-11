@@ -1,5 +1,6 @@
 from django import forms
-from .models import Employee, Task, Payment, PurchaseItem, VendorInformation, Company, Profile
+from .models import (Employee, Task, Payment, PurchaseItem, VendorInformation,
+                     Company, Profile, StaffSalary, AdvanceTransaction)
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 
@@ -136,3 +137,27 @@ class AddCompanyForm(forms.Form):
         if ifsc_code and not re.match(r'^[A-Za-z]{4}\d{7}$', ifsc_code):
             raise forms.ValidationError("Invalid IFSC code format.")
         return ifsc_code
+
+
+# staff salary form
+class StaffSalaryForm(forms.ModelForm):
+    class Meta:
+        model = StaffSalary
+        fields = [
+            'pf_no', 'name', 'father_name', 'gross_rate', 'esic_applicable', 'pf_applicable', 'lwf_applicable',
+            'pd', 'gross_salary', 'esic_deduction', 'pf_deduction', 'lwf_deduction', 'net_salary', 'advance_given',
+            'advance_deduction', 'advance_pending', 'salary_paid_from_account', 'date', 'opening_balance', 'amount_paid_to_employee',
+            'amount_recovered', 'amount_left', 'comment', 'column_1'
+        ]
+        widgets = {
+            'date': forms.SelectDateWidget(),
+        }
+
+#additional advance form for staff
+class AdvanceTransactionForm(forms.ModelForm):
+    class Meta:
+        model = AdvanceTransaction
+        fields = ['date', 'advance_taken', 'advance_deducted','paid_received_by', 'paid_received_account', 'comment']
+        widgets = {
+            'date': forms.SelectDateWidget(),
+        }

@@ -5,14 +5,21 @@
 {% block content %}
     <h1>Generate Salary</h1>
 
-    <!-- Salary generation form -->
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
     <form method="POST">
         {% csrf_token %}
         <label for="month">Select Month:</label>
         <select name="month" id="month" required>
             <option value="">Select Month</option>
-            {% for month in months %}
-                <option value="{{ month }}">{{ month }}</option>
+            {% for value, name in months %}
+                <option value="{{ value }}">{{ name }}</option>
             {% endfor %}
         </select>
 

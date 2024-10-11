@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container my-4">
+    <h2>{{ salary.name }} - Profile</h2>
+
+    <!-- Employee Details -->
+    <table class="table table-bordered">
+      <tbody>
+        <tr>
+          <th scope="row">PF No:</th>
+          <td>{{ salary.pf_no }}</td>
+        </tr>
+        <tr>
+          <th scope="row">Gross Salary:</th>
+          <td>{{ salary.gross_salary }}</td>
+        </tr>
+        <tr>
+          <th scope="row">Advance Given:</th>
+          <td>{{ salary.advance_given }}</td>
+        </tr>
+        <tr>
+          <th scope="row">Advance Pending:</th>
+          <td>{{ salary.advance_pending }}</td>
+        </tr>
+        <tr>
+          <th scope="row">Net Salary:</th>
+          <td>{{ salary.net_salary }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Transactions Section -->
+    <h3>Advance Transactions</h3>
+    <table class="table table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col">Date</th>
+          <th scope="col">Advance Taken</th>
+          <th scope="col">Advance Deducted</th>
+          <th scope="col">Paid/Received by</th>
+          <th scope="col">Paid/Received to Account </th>
+          <th scope="col">Advance Balance</th>
+          <th scope="col">Comment</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for transaction in transactions %}
+          <tr>
+            <td>{{ transaction.date }}</td>
+            <td>{{ transaction.advance_taken }}</td>
+            <td>{{ transaction.advance_deducted }}</td>
+            <td>{{ transaction.paid_received_by }}</td>
+            <td>{{ transaction.paid_received_account }}</td>
+            <td>{{ transaction.advance_balance }}</td>
+            <td>{{ transaction.comment }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Add New Transaction Form -->
+    <h3>Add New Transaction</h3>
+    <form method="POST">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-primary">Add Transaction</button>
+    </form>
+  </div>
+{% endblock %}

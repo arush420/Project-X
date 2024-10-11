@@ -17,11 +17,14 @@ from django.db import transaction
 import pandas as pd
 from django.views import View
 from django.views.generic import ListView
+from datetime import datetime
 
 # Import your models and forms
-from .models import Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company
+from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company,
+                     StaffSalary, AdvanceTransaction)
 from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm,
-                    CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm)
+                    CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm,
+                    AdvanceTransactionForm)
 
 def get_user_role_flags(user):
     """
@@ -439,11 +442,19 @@ class GenerateSalaryView(View):
             messages.error(request, 'Please provide all inputs.')
             return redirect('employees:generate_salary')
 
-        employees = Employee.objects.all()
-        salary_data, total_net_salary = self.calculate_salaries(request, employees, int(days_in_month), int(month), int(year))
+        employees = Employee.objects.all().select_related()  # Efficiently fetch related data
+        salary_data, total_gross_salary, total_pf, total_esic, total_canteen, total_advance, total_net_salary = self.calculate_salaries(
+            request, employees, int(days_in_month), int(month), int(year)
+        )
 
+        messages.success(request, 'Salary generated successfully!')
         return render(request, 'employees/salary_report.html', {
             'salary_data': salary_data,
+            'total_gross_salary': total_gross_salary,
+            'total_pf': total_pf,
+            'total_esic': total_esic,
+            'total_canteen': total_canteen,
+            'total_advance': total_advance,
             'total_net_salary': total_net_salary,
             'month': month,
             'year': year
@@ -453,12 +464,15 @@ class GenerateSalaryView(View):
         return request.POST.get('month'), request.POST.get('year'), request.POST.get('days_in_month')
 
     def calculate_salaries(self, request, employees, days_in_month, month, year):
-        salary_data, total_net_salary = [], Decimal(0)
+        salary_data = []
+        total_gross_salary = total_pf = total_esic = total_canteen = total_advance = total_net_salary = Decimal(0)
+
         for employee in employees:
             days_worked = int(request.POST.get(f'days_worked_{employee.id}', 0))
             advance = Decimal(request.POST.get(f'advance_{employee.id}', 0))
 
-            gross_salary, net_salary = self.calculate_salary(employee, days_worked, days_in_month)
+            # calculate gross salary, net salary, pf, esic, and canteen
+            gross_salary, net_salary, pf, esic, canteen = self.calculate_salary(employee, days_worked, days_in_month)
             net_salary -= advance
 
             # Update or create salary record
@@ -467,26 +481,27 @@ class GenerateSalaryView(View):
                 defaults={'gross_salary': gross_salary, 'net_salary': net_salary, 'advance': advance}
             )
 
+            # Append salary data for each employee
             salary_data.append({
                 'employee_code': employee.employee_code,
                 'name': employee.name,
                 'gross_salary': gross_salary,
-                'net_salary': net_salary,
+                'pf': pf,
+                'esic': esic,
+                'canteen': canteen,
+                'advance': advance,
+                'net_salary': net_salary
             })
 
+            # Calculate totals for each column
+            total_gross_salary += gross_salary
+            total_pf += pf
+            total_esic += esic
+            total_canteen += canteen
+            total_advance += advance
             total_net_salary += net_salary
-        return salary_data, total_net_salary
 
-    def calculate_salary(self, employee, days_worked, days_in_month):
-        if days_worked == 0 or days_in_month == 0:
-            return Decimal(0), Decimal(0)
-
-        basic, transport, canteen = employee.basic, employee.transport, employee.canteen
-        gross_salary = (basic + transport) / days_in_month * days_worked
-        pf = employee.pf / 100 * basic
-        esic = employee.esic / 100 * basic
-        net_salary = gross_salary - (canteen + pf + esic)
-        return round(gross_salary, 2), round(net_salary, 2)
+        return salary_data, total_gross_salary, total_pf, total_esic, total_canteen, total_advance, total_net_salary
 
 
 def download_template(request):
@@ -611,3 +626,51 @@ def company_list(request):
         'selected_company': selected_company,
     }
     return render(request, 'employees/company_list.html', context)
+
+# Staff Salary view
+def staff_salary_list(request):
+    salaries = StaffSalary.objects.all()
+    return render(request, 'employees/staff_salary_list.html', {'salaries': salaries})
+
+def staff_salary_create(request):
+    if request.method == 'POST':
+        form = StaffSalaryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('employees:staff_salary_list')
+    else:
+        form = StaffSalaryForm()
+    return render(request, 'employees/staff_salary_form.html', {'form': form})
+
+def staff_salary_detail(request, pk):
+    salary = get_object_or_404(StaffSalary, pk=pk)
+    # Handle form submission
+    if request.method == 'POST':
+        form = AdvanceTransactionForm(request.POST)
+        if form.is_valid():
+            new_transaction = form.save(commit=False)
+            new_transaction.staff_salary = salary
+            new_transaction.save()
+            return redirect('employees:staff_salary_detail', pk=pk)
+    else:
+        form = AdvanceTransactionForm()
+
+    # Get all transactions for the current employee
+    transactions = salary.transactions.all().order_by('-date')
+
+    return render(request, 'employees/staff_salary_detail.html', {
+        'salary': salary,
+        'transactions': transactions,
+        'form': form,
+    })
+
+def staff_salary_update(request, pk):
+    salary = StaffSalary.objects.get(pk=pk)
+    if request.method == 'POST':
+        form = StaffSalaryForm(request.POST, instance=salary)
+        if form.is_valid():
+            form.save()
+            return redirect('employees:staff_salary_list')
+    else:
+        form = StaffSalaryForm(instance=salary)
+    return render(request, 'employees/staff_salary_form.html', {'form': form})

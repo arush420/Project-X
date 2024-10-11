@@ -41,6 +41,12 @@
     </div>
 </div>
 
+<div class="btn-group mb-4" role="group">
+            <a href="{% url 'employees:staff_salary_list' %}" class="btn btn-primary">Staff Employees List</a>
+            <a href="{% url 'employees:staff_salary_create' %}" class="btn btn-primary">Staff Employees Create</a>
+
+</div>
+
 <script>
     var ctx = document.getElementById('adminChart').getContext('2d');
 

@@ -136,6 +136,15 @@ class Salary(models.Model):
     def get_month_display(self):
         return dict(MONTH_CHOICES).get(self.month)
 
+class SalaryTotals(models.Model):
+    month = models.IntegerField()
+    year = models.IntegerField()
+    total_gross_salary = models.DecimalField(max_digits=12, decimal_places=2)
+    total_pf = models.DecimalField(max_digits=12, decimal_places=2)
+    total_esic = models.DecimalField(max_digits=12, decimal_places=2)
+    total_canteen = models.DecimalField(max_digits=12, decimal_places=2)
+    total_advance = models.DecimalField(max_digits=12, decimal_places=2)
+    total_net_salary = models.DecimalField(max_digits=12, decimal_places=2)
 
 class PurchaseItem(models.Model):
     CATEGORY_CHOICES = [
@@ -210,3 +219,68 @@ class VendorInformation(models.Model):
     def __str__(self):
         return self.vendor_name
 
+# Staff salary
+class StaffSalary(models.Model):
+    pf_no = models.CharField(max_length=20, unique=True)
+    name = models.CharField(max_length=100)
+    father_name = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    gross_rate = models.DecimalField(max_digits=10, decimal_places=2)
+
+    esic_applicable = models.BooleanField(default=False)
+    pf_applicable = models.BooleanField(default=False)
+    lwf_applicable = models.BooleanField(default=False)
+
+    pd = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    gross_salary = models.DecimalField(max_digits=10, decimal_places=2)
+
+    esic_deduction = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    pf_deduction = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    lwf_deduction = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    net_salary = models.DecimalField(max_digits=10, decimal_places=2)
+    advance_given = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, blank=True)
+    advance_deduction = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, blank=True)
+    advance_pending = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, blank=True)
+
+    salary_paid_from_account = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    date = models.DateField(default=timezone.now)
+
+    opening_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    amount_paid_to_employee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    amount_recovered = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    amount_left = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    comment = models.TextField(null=True, blank=True)
+    column_1 = models.CharField(max_length=100, null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        # Carry forward opening balance from the previous month
+        if self.pk is None:  # New entry
+            previous_month_entry = StaffSalary.objects.filter(name=self.name).order_by('-date').first()
+            if previous_month_entry:
+                self.opening_balance = previous_month_entry.amount_left
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
+class AdvanceTransaction(models.Model):
+    staff_salary = models.ForeignKey(StaffSalary, on_delete=models.CASCADE, related_name='transactions')
+    date = models.DateField(default=timezone.now)
+    advance_taken = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    advance_deducted = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    paid_received_by = models.CharField(max_length=100, default='Unknown')
+    paid_received_account = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    advance_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    comment = models.TextField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        # Update the advance pending field on the related StaffSalary instance
+        self.advance_balance = self.staff_salary.advance_pending - self.advance_deducted + self.advance_taken
+        self.staff_salary.advance_pending = self.advance_balance
+        self.staff_salary.save()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Transaction on {self.date} for {self.staff_salary.name}"

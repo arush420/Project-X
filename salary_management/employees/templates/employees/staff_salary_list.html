@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Staff Salaries</h2>
+  <a href="{% url 'employees:staff_salary_create' %}">Add Salary Entry</a>
+  <table>
+    <thead>
+      <tr>
+        <th>PF No</th>
+        <th>Name</th>
+        <th>Gross Salary</th>
+        <th>Advance Given</th>
+        <th>Advance Deduction</th>
+        <th>Advance Pending</th>
+        <th>Net Salary</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for salary in salaries %}
+        <tr>
+          <td>{{ salary.pf_no }}</td>
+          <td>{{ salary.name }}</td>
+          <td>{{ salary.gross_salary }}</td>
+          <td>{{ salary.advance_given }}</td>
+          <td>{{ salary.advance_deduction }}</td>
+          <td>{{ salary.advance_pending }}</td>
+          <td>{{ salary.net_salary }}</td>
+          <td>
+            <a href="{% url 'employees:staff_salary_update' salary.pk %}">Edit</a>
+            <a href="{% url 'employees:staff_salary_detail' salary.pk %}">View More</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
