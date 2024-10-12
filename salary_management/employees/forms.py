@@ -157,7 +157,8 @@ class StaffSalaryForm(forms.ModelForm):
 class AdvanceTransactionForm(forms.ModelForm):
     class Meta:
         model = AdvanceTransaction
-        fields = ['date', 'advance_taken', 'advance_deducted','paid_received_by', 'paid_received_account', 'comment']
+        fields = ['date', 'advance_taken', 'advance_deducted', 'nature','company',
+                  'mode', 'cheque_no', 'paid_received_by', 'paid_received_account', 'comment']
         widgets = {
             'date': forms.SelectDateWidget(),
         }

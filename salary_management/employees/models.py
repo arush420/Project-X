@@ -225,7 +225,7 @@ class VendorInformation(models.Model):
 class StaffSalary(models.Model):
     pf_no = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=100)
-    father_name = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    father_name = models.CharField(max_length=100, null=True, blank=True)
     gross_rate = models.DecimalField(max_digits=10, decimal_places=2)
 
     esic_applicable = models.BooleanField(default=False)
@@ -246,6 +246,11 @@ class StaffSalary(models.Model):
 
     salary_paid_from_account = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     date = models.DateField(default=timezone.now)
+
+    opening_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    amount_paid_to_employee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    amount_recovered = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    amount_left = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     opening_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     amount_paid_to_employee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -276,7 +281,11 @@ class AdvanceTransaction(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Amount
     paid_received = models.CharField(max_length=10,
                                      choices=[('paid', 'Paid'), ('received', 'Received')], default='paid')  # Paid to/Received
-    nature = models.CharField(max_length=100, default='personal')  # Nature, will be dynamically filtered
+    NATURE_CHOICES = [
+        ('personal', 'Personal'),
+        ('office', 'Office Expense'),
+        ('company', 'Company Expense'),]
+    nature = models.CharField(max_length=100,choices=NATURE_CHOICES ,default='personal')  # Nature, will be dynamically filtered
     company = models.CharField(max_length=100, null=True, blank=True, default='Shree Hanuman')  # Company
     mode = models.CharField(max_length=50, default='cash')  # Mode
     cheque_no = models.CharField(max_length=50, null=True, blank=True)  # Cheque No.
@@ -290,9 +299,9 @@ class AdvanceTransaction(models.Model):
     date = models.DateField(default=timezone.now)
     advance_taken = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     advance_deducted = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    advance_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     paid_received_by = models.CharField(max_length=100, default='Unknown')
     paid_received_account = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    advance_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     comment = models.TextField(null=True, blank=True)
 
     def save(self, *args, **kwargs):

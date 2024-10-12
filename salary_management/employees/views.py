@@ -135,6 +135,49 @@ def save_theme_preference(request):
 def settings_view(request):
     return render(request, 'employees/settings.html')
 
+# views.py
+@login_required
+def staff_salary_detail(request, pk):
+    salary = get_object_or_404(StaffSalary, pk=pk)
+
+    if request.method == 'POST':
+        form = AdvanceTransactionForm(request.POST)
+        if form.is_valid():
+            new_transaction = form.save(commit=False)
+            new_transaction.staff_salary = salary
+            new_transaction.save()
+            return redirect('employees:staff_salary_detail', pk=pk)
+    else:
+        form = AdvanceTransactionForm()
+
+    transactions = salary.transactions.all().order_by('-date')
+
+    return render(request, 'employees/staff_salary_detail.html', {
+        'salary': salary,
+        'transactions': transactions,
+        'form': form,
+    })
+
+
+@login_required
+def edit_transaction(request, pk):
+    transaction = get_object_or_404(AdvanceTransaction, pk=pk)
+    salary = transaction.staff_salary
+
+    if request.method == 'POST':
+        form = AdvanceTransactionForm(request.POST, instance=transaction)
+        if form.is_valid():
+            form.save()
+            return redirect('employees:staff_salary_detail', pk=salary.pk)
+    else:
+        form = AdvanceTransactionForm(instance=transaction)
+
+    return render(request, 'employees/edit_transaction.html', {
+        'form': form,
+        'salary': salary,
+        'transaction': transaction,
+    })
+
 
 # Registering a user with unique username validation
 def register_view(request):
@@ -663,27 +706,6 @@ def staff_salary_create(request):
         form = StaffSalaryForm()
     return render(request, 'employees/staff_salary_form.html', {'form': form})
 
-def staff_salary_detail(request, pk):
-    salary = get_object_or_404(StaffSalary, pk=pk)
-    # Handle form submission
-    if request.method == 'POST':
-        form = AdvanceTransactionForm(request.POST)
-        if form.is_valid():
-            new_transaction = form.save(commit=False)
-            new_transaction.staff_salary = salary
-            new_transaction.save()
-            return redirect('employees:staff_salary_detail', pk=pk)
-    else:
-        form = AdvanceTransactionForm()
-
-    # Get all transactions for the current employee
-    transactions = salary.transactions.all().order_by('-date')
-
-    return render(request, 'employees/staff_salary_detail.html', {
-        'salary': salary,
-        'transactions': transactions,
-        'form': form,
-    })
 
 def staff_salary_update(request, pk):
     salary = StaffSalary.objects.get(pk=pk)

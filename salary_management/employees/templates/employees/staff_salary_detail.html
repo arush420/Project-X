@@ -2,46 +2,49 @@
 
 {% block content %}
   <div class="container my-4">
-    <h2>{{ salary.name }} - Profile</h2>
+    <h2>PF No:{{ salary.pf_no }} | {{ salary.name }}'s Profile</h2>
 
-    <!-- Employee Details -->
     <table class="table table-bordered">
       <tbody>
         <tr>
-          <th scope="row">PF No:</th>
-          <td>{{ salary.pf_no }}</td>
+          <th>Basic:</th>
+          <td>{{ salary.basic }}</td>
         </tr>
         <tr>
-          <th scope="row">Gross Salary:</th>
+          <th>Gross Salary:</th>
           <td>{{ salary.gross_salary }}</td>
         </tr>
         <tr>
-          <th scope="row">Advance Given:</th>
+          <th>Advance Given:</th>
           <td>{{ salary.advance_given }}</td>
         </tr>
         <tr>
-          <th scope="row">Advance Pending:</th>
+          <th>Advance Pending:</th>
           <td>{{ salary.advance_pending }}</td>
         </tr>
         <tr>
-          <th scope="row">Net Salary:</th>
+          <th>Net Salary:</th>
           <td>{{ salary.net_salary }}</td>
         </tr>
       </tbody>
     </table>
 
-    <!-- Transactions Section -->
     <h3>Advance Transactions</h3>
     <table class="table table-striped">
       <thead class="thead-dark">
         <tr>
-          <th scope="col">Date</th>
-          <th scope="col">Advance Given</th>
-          <th scope="col">Advance Deducted</th>
-          <th scope="col">Paid / Received by</th>
-          <th scope="col">Paid / Received to Account </th>
-          <th scope="col">Advance Balance</th>
-          <th scope="col">Comment</th>
+          <th>Date</th>
+          <th>Advance Given</th>
+          <th>Advance Deducted</th>
+          <th>Nature</th>
+          <th>Company</th>
+          <th>Mode</th>
+          <th>Cheque no.</th>
+          <th>Paid / Received by</th>
+          <th>Paid / Received to Account </th>
+          <th>Net Amount</th>
+          <th>Comment</th>
+          <th>Edit</th>
         </tr>
       </thead>
       <tbody>
@@ -50,49 +53,28 @@
             <td>{{ transaction.date }}</td>
             <td>{{ transaction.advance_taken }}</td>
             <td>{{ transaction.advance_deducted }}</td>
+            <td>{{ transaction.nature }}</td>
+            <td>{{ transaction.company }}</td>
+            <td>{{ transaction.mode }}</td>
+            <td>{{ transaction.cheque_no }}</td>
             <td>{{ transaction.paid_received_by }}</td>
             <td>{{ transaction.paid_received_account }}</td>
             <td>{{ transaction.advance_balance }}</td>
             <td>{{ transaction.comment }}</td>
+            <td>
+              <a href="{% url 'employees:edit_transaction' transaction.pk %}" class="btn btn-sm btn-warning">Edit</a>
+            </td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
 
-    <!-- Add New Transaction Form -->
     <h3>Add New Transaction</h3>
     <form method="POST">
       {% csrf_token %}
+
       {{ form.as_p }}
       <button type="submit" class="btn btn-primary">Add Transaction</button>
-      <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const paidReceivedField = document.querySelector('#id_paid_received');
-            const natureField = document.querySelector('#id_nature');
-
-            paidReceivedField.addEventListener('change', function () {
-                const selectedOption = this.value;
-
-                // Clear the nature options
-                natureField.innerHTML = '';
-
-                if (selectedOption === 'paid') {
-                    const options = ['Personal', 'Office Expense', 'Company'];
-                    options.forEach(function (opt) {
-                        let newOption = new Option(opt, opt.toLowerCase().replace(/ /g, '_'));
-                        natureField.appendChild(newOption);
-                    });
-                } else if (selectedOption === 'received') {
-                    const options = ['Shoes', 'Dress'];
-                    options.forEach(function (opt) {
-                        let newOption = new Option(opt, opt.toLowerCase());
-                        natureField.appendChild(newOption);
-                    });
-                }
-            });
-        });
-      </script>
-
     </form>
   </div>
 {% endblock %}
