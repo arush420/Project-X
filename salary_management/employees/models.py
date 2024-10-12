@@ -1,3 +1,4 @@
+from datetime import datetime
 from os import times
 from django.db import models
 from django.utils import timezone
@@ -71,6 +72,7 @@ class Company(models.Model):
 # User Profile details
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)  # Linking to the User model
+    theme_preference = models.CharField(max_length=10, default='light')  # choosing 'light' or 'dark'
     USER_TYPE_CHOICES = [
         ('Owner', 'Owner'),
         ('Manager', 'Manager'),
@@ -267,6 +269,24 @@ class StaffSalary(models.Model):
 
 class AdvanceTransaction(models.Model):
     staff_salary = models.ForeignKey(StaffSalary, on_delete=models.CASCADE, related_name='transactions')
+
+    # New fields added
+    serial_number = models.IntegerField(default=1)  # S.NO
+    name = models.CharField(max_length=100, default='unknown')  # Name
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Amount
+    paid_received = models.CharField(max_length=10,
+                                     choices=[('paid', 'Paid'), ('received', 'Received')], default='paid')  # Paid to/Received
+    nature = models.CharField(max_length=100, default='personal')  # Nature, will be dynamically filtered
+    company = models.CharField(max_length=100, null=True, blank=True, default='Shree Hanuman')  # Company
+    mode = models.CharField(max_length=50, default='cash')  # Mode
+    cheque_no = models.CharField(max_length=50, null=True, blank=True)  # Cheque No.
+    month = models.CharField(max_length=20, default=datetime.now)  # Month
+    net_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Net Amount
+    account = models.CharField(max_length=50, null=True, blank=True, default=0.00)  # A/C
+    ifsc_code = models.CharField(max_length=50, null=True, blank=True, default=0.00)  # IFSC Code
+    column1 = models.CharField(max_length=100, null=True, blank=True)  # Column1
+
+    # Existing fields
     date = models.DateField(default=timezone.now)
     advance_taken = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     advance_deducted = models.DecimalField(max_digits=10, decimal_places=2, default=0)

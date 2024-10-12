@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+
+<!-- Display Current Theme and Option to Switch -->
+<div class="theme-toggle">
+    <p id="current-theme-text">Current Theme: Light Mode</p>
+    <label class="switch">
+        <input type="checkbox" id="theme-switch">
+        <span class="slider round"></span>
+    </label>
+    <p>Switch to <span id="toggle-theme-text">Dark Mode</span></p>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Style the switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* Rounded slider */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const themeSwitch = document.getElementById('theme-switch');
+        const currentThemeText = document.getElementById('current-theme-text');
+        const toggleThemeText = document.getElementById('toggle-theme-text');
+        let currentTheme = 'light';
+
+        // Fetch user theme preference from database if logged in
+        {% if request.user.is_authenticated %}
+            currentTheme = '{{ request.user.profile.theme_preference }}';
+        {% else %}
+            // If not logged in, use local storage
+            currentTheme = localStorage.getItem('theme') || 'light';
+        {% endif %}
+
+        // Set the initial theme based on the user's preference or local storage
+        if (currentTheme === 'dark') {
+            document.body.classList.add('dark-theme');
+            document.body.classList.remove('light-theme');
+            themeSwitch.checked = true;
+            currentThemeText.innerHTML = 'Current Theme: Dark Mode';
+            toggleThemeText.innerHTML = 'Light Mode';
+        } else {
+            document.body.classList.add('light-theme');
+            document.body.classList.remove('dark-theme');
+            currentThemeText.innerHTML = 'Current Theme: Light Mode';
+            toggleThemeText.innerHTML = 'Dark Mode';
+        }
+
+        // Toggle theme and save preference when switch is clicked
+        themeSwitch.addEventListener('change', function() {
+            let selectedTheme = this.checked ? 'dark' : 'light';
+
+            fetch('{% url "save_theme_preference" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ theme: selectedTheme })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (selectedTheme === 'dark') {
+                        document.body.classList.remove('light-theme');
+                        document.body.classList.add('dark-theme');
+                        currentThemeText.innerHTML = 'Current Theme: Dark Mode';
+                        toggleThemeText.innerHTML = 'Light Mode';
+                    } else {
+                        document.body.classList.remove('dark-theme');
+                        document.body.classList.add('light-theme');
+                        currentThemeText.innerHTML = 'Current Theme: Light Mode';
+                        toggleThemeText.innerHTML = 'Dark Mode';
+                    }
+                    localStorage.setItem('theme', selectedTheme);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

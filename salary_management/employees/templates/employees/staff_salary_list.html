@@ -1,23 +1,24 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2>Staff Salaries</h2>
-  <a href="{% url 'employees:staff_salary_create' %}">Add Salary Entry</a>
-  <table>
-    <thead>
-      <tr>
-        <th>PF No</th>
-        <th>Name</th>
-        <th>Gross Salary</th>
-        <th>Advance Given</th>
-        <th>Advance Deduction</th>
-        <th>Advance Pending</th>
-        <th>Net Salary</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for salary in salaries %}
+  <div class="container my-4">
+    <h2>Staff Salaries</h2>
+    <a href="{% url 'employees:staff_salary_create' %}" class="btn btn-primary mb-3">Add New Member</a>
+    <table class="table table-striped table-bordered">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col">PF No</th>
+          <th scope="col">Name</th>
+          <th scope="col">Gross Salary</th>
+          <th scope="col">Advance Given</th>
+          <th scope="col">Advance Deduction</th>
+          <th scope="col">Advance Pending</th>
+          <th scope="col">Net Salary</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for salary in salaries %}
         <tr>
           <td>{{ salary.pf_no }}</td>
           <td>{{ salary.name }}</td>
@@ -27,11 +28,12 @@
           <td>{{ salary.advance_pending }}</td>
           <td>{{ salary.net_salary }}</td>
           <td>
-            <a href="{% url 'employees:staff_salary_update' salary.pk %}">Edit</a>
-            <a href="{% url 'employees:staff_salary_detail' salary.pk %}">View More</a>
+            <a href="{% url 'employees:staff_salary_update' salary.pk %}" class="btn btn-warning btn-sm">Edit</a>
+            <a href="{% url 'employees:staff_salary_detail' salary.pk %}" class="btn btn-info btn-sm">View More</a>
           </td>
         </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endblock %}

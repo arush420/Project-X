@@ -67,7 +67,7 @@
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <li><a class="dropdown-item" href="{% url 'employees:user_profile_detail' %}">My Profile</a></li>
-                        <li><a class="dropdown-item" href="#">Settings</a></li>
+                        <li><a class="dropdown-item" href="{% url 'employees:settings' %}">Settings</a></li>
                         <li><a class="dropdown-item" href="#">Help</a></li>
                         {% if is_superuser %}
                         <li><a class="dropdown-item" href="{% url 'employees:manage_user_permissions' %}">Manage Permission</a></li>
@@ -92,5 +92,42 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <!-- Theme Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeSwitch = document.getElementById('theme-switch');
+            let currentTheme = 'light';
+
+            // Fetch user theme preference from database if logged in
+            {% if request.user.is_authenticated %}
+                currentTheme = '{{ request.user.userprofile.theme_preference }}';
+            {% else %}
+                // If not logged in, use local storage
+                currentTheme = localStorage.getItem('theme') || 'light';
+            {% endif %}
+
+            if (currentTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeSwitch.checked = true;
+            } else {
+                document.body.classList.add('light-theme');
+            }
+
+            // Continue with the same logic for the toggle switch
+            themeSwitch.addEventListener('change', function() {
+                if (this.checked) {
+                    document.body.classList.remove('light-theme');
+                    document.body.classList.add('dark-theme');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.body.classList.remove('dark-theme');
+                    document.body.classList.add('light-theme');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+        });
+    </script>
+
 </body>
 </html>

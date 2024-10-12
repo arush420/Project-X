@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q, Sum
 from django.utils import timezone
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -18,6 +18,8 @@ import pandas as pd
 from django.views import View
 from django.views.generic import ListView
 from datetime import datetime
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 # Import your models and forms
 from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company,
@@ -113,6 +115,25 @@ def manage_user_permissions(request):
     groups = Group.objects.all()
     context = {'users': users, 'groups': groups}
     return render(request, 'employees/manage_permissions.html', context)
+
+@login_required
+@csrf_exempt
+def save_theme_preference(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        theme = data.get('theme', 'light')
+
+        # Update the user's profile
+        user_profile = request.user.userprofile
+        user_profile.theme_preference = theme
+        user_profile.save()
+
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False}, status=400)
+
+@login_required
+def settings_view(request):
+    return render(request, 'employees/settings.html')
 
 
 # Registering a user with unique username validation

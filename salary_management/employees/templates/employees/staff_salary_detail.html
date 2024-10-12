@@ -36,10 +36,10 @@
       <thead class="thead-dark">
         <tr>
           <th scope="col">Date</th>
-          <th scope="col">Advance Taken</th>
+          <th scope="col">Advance Given</th>
           <th scope="col">Advance Deducted</th>
-          <th scope="col">Paid/Received by</th>
-          <th scope="col">Paid/Received to Account </th>
+          <th scope="col">Paid / Received by</th>
+          <th scope="col">Paid / Received to Account </th>
           <th scope="col">Advance Balance</th>
           <th scope="col">Comment</th>
         </tr>
@@ -65,6 +65,34 @@
       {% csrf_token %}
       {{ form.as_p }}
       <button type="submit" class="btn btn-primary">Add Transaction</button>
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const paidReceivedField = document.querySelector('#id_paid_received');
+            const natureField = document.querySelector('#id_nature');
+
+            paidReceivedField.addEventListener('change', function () {
+                const selectedOption = this.value;
+
+                // Clear the nature options
+                natureField.innerHTML = '';
+
+                if (selectedOption === 'paid') {
+                    const options = ['Personal', 'Office Expense', 'Company'];
+                    options.forEach(function (opt) {
+                        let newOption = new Option(opt, opt.toLowerCase().replace(/ /g, '_'));
+                        natureField.appendChild(newOption);
+                    });
+                } else if (selectedOption === 'received') {
+                    const options = ['Shoes', 'Dress'];
+                    options.forEach(function (opt) {
+                        let newOption = new Option(opt, opt.toLowerCase());
+                        natureField.appendChild(newOption);
+                    });
+                }
+            });
+        });
+      </script>
+
     </form>
   </div>
 {% endblock %}

@@ -32,4 +32,6 @@ urlpatterns = [
     path('salaries/new/', views.staff_salary_create, name='staff_salary_create'),
     path('salaries/edit/<int:pk>/', views.staff_salary_update, name='staff_salary_update'),
     path('salaries/detail/<int:pk>/', views.staff_salary_detail, name='staff_salary_detail'),  # Detail view
+    path('settings/', views.settings_view, name='settings'),  # Add this for the settings page
+    path('save-theme-preference/', views.save_theme_preference, name='save_theme_preference'), #added this to save theme preference
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

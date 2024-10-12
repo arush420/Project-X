@@ -1,0 +1,23 @@
+/* theme.css */
+
+/* Light Theme (default) */
+body.light-theme {
+    background-color: white;
+    color: black;
+}
+
+.navbar.light-theme {
+    background-color: #f8f9fa;
+    color: black;
+}
+
+/* Dark Theme */
+body.dark-theme {
+    background-color: #121212;
+    color: white;
+}
+
+.navbar.dark-theme {
+    background-color: #343a40;
+    color: white;
+}
