@@ -1,56 +1,60 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <div class="container my-4">
-    <h2>PF No:{{ salary.pf_no }} | {{ salary.name }}'s Profile</h2>
-
-    <table class="table table-bordered">
-      <tbody>
-        <tr>
-          <th>Basic:</th>
-          <td>{{ salary.basic }}</td>
-        </tr>
-        <tr>
-          <th>Gross Salary:</th>
-          <td>{{ salary.gross_salary }}</td>
-        </tr>
-        <tr>
-          <th>Advance Given:</th>
-          <td>{{ salary.advance_given }}</td>
-        </tr>
-        <tr>
-          <th>Advance Pending:</th>
-          <td>{{ salary.advance_pending }}</td>
-        </tr>
-        <tr>
-          <th>Net Salary:</th>
-          <td>{{ salary.net_salary }}</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h3>Advance Transactions</h3>
-    <table class="table table-striped">
-      <thead class="thead-dark">
-        <tr>
-          <th>Date</th>
-          <th>Advance Given</th>
-          <th>Advance Deducted</th>
-          <th>Nature</th>
-          <th>Company</th>
-          <th>Mode</th>
-          <th>Cheque no.</th>
-          <th>Paid / Received by</th>
-          <th>Paid / Received to Account </th>
-          <th>Net Amount</th>
-          <th>Comment</th>
-          <th>Edit</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for transaction in transactions %}
+<div class="container-fluid my-4 px-2">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h2 class="mb-0">PF No: {{ salary.pf_no }} | {{ salary.name }}'s Profile</h2>
+    </div>
+    <div class="card-body">
+      <!-- Employee Details -->
+      <table class="table table-bordered w-100">
+        <tbody>
           <tr>
-            <td>{{ transaction.date }}</td>
+            <th scope="row">Basic:</th>
+            <td>{{ salary.basic }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Gross Salary:</th>
+            <td>{{ salary.gross_salary }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Advance Given:</th>
+            <td>{{ salary.advance_given }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Advance Pending:</th>
+            <td>{{ salary.advance_pending }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Net Salary:</th>
+            <td>{{ salary.net_salary }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Advance Transactions</h3>
+      <table class="table table-striped table-hover w-100">
+        <thead class="thead-dark">
+          <tr>
+            <th>Date</th>
+            <th>Advance Given</th>
+            <th>Advance Deducted</th>
+            <th>Nature</th>
+            <th>Company</th>
+            <th>Mode</th>
+            <th>Cheque no.</th>
+            <th>Paid / Received by</th>
+            <th>Paid / Received to Account</th>
+            <th>Net Amount</th>
+            <th>Comment</th>
+            <th>Edit</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for transaction in transactions %}
+          <tr>
+            <td>{{ transaction.date|date:"d-M-Y" }}</td>
             <td>{{ transaction.advance_taken }}</td>
             <td>{{ transaction.advance_deducted }}</td>
             <td>{{ transaction.nature }}</td>
@@ -65,16 +69,86 @@
               <a href="{% url 'employees:edit_transaction' transaction.pk %}" class="btn btn-sm btn-warning">Edit</a>
             </td>
           </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+          {% endfor %}
+        </tbody>
+      </table>
 
-    <h3>Add New Transaction</h3>
-    <form method="POST">
-      {% csrf_token %}
+      <h3>Add New Transaction</h3>
+      <form method="POST">
+        {% csrf_token %}
 
-      {{ form.as_p }}
-      <button type="submit" class="btn btn-primary">Add Transaction</button>
-    </form>
+        <!-- First Row: Date -->
+        <div class="form-group row">
+          <label for="id_date" class="col-sm-2 col-form-label">Date</label>
+          <div class="col-sm-10">
+            {{ form.date }}
+          </div>
+        </div>
+
+        <!-- Second Row: Advance Taken, Advance Deducted, Mode -->
+        <div class="form-group row">
+          <div class="col-sm-4">
+            <label for="id_advance_taken">Advance Taken</label>
+            {{ form.advance_taken }}
+          </div>
+          <div class="col-sm-4">
+            <label for="id_advance_deducted">Advance Deducted</label>
+            {{ form.advance_deducted }}
+          </div>
+          <div class="col-sm-4">
+            <label for="id_mode">Mode</label>
+            {{ form.mode }}
+          </div>
+        </div>
+
+        <!-- Third Row: Cheque No., Nature, Company -->
+        <div class="form-group row">
+          <div class="col-sm-4">
+            <label for="id_cheque_no">Cheque No.</label>
+            {{ form.cheque_no }}
+          </div>
+          <div class="col-sm-4">
+            <label for="id_nature">Nature</label>
+            {{ form.nature }}
+          </div>
+          <div class="col-sm-4">
+            <label for="id_company">Company</label>
+            {{ form.company }}
+          </div>
+        </div>
+
+        <!-- Fourth Row: Paid/Received By, Paid/Received Account -->
+        <div class="form-group row">
+          <div class="col-sm-6">
+            <label for="id_paid_received_by">Paid/Received By</label>
+            {{ form.paid_received_by }}
+          </div>
+          <div class="col-sm-6">
+            <label for="id_paid_received_account">Paid/Received Account</label>
+            {{ form.paid_received_account }}
+          </div>
+        </div>
+
+        <!-- Fifth Row: Comment and Submit -->
+        <div class="form-group row">
+          <div class="col-sm-10">
+            <label for="id_comment">Comment</label>
+            {{ form.comment }}
+          </div>
+          <div class="col-sm-2">
+            <button type="submit" class="btn btn-primary mt-4">Add Transaction</button>
+          </div>
+        </div>
+      </form>
+    </div>
   </div>
+</div>
+
+<style>
+  #id_comment {
+    height: 35px;
+    width: 100%;
+  }
+</style>
+
 {% endblock %}

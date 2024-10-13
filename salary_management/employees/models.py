@@ -287,7 +287,10 @@ class AdvanceTransaction(models.Model):
         ('company', 'Company Expense'),]
     nature = models.CharField(max_length=100,choices=NATURE_CHOICES ,default='personal')  # Nature, will be dynamically filtered
     company = models.CharField(max_length=100, null=True, blank=True, default='Shree Hanuman')  # Company
-    mode = models.CharField(max_length=50, default='cash')  # Mode
+    MODE_CHOICES = [
+        ('cash', 'Cash'),
+        ('bank', 'Bank')]
+    mode = models.CharField(max_length=50, choices=MODE_CHOICES, default='cash')  # Mode
     cheque_no = models.CharField(max_length=50, null=True, blank=True)  # Cheque No.
     month = models.CharField(max_length=20, default=datetime.now)  # Month
     net_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Net Amount
