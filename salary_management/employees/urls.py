@@ -28,6 +28,7 @@ urlpatterns = [
     path('purchase-item-input/', views.purchase_item_input, name='purchase_item_input'),
     path('vendor-information-input/', views.vendor_information_input, name='vendor_information_input'),
     path('companies/', views.company_list, name='company_list'),
+    path('companies/delete/<int:company_id>/', views.delete_company, name='delete_company'),
     path('salaries/', views.staff_salary_list, name='staff_salary_list'),
     path('salaries/new/', views.staff_salary_create, name='staff_salary_create'),
     path('salaries/edit/<int:pk>/', views.staff_salary_update, name='staff_salary_update'),

@@ -680,9 +680,13 @@ def vendor_information_input(request):
 
 
 def company_list(request):
-    companies = Company.objects.all()
-    company_form = CompanyForm()
-    add_company_form = AddCompanyForm()
+    # Search functionality (correct method for retrieving GET parameters)
+    query = request.GET.get('q', '')  # Note the lowercase 'get'
+    if query:
+        companies = Company.objects.filter(company_name__icontains=query)
+    else:
+        companies = Company.objects.all()
+
     selected_company = None
 
     if request.method == 'POST':
@@ -692,18 +696,9 @@ def company_list(request):
             company_form = CompanyForm(instance=selected_company)
 
         elif 'add_company' in request.POST:
-            add_company_form = AddCompanyForm(request.POST)
-            if add_company_form.is_valid():
-                Company.objects.create(
-                    company_code=add_company_form.cleaned_data['company_code'],
-                    company_name=add_company_form.cleaned_data['company_name'],
-                    company_address=add_company_form.cleaned_data['company_address'],
-                    company_gst_number=add_company_form.cleaned_data['company_gst_number'],
-                    company_account_number=add_company_form.cleaned_data['company_account_number'],
-                    company_ifsc_code=add_company_form.cleaned_data['company_ifsc_code'],
-                    company_contact_person_name=add_company_form.cleaned_data['company_contact_person_name'],
-                    company_contact_person_number=add_company_form.cleaned_data['company_contact_person_number'],
-                )
+            company_form = CompanyForm(request.POST)
+            if company_form.is_valid():
+                company_form.save()
                 messages.success(request, "Company added successfully!")
                 return redirect('employees:company_list')
 
@@ -716,13 +711,24 @@ def company_list(request):
                 messages.success(request, "Company details updated successfully!")
                 return redirect('employees:company_list')
 
+    else:
+        company_form = CompanyForm()
+
     context = {
         'companies': companies,
         'company_form': company_form,
-        'add_company_form': add_company_form,
         'selected_company': selected_company,
+        'query': query,  # Pass the search query to the template
     }
     return render(request, 'employees/company_list.html', context)
+
+
+def delete_company(request, company_id):
+    company = get_object_or_404(Company, id=company_id)
+    company.delete()
+    messages.success(request, "Company deleted successfully!")
+    return redirect('employees:company_list')
+
 
 # Staff Salary view
 def staff_salary_list(request):

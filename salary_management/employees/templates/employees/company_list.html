@@ -3,45 +3,84 @@
 {% block title %}Company List{% endblock %}
 
 {% block content %}
-    <h2>Company List</h2>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <h2>Company List</h2>
 
-    <!-- Display messages -->
-    {% if messages %}
-        <ul>
-            {% for message in messages %}
-                <li style="color: {{ message.tags }}">{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+            <!-- Search Bar -->
+            <form method="GET" action="{% url 'employees:company_list' %}" class="form-inline mb-3">
+                <input class="form-control mr-sm-2" type="search" name="q" value="{{ query }}" placeholder="Search for a company" aria-label="Search">
+                <button class="btn btn-outline-primary" type="submit">Search</button>
+            </form>
 
-    <!-- Form to select a company -->
-    <form method="POST" action="{% url 'employees:company_list' %}">
-        {% csrf_token %}
-        <select name="company">
-            <option value="">Select a company</option>
-            {% for company in companies %}
-                <option value="{{ company.id }}">{{ company.company_name }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit">Select Company</button>
-    </form>
+            <!-- Add Company Button -->
+            <button class="btn btn-success mb-3" id="toggleAddCompanyForm">Add New Company</button>
 
-    <!-- Display selected company details if available -->
-    {% if selected_company %}
-        <h3>Company Details</h3>
-        <form method="POST" action="{% url 'employees:company_list' %}">
-            {% csrf_token %}
-            {{ company_form.as_p }}
-            <input type="hidden" name="selected_company_id" value="{{ selected_company.id }}">
-            <button type="submit" name="update_company">Update Company</button>
-        </form>
-    {% endif %}
+            <!-- Add Company Form (hidden by default) -->
+            <div id="addCompanyForm" style="display: none;">
+                <h4>Add Company</h4>
+                <form method="POST" action="{% url 'employees:company_list' %}">
+                    {% csrf_token %}
+                    {{ company_form.as_p }}
+                    <button type="submit" name="add_company" class="btn btn-primary w-100">Add Company</button>
+                </form>
+            </div>
 
-    <!-- Form to add a new company -->
-    <h3>Add New Company</h3>
-    <form method="POST" action="{% url 'employees:company_list' %}">
-        {% csrf_token %}
-        {{ add_company_form.as_p }}
-        <button type="submit" name="add_company">Add Company</button>
-    </form>
+            <!-- Company List Table -->
+            <table class="table table-striped mt-3">
+                <thead>
+                    <tr>
+                        <th>Company Code</th>
+                        <th>Company Name</th>
+                        <th>GST Number</th>
+                        <th>Contact Person</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for company in companies %}
+                        <tr>
+                            <td>{{ company.company_code }}</td>
+                            <td>{{ company.company_name }}</td>
+                            <td>{{ company.company_gst_number }}</td>
+                            <td>{{ company.company_contact_person_name }}</td>
+                            <td>
+                                <button class="btn btn-info btn-sm" onclick="toggleCompanyDetails('{{ company.id }}')">View</button>
+                                <button class="btn btn-warning btn-sm" onclick="editCompany('{{ company.id }}')">Edit</button>
+                                <form method="POST" action="{% url 'employees:delete_company' company.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <!-- Hidden Company Details -->
+                        <tr id="company-details-{{ company.id }}" style="display: none;">
+                            <td colspan="5">
+                                <strong>Address:</strong> {{ company.company_address }}<br>
+                                <strong>Account Number:</strong> {{ company.company_account_number }}<br>
+                                <strong>IFSC Code:</strong> {{ company.company_ifsc_code }}<br>
+                                <strong>Contact Number:</strong> {{ company.company_contact_person_number }}<br>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle Add Company Form visibility
+    document.getElementById('toggleAddCompanyForm').onclick = function () {
+        var form = document.getElementById('addCompanyForm');
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    };
+
+    // Toggle visibility of company details
+    function toggleCompanyDetails(companyId) {
+        var detailsRow = document.getElementById('company-details-' + companyId);
+        detailsRow.style.display = detailsRow.style.display === 'none' ? 'table-row' : 'none';
+    }
+</script>
 {% endblock %}
