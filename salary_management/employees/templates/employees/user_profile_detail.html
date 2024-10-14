@@ -4,30 +4,84 @@
 
 {% block content %}
     <h1>User Profile</h1>
-    <p>Username: {{ request.user.username }}</p>
-    <p>First Name: {{ profile.user.first_name }}</p>
-    <p>Last Name: {{ profile.user.last_name }}</p>
-    <p>User Type: {{ profile.user_type }}</p>
 
-    {% if profile.user_type == 'Owner' %}
-        <h2>Owner Details</h2>
-        {% if profile.organisation_name %}
-            <p>Organisation Name: {{ profile.organisation_name }}</p>
+    <form method="POST" id="profile-form">
+        {% csrf_token %}
+
+        <!-- Display Profile Details -->
+        <h2>Profile Information</h2>
+        <p>Username: {{ request.user.username }}</p>
+        <p>First Name: <input type="text" name="first_name" class="form-control" value="{{ profile.user.first_name }}" disabled></p>
+        <p>Last Name: <input type="text" name="last_name" class="form-control" value="{{ profile.user.last_name }}" disabled></p>
+        <p>User Type: {{ profile.user_type }}</p>
+
+        {% if profile.user_type == 'Owner' %}
+            <h3>Owner Details</h3>
+            <div class="form-group">
+                <label for="id_organisation_name">Organisation Name</label>
+                <input type="text" name="organisation_name" id="id_organisation_name" class="form-control" value="{{ profile.organisation_name }}" disabled>
+            </div>
+            <div class="form-group">
+                <label for="id_organisation_address">Organisation Address</label>
+                <input type="text" name="organisation_address" id="id_organisation_address" class="form-control" value="{{ profile.organisation_address }}" disabled>
+            </div>
+            <div class="form-group">
+                <label for="id_contact_number">Contact Number</label>
+                <input type="text" name="contact_number" id="id_contact_number" class="form-control" value="{{ profile.contact_number }}" disabled>
+            </div>
+            <div class="form-group">
+                <label for="id_account_number">Account Number</label>
+                <input type="text" name="account_number" id="id_account_number" class="form-control" value="{{ profile.account_number }}" disabled>
+            </div>
+            <div class="form-group">
+                <label for="id_ifsc_code">IFSC Code</label>
+                <input type="text" name="ifsc_code" id="id_ifsc_code" class="form-control" value="{{ profile.ifsc_code }}" disabled>
+            </div>
+            <div class="form-group">
+                <label for="id_gst_number">GST Number</label>
+                <input type="text" name="gst_number" id="id_gst_number" class="form-control" value="{{ profile.gst_number }}" disabled>
+            </div>
         {% endif %}
-        {% if profile.organisation_address %}
-            <p>Organisation Address: {{ profile.organisation_address }}</p>
-        {% endif %}
-        {% if profile.contact_number %}
-            <p>Contact Number: {{ profile.contact_number }}</p>
-        {% endif %}
-        {% if profile.account_number %}
-            <p>Account Number: {{ profile.account_number }}</p>
-        {% endif %}
-        {% if profile.ifsc_code %}
-            <p>IFSC Code: {{ profile.ifsc_code }}</p>
-        {% endif %}
-        {% if profile.gst_number %}
-            <p>GST Number: {{ profile.gst_number }}</p>
-        {% endif %}
-    {% endif %}
+
+        <!-- Edit, Save, and Cancel Buttons -->
+        <div class="form-group">
+            <button type="button" class="btn btn-secondary" id="edit-btn">Edit</button>
+            <button type="submit" class="btn btn-primary" id="save-btn" style="display:none;">Save</button>
+            <button type="button" class="btn btn-danger" id="cancel-btn" style="display:none;">Cancel</button>
+        </div>
+    </form>
+
+    <!-- JavaScript to toggle between edit and view mode -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const editBtn = document.getElementById('edit-btn');
+            const saveBtn = document.getElementById('save-btn');
+            const cancelBtn = document.getElementById('cancel-btn');
+            const inputs = document.querySelectorAll('input');
+
+            // Initially, all fields are disabled
+            function toggleEditable(editable) {
+                inputs.forEach(input => {
+                    input.disabled = !editable;
+                });
+                // Show/Hide buttons accordingly
+                editBtn.style.display = editable ? 'none' : 'inline-block';
+                saveBtn.style.display = editable ? 'inline-block' : 'none';
+                cancelBtn.style.display = editable ? 'inline-block' : 'none';
+            }
+
+            // Set to view mode initially
+            toggleEditable(false);
+
+            // Click event for Edit button
+            editBtn.addEventListener('click', () => {
+                toggleEditable(true);
+            });
+
+            // Click event for Cancel button
+            cancelBtn.addEventListener('click', () => {
+                toggleEditable(false);
+            });
+        });
+    </script>
 {% endblock %}

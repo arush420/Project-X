@@ -6,7 +6,7 @@ from decimal import Decimal
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from django.db.models.signals import post_migrate
+from django.db.models.signals import post_migrate, post_save
 from django.dispatch import receiver
 from django.core.validators import RegexValidator
 
@@ -28,6 +28,43 @@ phone_regex = RegexValidator(regex=r'^\+?1?\d{9,15}$', message="Phone number mus
 class MyModel(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
+
+class Company(models.Model):
+    company_code = models.CharField(max_length=4, default="0000")
+    company_name = models.CharField(max_length=100, default="")
+    company_address = models.TextField()
+    company_gst_number = models.CharField(max_length=20)
+    company_account_number = models.CharField(max_length=20)
+    company_ifsc_code = models.CharField(max_length=11)
+    company_contact_person_name = models.CharField(max_length=100)
+    company_contact_person_number = models.CharField(validators=[phone_regex], max_length=10)
+
+    def __str__(self):
+        return self.company_name
+
+
+# User Profile details
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)  # Linking to the User model
+    theme_preference = models.CharField(max_length=10, default='light')  # choosing 'light' or 'dark'
+    USER_TYPE_CHOICES = [
+        ('Owner', 'Owner'),
+        ('Manager', 'Manager'),
+        ('Employee', 'Employee'),
+    ]
+    user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='Employee')
+    company = models.ForeignKey(Company, null=True, blank=True, on_delete=models.SET_NULL)
+
+    # Owner-specific fields
+    organisation_name = models.CharField(max_length=255, blank=True, null=True)
+    organisation_address = models.TextField(blank=True, null=True)
+    contact_number = models.CharField(max_length=15, blank=True, null=True)
+    account_number = models.CharField(max_length=20, blank=True, null=True)
+    ifsc_code = models.CharField(max_length=11, blank=True, null=True)
+    gst_number = models.CharField(max_length=15, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.user_type}"
 
 @receiver(post_migrate)
 def create_user_groups(sender, **kwargs):
@@ -54,45 +91,14 @@ def create_user_groups(sender, **kwargs):
             read_write_group.permissions.add(*read_write_permissions)
             read_only_group.permissions.add(*read_only_permissions)
 
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
 
-
-class Company(models.Model):
-    company_code = models.CharField(max_length=4, default="0000")
-    company_name = models.CharField(max_length=100, default="")
-    company_address = models.TextField()
-    company_gst_number = models.CharField(max_length=20)
-    company_account_number = models.CharField(max_length=20)
-    company_ifsc_code = models.CharField(max_length=11)
-    company_contact_person_name = models.CharField(max_length=100)
-    company_contact_person_number = models.CharField(validators=[phone_regex], max_length=10)
-
-    def __str__(self):
-        return self.company_name
-
-# User Profile details
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)  # Linking to the User model
-    theme_preference = models.CharField(max_length=10, default='light')  # choosing 'light' or 'dark'
-    USER_TYPE_CHOICES = [
-        ('Owner', 'Owner'),
-        ('Manager', 'Manager'),
-        ('Employee', 'Employee'),
-    ]
-    user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='Employee')
-    company = models.ForeignKey(Company, null=True, blank=True, on_delete=models.SET_NULL)
-
-    # Owner-specific fields
-    organisation_name = models.CharField(max_length=255, blank=True, null=True)
-    organisation_address = models.TextField(blank=True, null=True)
-    contact_number = models.CharField(max_length=15, blank=True, null=True)
-    account_number = models.CharField(max_length=20, blank=True, null=True)
-    ifsc_code = models.CharField(max_length=11, blank=True, null=True)
-    gst_number = models.CharField(max_length=15, blank=True, null=True)
-
-    def __str__(self):
-        return f"{self.user.username} - {self.user_type}"
-
-
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    instance.profile.save()
 
 class Employee(models.Model):
     employee_code = models.CharField(max_length=10, unique=True)

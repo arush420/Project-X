@@ -26,7 +26,7 @@ from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, Ven
                      StaffSalary, AdvanceTransaction)
 from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm,
                     CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm,
-                    AdvanceTransactionForm)
+                    AdvanceTransactionForm, ProfileEditForm)
 
 def get_user_role_flags(user):
     """
@@ -188,23 +188,27 @@ def register_view(request):
                 user = form.save()
 
                 # Profile creation and assigning group based on user type
-                user_type = form.cleaned_data['user_type']
-                company = form.cleaned_data.get('company_name', None)
-                profile = Profile.objects.create(user=user, user_type=user_type, company_name=company)
+                profile = Profile.objects.create(
+                    user=user,
+                    user_type=form.cleaned_data['user_type'],
+                    company=form.cleaned_data.get('company_name', None)
+                )
 
-                if user_type == 'Owner':
-                    profile.organisation_name = form.cleaned_data['organisation_name']
-                    profile.organisation_address = form.cleaned_data['organisation_address']
-                    profile.contact_number = form.cleaned_data['contact_number']
-                    profile.account_number = form.cleaned_data['account_number']
-                    profile.ifsc_code = form.cleaned_data['ifsc_code']
-                    profile.gst_number = form.cleaned_data['gst_number']
+                if profile.user_type == 'Owner':
+                    # Assign Owner-specific fields directly to profile
+                    profile.organisation_name = form.cleaned_data.get('organisation_name', "")
+                    profile.organisation_address = form.cleaned_data.get('organisation_address', "")
+                    profile.contact_number = form.cleaned_data.get('contact_number', "")
+                    profile.account_number = form.cleaned_data.get('account_number', "")
+                    profile.ifsc_code = form.cleaned_data.get('ifsc_code', "")
+                    profile.gst_number = form.cleaned_data.get('gst_number', "")
                     profile.save()
 
-                    # Add default owner permissions (or custom group)
+                    # Add owner group permissions
                     owner_group = Group.objects.get(name='Owner')
                     user.groups.add(owner_group)
-                elif user_type == 'Manager':
+
+                elif profile.user_type == 'Manager':
                     manager_group = Group.objects.get(name='Manager')
                     user.groups.add(manager_group)
                 else:
@@ -212,13 +216,18 @@ def register_view(request):
                     user.groups.add(employee_group)
 
                 login(request, user)
-                return redirect('login')
+                messages.success(request, "Registration successful! You are now logged in.")
+                return redirect('employees:home')
+
             except IntegrityError:
                 form.add_error('username', 'Username already exists. Please try another.')
+                messages.error(request, 'Username already exists. Please try again.')
     else:
         form = CustomUserCreationForm()
 
     return render(request, 'employees/register.html', {'form': form})
+
+
 
 # Logging in a user
 def login_view(request):
@@ -231,6 +240,8 @@ def login_view(request):
             # Use role flags to decide the redirect
             role_flags = get_user_role_flags(user)
 
+            messages.success(request, "Login successful! Welcome back.")
+
             if role_flags['is_superuser']:
                 return redirect('employees:superuser_dashboard')
             elif role_flags['is_read_write']:
@@ -239,6 +250,9 @@ def login_view(request):
                 return redirect('employees:read_only_dashboard')
             else:
                 return redirect('employees:home')  # Default fallback
+
+        else:
+            messages.error(request, "Invalid username or password. Please try again.")
 
     else:
         form = AuthenticationForm()
@@ -250,16 +264,35 @@ def logout_view(request):
     logout(request)
     return redirect('employees:login')
 
-
+@login_required
 def user_profile_detail(request):
-    profile = request.user.profile  # Assuming a OneToOne relationship with User
+    user = request.user
+    try:
+        profile = user.profile  # Get the user's profile
+    except Profile.DoesNotExist:
+        profile = Profile.objects.create(user=user) # If profile does not exist, create a new one for the user
+
+
+    # Handle the form submission for editing the profile
+    if request.method == 'POST':
+        # If it's a POST request, process the form and update the profile
+        form = ProfileEditForm(request.POST, instance=profile)  # Bind the form with POST data
+        if form.is_valid():
+            form.save() # Save the updated profile information
+            messages.success(request, "Profile updated successfully!")
+            return redirect('user_profile_detail')  # Refresh page after successful update
+    else:
+        # If it's a GET request, display the form with the current profile data
+        form = ProfileEditForm(instance=profile)  # Pre-fill form with current profile data
+
     context = {
         'profile': profile,
-        'is_superuser': request.user.groups.filter(name='Superuser').exists(),
-        'is_read_write': request.user.groups.filter(name='Read and Write').exists(),  # Match group name
-        'is_read_only': request.user.groups.filter(name='Read Only').exists(),  # Match group name
+        'form': form,
+        'is_superuser': user.groups.filter(name='Superuser').exists(),
+        'is_read_write': user.groups.filter(name='Read and Write').exists(),
+        'is_read_only': user.groups.filter(name='Read Only').exists(),
     }
-    return render(request, 'user_profile_detail.html', context)
+    return render(request, 'employees/user_profile_detail.html', context)
 
 
 

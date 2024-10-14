@@ -3,12 +3,12 @@
 {% block title %}Register{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container mt-5">
     <div class="row justify-content-center">
         <!-- Column adjusted for smaller screens -->
         <div class="col-lg-6 col-md-8 col-sm-10 col-12">
             <div class="card shadow-sm">
-                <div class="card-header text-center">
+                <div class="card-header bg-primary text-white text-center">
                     <h2>Register</h2>
                 </div>
                 <div class="card-body">
@@ -16,7 +16,6 @@
                         {% csrf_token %}
                         <!-- Form fields rendered from Django form -->
                         {{ form.as_p }}
-
                         <!-- Hidden fields for company registration details -->
                         <div id="company-details" style="display:none;">
                             <div class="form-group owner-field mb-3">
@@ -44,11 +43,9 @@
                                 <input type="text" name="gst_number" id="id_gst_number" class="form-control">
                             </div>
                         </div>
-
                         <!-- Submit button -->
                         <button type="submit" class="btn btn-primary w-100">Register</button>
                     </form>
-
                     <!-- Link to login -->
                     <div class="text-center mt-3">
                         <a href="{% url 'employees:login' %}" class="btn btn-link">Already have an account? Login</a>
@@ -64,22 +61,18 @@
         const userTypeField = document.querySelector('#id_user_type');
         const companyField = document.querySelector('#id_company_name');
         const companyDetails = document.querySelector('#company-details');
-
         function toggleFields() {
             const isOwner = userTypeField.value === 'Owner';
             const isOtherCompany = companyField.value === 'Other';
-
             if (isOwner && isOtherCompany) {
                 companyDetails.style.display = 'block';
             } else {
                 companyDetails.style.display = 'none';
             }
         }
-
         // Event listeners for field changes
         userTypeField.addEventListener('change', toggleFields);
         companyField.addEventListener('change', toggleFields);
-
         // Initial check on page load
         toggleFields();
     });

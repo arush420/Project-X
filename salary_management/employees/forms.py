@@ -4,13 +4,12 @@ from .models import (Employee, Task, Payment, PurchaseItem, VendorInformation,
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 
-
+# User Registration
 USER_TYPE_CHOICES = [
     ('Owner', 'Owner'),
     ('Manager', 'Manager'),
     ('Employee', 'Employee'),
 ]
-
 
 class CustomUserCreationForm(UserCreationForm):
     first_name = forms.CharField(max_length=30, required=True)
@@ -19,7 +18,6 @@ class CustomUserCreationForm(UserCreationForm):
 
     company_name = forms.ModelChoiceField(queryset=Company.objects.all(),
                                           required=False, empty_label="Select Company")
-
 
     class Meta:
         model = User
@@ -56,6 +54,27 @@ class CustomUserCreationForm(UserCreationForm):
         return cleaned_data
 
 
+class ProfileEditForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = [
+            'theme_preference',
+            'organisation_name',
+            'organisation_address',
+            'contact_number',
+            'account_number',
+            'ifsc_code',
+            'gst_number',
+            'company',  # Assuming users can change their company if needed
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Customize fields (e.g., make some fields read-only, optional, etc.)
+        self.fields['company'].empty_label = "Select Company"
+
+
+# User login Form
 class LoginForm(AuthenticationForm):
     username = forms.CharField(max_length=254, widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label="Password", widget=forms.PasswordInput(attrs={'class': 'form-control'}))
