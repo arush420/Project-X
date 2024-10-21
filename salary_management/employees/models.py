@@ -66,6 +66,7 @@ class Profile(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.user_type}"
 
+
 @receiver(post_migrate)
 def create_user_groups(sender, **kwargs):
     # Create groups
@@ -73,23 +74,37 @@ def create_user_groups(sender, **kwargs):
     read_write_group, rw_created = Group.objects.get_or_create(name='Read and Write')
     read_only_group, ro_created = Group.objects.get_or_create(name='Read Only')
 
-    # Assign specific permissions to groups if they were just created
-    if rw_created or ro_created:
-        content_types = [
-            ContentType.objects.get_for_model(Employee),
-            ContentType.objects.get_for_model(Salary),
-            ContentType.objects.get_for_model(Profile),
-            ContentType.objects.get_for_model(Payment),
-            ContentType.objects.get_for_model(VendorInformation),
-            ContentType.objects.get_for_model(PurchaseItem),
-        ]
+    # Fetch content types for the relevant models
+    content_types = [
+        ContentType.objects.get_for_model(Employee),
+        ContentType.objects.get_for_model(Salary),
+        ContentType.objects.get_for_model(Profile),
+        ContentType.objects.get_for_model(Payment),
+        ContentType.objects.get_for_model(VendorInformation),
+        ContentType.objects.get_for_model(PurchaseItem),
+    ]
 
+    # Assign all permissions to the "Superuser" group
+    if superuser_created:
         for content_type in content_types:
-            read_only_permissions = Permission.objects.filter(content_type=content_type, codename__startswith='view')
-            read_write_permissions = Permission.objects.filter(content_type=content_type).exclude(codename__startswith='delete')
+            all_permissions = Permission.objects.filter(content_type=content_type)
+            superuser_group.permissions.add(*all_permissions)
 
+    # Assign permissions for the "Read and Write" group
+    if rw_created:
+        for content_type in content_types:
+            # Exclude delete permissions for read-write group
+            read_write_permissions = Permission.objects.filter(content_type=content_type).exclude(
+                codename__startswith='delete')
             read_write_group.permissions.add(*read_write_permissions)
+
+    # Assign read-only permissions for the "Read Only" group
+    if ro_created:
+        for content_type in content_types:
+            # Only assign 'view' permissions for read-only group
+            read_only_permissions = Permission.objects.filter(content_type=content_type, codename__startswith='view')
             read_only_group.permissions.add(*read_only_permissions)
+
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
