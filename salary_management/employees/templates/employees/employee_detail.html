@@ -7,20 +7,26 @@
 
 <form method="GET" action="{% url 'employees:employee_detail' %}">
     {{ form.as_p }}
-    <button type="submit">Search</button>
+    <button type="submit" class="btn btn-primary">Search</button>
 </form>
+
+{% if not_found %}
+    <div class="alert alert-danger">
+        Details not found, such a record does not exist.
+    </div>
+{% endif %}
 
 {% if employee %}
     <h2>Employee Details</h2>
     <p><strong>Employee Code:</strong> {{ employee.employee_code }}</p>
     <p><strong>Name:</strong> {{ employee.name }}</p>
-    <p><strong>Father Name:</strong> {{ employee.father_name }}</p>
+    <p><strong>Father's Name:</strong> {{ employee.father_name }}</p>
 
     <h3>Salary History</h3>
-    {% if salaries %}
+    {% if salaries.exists %}
     <p>Salary records found: {{ salaries.count }}</p>
-    <table>
-        <thead>
+    <table class="table table-bordered table-striped">
+        <thead class="thead-dark">
             <tr>
                 <th>Month</th>
                 <th>Year</th>
@@ -49,16 +55,31 @@
                 <td>{{ salary.net_salary }}</td>
             </tr>
             {% endfor %}
+
+        <!-- Add the delete button in the employee details section -->
+        {% if employee %}
+            <h2>Employee Details</h2>
+            <p><strong>Employee Code:</strong> {{ employee.employee_code }}</p>
+            <p><strong>Name:</strong> {{ employee.name }}</p>
+            <p><strong>Father's Name:</strong> {{ employee.father_name }}</p>
+
+            <!-- Delete button -->
+            <a href="{% url 'employees:delete_employee' employee.id %}" class="btn btn-danger">Delete Employee</a>
+
+            <h3>Salary History</h3>
+            <!-- Salary history table as before -->
+        {% endif %}
+``
         </tbody>
     </table>
-{% else %}
+    {% else %}
     <p>No salary history found for this employee.</p>
-{% endif %}
-
+    {% endif %}
 {% else %}
     <p>Enter an employee code or name to search for their profile.</p>
 {% endif %}
 
-    <!-- Add back button or edit button -->
-    <a href="{% url 'employees:employee_list' %}" class="btn btn-primary">Back to Employee List</a>
+<!-- Back button -->
+<a href="{% url 'employees:employee_list' %}" class="btn btn-primary mt-3">Back to Employee List</a>
+
 {% endblock %}

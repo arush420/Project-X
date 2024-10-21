@@ -621,6 +621,7 @@ def employee_detail(request):
     form = EmployeeSearchForm()
     employee = None
     salaries = None
+    not_found = False # Flag to indicate if no record was found
 
     if request.method == 'GET':
         query = request.GET.get('employee_code_or_name')
@@ -629,13 +630,42 @@ def employee_detail(request):
 
             if employee:
                 salaries = Salary.objects.filter(employee=employee).order_by('-month')
+            else:
+                not_found = True # Set the flag if no employee was found
 
     context = {
         'form': form,
         'employee': employee,
-        'salaries': salaries
+        'salaries': salaries,
+        'not_found': not_found # pass the flag to the template
     }
     return render(request, 'employees/employee_detail.html', context)
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def delete_employee(request, employee_id):
+    employee = get_object_or_404(Employee, id=employee_id)
+
+    if request.method == 'POST':  # Confirm the deletion with a POST request
+        employee.delete()
+        messages.success(request, f'Employee {employee.name} has been successfully deleted.')
+        return redirect('employees:employee_list')  # Redirect to employee list after deletion
+    return render(request, 'employees/employee_confirm_delete.html', {'employee': employee})
+
+
+@login_required
+def delete_multiple_employees(request):
+    if request.method == 'POST':
+        employee_ids = request.POST.getlist('employee_ids')  # Get list of selected employee IDs
+        if employee_ids:
+            employees = Employee.objects.filter(id__in=employee_ids)
+            employees_deleted = employees.count()
+            employees.delete()
+            messages.success(request, f'{employees_deleted} employee(s) successfully deleted.')
+        else:
+            messages.warning(request, 'No employees selected for deletion.')
+
+    return redirect('employees:employee_list')
 
 
 def salary_list(request):

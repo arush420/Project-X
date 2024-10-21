@@ -16,7 +16,7 @@
     <!-- Employee table -->
     <div class="table-responsive">
         <table class="table table-bordered table-striped">
-            <thead>
+            <thead class="thead-dark">
                 <tr>
                     <th>Employee Code</th>
                     <th>Name</th>
@@ -27,6 +27,7 @@
                     <th>PF</th>
                     <th>ESIC</th>
                     <th>Advance</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -42,11 +43,14 @@
                         <td>{{ employee.pf }}</td>
                         <td>{{ employee.esic }}</td>
                         <td>{{ employee.advance }}</td>
+                        <td>
+                            <a href="{% url 'employees:delete_employee' employee.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this employee?');">Delete</a>
+                        </td>
                     </tr>
                     {% endfor %}
                 {% else %}
                     <tr>
-                        <td colspan="9" class="text-center">No employees found matching your search.</td>
+                        <td colspan="10" class="text-center">No employees found matching your search.</td>
                     </tr>
                 {% endif %}
             </tbody>
