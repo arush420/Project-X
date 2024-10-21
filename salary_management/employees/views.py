@@ -21,6 +21,7 @@ from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.contrib.auth.mixins import PermissionRequiredMixin
+import csv
 
 # Import your models and forms
 from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company,
@@ -684,6 +685,47 @@ def salary_list(request):
     }
     return render(request, 'employees/salary_list.html', context)
 
+# Download Salary List as CSV
+def download_salary_csv(request):
+    # Get the selected month and year from query parameters
+    month = request.GET.get('month', '')
+    year = request.GET.get('year', '')
+
+    # Filter salaries based on month and year
+    salaries = Salary.objects.all()
+    if year:
+        salaries = salaries.filter(year=year)
+    if month:
+        salaries = salaries.filter(month=month)
+
+    # Create the HttpResponse object with the appropriate CSV header.
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="salaries_{month}_{year}.csv"'
+
+    # Create a CSV writer
+    writer = csv.writer(response)
+    # Write the header row
+    writer.writerow([
+        'Employee Name', 'Month', 'Year', 'Basic Salary', 'Transport', 'Canteen', 'PF', 'ESIC', 'Advance Deduction', 'Gross Salary', 'Net Salary' ])
+
+    # Write the data rows
+    for salary in salaries:
+        writer.writerow([
+            salary.employee.name,
+            salary.get_month_display(),
+            salary.year,
+            f"{salary.basic_salary:.2f}",
+            f"{salary.transport:.2f}",
+            f"{salary.canteen:.2f}",
+            f"{salary.pf:.2f}",
+            f"{salary.esic:.2f}",
+            f"{salary.advance_deduction:.2f}",
+            f"{salary.gross_salary:.2f}",
+            f"{salary.net_salary:.2f}",
+        ])
+
+    return response
+
 
 # Handle form submission for adding and editing
 def handle_form_submission(request, form_class, redirect_url, template_name, context, instance=None):
@@ -723,12 +765,12 @@ def delete_payment(request, payment_id):
     return redirect('employees:payment_input')
 
 
-
+# Purchase information
 def purchase_item_input(request):
     purchases = PurchaseItem.objects.all()
     return handle_form_submission(request, PurchaseItemForm, 'employees:purchase_item_input', 'employees/purchase_item_input.html', {'purchases': purchases})
 
-
+# Vendor information and profile
 def vendor_information_input(request):
     if request.method == 'POST':
         form = VendorInformationForm(request.POST)

@@ -32,7 +32,7 @@
     {% if salaries %}
     <div class="d-flex justify-content-end mb-4">
         <button class="btn btn-secondary mr-2" onclick="window.print()">Print</button>
-        <a href="/employees/salary/download-csv/?month={{ month }}&year={{ year }}" target="_blank" class="btn btn-success">Download CSV</a>
+        <a href="{% url 'employees:download_salary_csv' %}?month={{ month }}&year={{ year }}" target="_blank" class="btn btn-success">Download CSV</a>
     </div>
 
     <!-- Salary Table -->

@@ -19,12 +19,17 @@ urlpatterns = [
     path('complete_task/<int:task_id>/', views.complete_task, name='complete_task'),
     path('delete_task/<int:task_id>/', views.delete_task, name='delete_task'),
     path('add_employee/', views.AddEmployeeAndUploadView.as_view(), name='add_employee_and_upload'),
+    # Download template to add bulk employees
+    path('download-template/', views.download_template, name='download_template'),
     path('employee_list/', views.EmployeeListView.as_view(), name='employee_list'),
     path('employee_detail/', views.employee_detail, name='employee_detail'),
     path('employee/<int:id>/', views.employee_detail, name='employee_details'),
     path('generate_salary/', views.GenerateSalaryView.as_view(), name='generate_salary'),
+    # salary List/ Report and CSV download
     path('salary_list/', views.salary_list, name='salary_list'),
-    path('download-template/', views.download_template, name='download_template'),
+    path('salary/download-csv/', views.download_salary_csv, name='download_salary_csv'),
+
+    # Payment Input
     path('payment-input/', views.payment_input, name='payment_input'),
     path('payment/edit/<int:payment_id>/', views.edit_payment, name='edit_payment'),
     path('payment/delete/<int:payment_id>/', views.delete_payment, name='delete_payment'),
