@@ -3,30 +3,115 @@
 {% block title %}Vendor Details Input{% endblock %}
 
 {% block content %}
-    <h1>Enter Vendor Details</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Submit</button>
-    </form>
+<div class="container mt-5">
+    <h1 class="mb-4 text-center">Vendor Details</h1>
 
-    <h2>Saved Vendors</h2>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Vendor ID</th>
-                <th>Firm Code</th>
-                <th>Vendor Name</th>
-                <th>Address</th>
-                <th>GST Number</th>
-                <th>Account Number</th>
-                <th>IFSC code</th>
-                <th>Contact Person</th>
-                <th>Contact Person's Number</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for vendor in vendor_information %}
+    <!-- Vendor Form -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Enter Vendor Details</h4>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <!-- Row 1: Vendor ID and Firm Code -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="vendor_id">Vendor ID</label>
+                            {{ form.vendor_id }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="firm_code">Firm Code</label>
+                            {{ form.firm_code }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Row 2: Vendor Name and GST -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="vendor_name">Vendor Name</label>
+                            {{ form.vendor_name }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="gst_number">GST Number</label>
+                            {{ form.vendor_gst_number }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Row 3: Contact Person and Contact Person's Number -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="contact_person">Contact Person</label>
+                            {{ form.vendor_contact_person_name }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="contact_number">Contact Person's Number</label>
+                            {{ form.vendor_contact_person_number }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Row 4: Account Details and IFSC Code -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="account_number">Account Number</label>
+                            {{ form.vendor_account_number }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="ifsc_code">IFSC Code</label>
+                            {{ form.vendor_ifsc_code }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Row 5: Vendor Address -->
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="address">Vendor Address</label>
+                            {{ form.vendor_address }}
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 mt-3">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Saved Vendors -->
+    <h2 class="mt-5">Saved Vendors</h2>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Vendor ID</th>
+                    <th>Firm Code</th>
+                    <th>Vendor Name</th>
+                    <th>Address</th>
+                    <th>GST Number</th>
+                    <th>Account Number</th>
+                    <th>IFSC Code</th>
+                    <th>Contact Person</th>
+                    <th>Contact Person's Number</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vendor in vendor_information %}
                 <tr>
                     <td>{{ vendor.vendor_id }}</td>
                     <td>{{ vendor.firm_code }}</td>
@@ -38,11 +123,13 @@
                     <td>{{ vendor.vendor_contact_person_name }}</td>
                     <td>{{ vendor.vendor_contact_person_number }}</td>
                 </tr>
-            {% empty %}
+                {% empty %}
                 <tr>
-                    <td colspan="9">No vendor entries available.</td>
+                    <td colspan="9" class="text-center">No vendor entries available.</td>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

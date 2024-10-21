@@ -3,16 +3,144 @@
 {% block title %}Purchase Item Input{% endblock %}
 
 {% block content %}
-    <h1>Enter Purchase Details</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Submit</button>
-    </form>
+<div class="container mt-5">
+    <h1 class="mb-4">Enter Purchase Details</h1>
 
-    <h2>Saved Purchase Entries</h2>
-    <table class="table table-striped">
-        <thead>
+    <!-- Purchase Form -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- Display form errors if any -->
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <!-- Row 1: Organization Name, Purchased Item -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_organization_name">Organization Name</label>
+                            {{ form.organization_name }}
+                            <!-- Display error for organization_name -->
+                            {% if form.organization_name.errors %}
+                                <div class="text-danger">
+                                    {{ form.organization_name.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_purchased_item">Purchased Item</label>
+                            {{ form.purchased_item }}
+                            <!-- Display error for purchased_item -->
+                            {% if form.purchased_item.errors %}
+                                <div class="text-danger">
+                                    {{ form.purchased_item.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 2: Category, Date of Purchase -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_category">Category</label>
+                            {{ form.category }}
+                            <!-- Display error for category -->
+                            {% if form.category.errors %}
+                                <div class="text-danger">
+                                    {{ form.category.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_date_of_purchase">Date of Purchase</label>
+                            {{ form.date_of_purchase }}
+                            <!-- Display error for date_of_purchase -->
+                            {% if form.date_of_purchase.errors %}
+                                <div class="text-danger">
+                                    {{ form.date_of_purchase.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 3: CGST, SGST, IGST -->
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="id_cgst_amount">CGST</label>
+                            {{ form.cgst_amount }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="id_sgst_amount">SGST</label>
+                            {{ form.sgst_amount }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="id_igst_amount">IGST</label>
+                            {{ form.igst_amount }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 4: Gross Total, Net Price -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_gross_total">Gross Total</label>
+                            {{ form.gross_total }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_net_price">Net Price</label>
+                            {{ form.net_price }}
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Saved Purchase Entries -->
+    <h2 class="mt-5">Saved Purchase Entries</h2>
+
+    <!-- Sorting Filter -->
+    <div class="mb-4">
+        <label for="sort-filter" class="form-label">Sort By:</label>
+        <select id="sort-filter" class="form-select" onchange="sortTable()">
+            <option value="id">ID</option>
+            <option value="organization_name">Organization Name</option>
+            <option value="purchased_item">Purchased Item</option>
+            <option value="category">Category</option>
+            <option value="date_of_purchase">Date</option>
+            <option value="cgst_amount">CGST</option>
+            <option value="sgst_amount">SGST</option>
+            <option value="igst_amount">IGST</option>
+            <option value="gross_total">Gross Total</option>
+            <option value="net_price">Net Price</option>
+        </select>
+    </div>
+
+    <!-- Purchase Table -->
+    <table class="table table-striped" id="purchase-table">
+        <thead class="thead-dark">
             <tr>
                 <th>ID</th>
                 <th>Organization Name</th>
@@ -28,23 +156,98 @@
         </thead>
         <tbody>
             {% for purchase in purchases %}
-                <tr>
-                    <td>{{ purchase.id }}</td>
-                    <td>{{ purchase.organization_name }}</td>
-                    <td>{{ purchase.purchased_item }}</td>
-                    <td>{{ purchase.category }}</td>
-                    <td>{{ purchase.date_of_purchase }}</td>
-                    <td>{{ purchase.cgst_amount }}</td>
-                    <td>{{ purchase.sgst_amount }}</td>
-                    <td>{{ purchase.igst_amount }}</td>
-                    <td>{{ purchase.gross_total }}</td>
-                    <td>{{ purchase.net_price }}</td>
-                </tr>
+            <tr>
+                <td>{{ purchase.id }}</td>
+                <td>{{ purchase.organization_name }}</td>
+                <td>{{ purchase.purchased_item }}</td>
+                <td>{{ purchase.category }}</td>
+                <td>{{ purchase.date_of_purchase }}</td>
+                <td>{{ purchase.cgst_amount }}</td>
+                <td>{{ purchase.sgst_amount }}</td>
+                <td>{{ purchase.igst_amount }}</td>
+                <td>{{ purchase.gross_total }}</td>
+                <td>{{ purchase.net_price }}</td>
+            </tr>
             {% empty %}
-                <tr>
-                    <td colspan="10">No purchase entries available.</td>
-                </tr>
+            <tr>
+                <td colspan="10">No purchase entries available.</td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
+</div>
+
+<script>
+    function sortTable() {
+        var table, rows, switching, i, x, y, shouldSwitch;
+        table = document.getElementById("purchase-table");
+        switching = true;
+
+        var sortOption = document.getElementById("sort-filter").value;
+        var columnIndex;
+        switch (sortOption) {
+            case "id":
+                columnIndex = 0;
+                break;
+            case "organization_name":
+                columnIndex = 1;
+                break;
+            case "purchased_item":
+                columnIndex = 2;
+                break;
+            case "category":
+                columnIndex = 3;
+                break;
+            case "date_of_purchase":
+                columnIndex = 4;
+                break;
+            case "cgst_amount":
+                columnIndex = 5;
+                break;
+            case "sgst_amount":
+                columnIndex = 6;
+                break;
+            case "igst_amount":
+                columnIndex = 7;
+                break;
+            case "gross_total":
+                columnIndex = 8;
+                break;
+            case "net_price":
+                columnIndex = 9;
+                break;
+            default:
+                columnIndex = 0;
+        }
+
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("TD")[columnIndex];
+                y = rows[i + 1].getElementsByTagName("TD")[columnIndex];
+                var xContent = x.innerHTML.toLowerCase();
+                var yContent = y.innerHTML.toLowerCase();
+
+                // Check if comparing numbers
+                if (columnIndex >= 5 && columnIndex <= 9) {
+                    if (parseFloat(xContent) > parseFloat(yContent)) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else {
+                    if (xContent > yContent) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+            }
+        }
+    }
+</script>
 {% endblock %}

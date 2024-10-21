@@ -655,9 +655,43 @@ def salary_list(request):
     return render(request, 'employees/salary_list.html', context)
 
 
+# Handle form submission for adding and editing
+def handle_form_submission(request, form_class, redirect_url, template_name, context, instance=None):
+    if request.method == 'POST':
+        form = form_class(request.POST, instance=instance)  # Use instance if editing
+        if form.is_valid():
+            form.save()
+            if instance:
+                messages.success(request, "Payment details updated successfully!")
+            else:
+                messages.success(request, "Payment entry added successfully!")
+            return redirect(redirect_url)
+    else:
+        form = form_class(instance=instance)  # Populate the form with instance if editing
+
+    context['form'] = form
+    return render(request, template_name, context)
+
+# Handle payment input and listing payments
 def payment_input(request):
     payments = Payment.objects.all()
-    return handle_form_submission(request, PaymentForm, 'employees:payment_input', 'employees/payment_input.html', {'payments': payments})
+    context = {'payments': payments}
+    return handle_form_submission(request, PaymentForm, 'employees:payment_input', 'employees/payment_input.html', context)
+
+# Handle payment edit
+def edit_payment(request, payment_id):
+    payment = get_object_or_404(Payment, id=payment_id)
+    payments = Payment.objects.all()
+    context = {'payments': payments}
+    return handle_form_submission(request, PaymentForm, 'employees:payment_input', 'employees/payment_input.html', context, instance=payment)
+
+# Handle payment delete
+def delete_payment(request, payment_id):
+    payment = get_object_or_404(Payment, id=payment_id)
+    payment.delete()
+    messages.success(request, "Payment entry deleted successfully!")
+    return redirect('employees:payment_input')
+
 
 
 def purchase_item_input(request):
@@ -744,7 +778,6 @@ def staff_salary_create(request):
     else:
         form = StaffSalaryForm()
     return render(request, 'employees/staff_salary_form.html', {'form': form})
-
 
 def staff_salary_update(request, pk):
     salary = StaffSalary.objects.get(pk=pk)

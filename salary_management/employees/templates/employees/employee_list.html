@@ -3,62 +3,96 @@
 {% block title %}Employee List{% endblock %}
 
 {% block content %}
-    <h1>Employee List</h1>
+<div class="container mt-5">
+    <h1 class="mb-4">Employee List</h1>
 
     <!-- Search form -->
     <form method="get" class="form-inline mb-3">
-        <label for="search">Search by Employee Code or Name:</label>
-        <input type="text" id="search" name="search" class="form-inline mr-2" value="{{ search_query }}" placeholder="Enter employee code or name">
+        <label for="search" class="mr-2">Search by Employee Code or Name:</label>
+        <input type="text" id="search" name="search" class="form-control mr-2" value="{{ search_query }}" placeholder="Enter employee code or name">
         <button type="submit" class="btn btn-primary">Search</button>
     </form>
 
     <!-- Employee table -->
-    <table class="table table-bordered table-striped">
-        <thead>
-            <tr>
-                <th>Employee Code</th>
-                <th>Name</th>
-                <th>Father Name</th>
-                <th>Basic</th>
-                <th>Transport</th>
-                <th>Canteen</th>
-                <th>PF</th>
-                <th>ESIC</th>
-                <th>Advance</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if employees %}
-                {% for employee in employees %}
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
                 <tr>
-                    <td><a href="{% url 'employees:employee_details' employee.id %}">{{ employee.employee_code }}</a></td>
-                    <td>{{ employee.name }}</td>
-                    <td>{{ employee.father_name }}</td>
-                    <td>{{ employee.basic }}</td>
-                    <td>{{ employee.transport }}</td>
-                    <td>{{ employee.canteen }}</td>
-                    <td>{{ employee.pf }}</td>
-                    <td>{{ employee.esic }}</td>
-                    <td>{{ employee.advance }}</td>
+                    <th>Employee Code</th>
+                    <th>Name</th>
+                    <th>Father Name</th>
+                    <th>Basic</th>
+                    <th>Transport</th>
+                    <th>Canteen</th>
+                    <th>PF</th>
+                    <th>ESIC</th>
+                    <th>Advance</th>
                 </tr>
-                {% endfor %}
-            {% else %}
-                <tr>
-                    <td colspan="9" class="text-center">No employees found matching your search.</td>
-                </tr>
-            {% endif %}
-        </tbody>
-    </table>
-
-    <!-- Pagination controls (if needed) -->
-    <div class="pagination justify-content-center">
-        {% if employees.has_previous %}
-            <a href="?search={{ search_query }}&page={{ employees.previous_page_number }}">&laquo; Previous</a>
-        {% endif %}
-        <span class="mx-3">Page {{ employees.number }} of {{ employees.paginator.num_pages }}</span>
-        {% if employees.has_next %}
-            <a href="?search={{ search_query }}&page={{ employees.next_page_number }}">Next &raquo;</a>
-        {% endif %}
+            </thead>
+            <tbody>
+                {% if employees %}
+                    {% for employee in employees %}
+                    <tr>
+                        <td><a href="{% url 'employees:employee_details' employee.id %}">{{ employee.employee_code }}</a></td>
+                        <td>{{ employee.name }}</td>
+                        <td>{{ employee.father_name }}</td>
+                        <td>{{ employee.basic }}</td>
+                        <td>{{ employee.transport }}</td>
+                        <td>{{ employee.canteen }}</td>
+                        <td>{{ employee.pf }}</td>
+                        <td>{{ employee.esic }}</td>
+                        <td>{{ employee.advance }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center">No employees found matching your search.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
     </div>
 
+    <!-- Enhanced Pagination controls -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if employees.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?search={{ search_query }}&page=1" aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?search={{ search_query }}&page={{ employees.previous_page_number }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+            <!-- Display page numbers -->
+            {% for num in employees.paginator.page_range %}
+                {% if employees.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > employees.number|add:'-2' and num < employees.number|add:'2' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?search={{ search_query }}&page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            {% if employees.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?search={{ search_query }}&page={{ employees.next_page_number }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?search={{ search_query }}&page={{ employees.paginator.num_pages }}" aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
 {% endblock %}

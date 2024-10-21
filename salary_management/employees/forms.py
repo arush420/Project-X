@@ -3,6 +3,25 @@ from .models import (Employee, Task, Payment, PurchaseItem, VendorInformation,
                      Company, Profile, StaffSalary, AdvanceTransaction)
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
+import re
+
+# Constants for validation
+GST_REGEX = r'\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[Z]{1}[A-Z\d]{1}'
+IFSC_REGEX = r'^[A-Za-z]{4}\d{7}$'
+
+
+# Helper function for validating GST and IFSC codes
+def validate_gst_number(gst_number):
+    if gst_number and not re.match(GST_REGEX, gst_number):
+        raise forms.ValidationError("Invalid GST number format.")
+    return gst_number
+
+
+def validate_ifsc_code(ifsc_code):
+    if ifsc_code and not re.match(IFSC_REGEX, ifsc_code):
+        raise forms.ValidationError("Invalid IFSC code format.")
+    return ifsc_code
+
 
 # User Registration
 USER_TYPE_CHOICES = [
@@ -11,13 +30,15 @@ USER_TYPE_CHOICES = [
     ('Employee', 'Employee'),
 ]
 
+
 class CustomUserCreationForm(UserCreationForm):
-    first_name = forms.CharField(max_length=30, required=True)
-    last_name = forms.CharField(max_length=30, required=True)
+    first_name = forms.CharField(max_length=30, required=True,
+                                 widget=forms.TextInput(attrs={'placeholder': 'Enter First Name'}))
+    last_name = forms.CharField(max_length=30, required=True,
+                                widget=forms.TextInput(attrs={'placeholder': 'Enter Last Name'}))
     user_type = forms.ChoiceField(choices=USER_TYPE_CHOICES, required=True)
 
-    company_name = forms.ModelChoiceField(queryset=Company.objects.all(),
-                                          required=False, empty_label="Select Company")
+    company_name = forms.ModelChoiceField(queryset=Company.objects.all(), required=False, empty_label="Select Company")
 
     class Meta:
         model = User
@@ -28,29 +49,24 @@ class CustomUserCreationForm(UserCreationForm):
         # Adding "Other" option manually to company_name
         self.fields['company_name'].choices = list(self.fields['company_name'].choices) + [("Other", "Other")]
 
-    def clean_gst_number(self):
-        gst_number = self.cleaned_data.get('gst_number')
-        if gst_number and not re.match(r'\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[Z]{1}[A-Z\d]{1}', gst_number):
-            raise forms.ValidationError("Invalid GST number format.")
-        return gst_number
-
-    def clean_ifsc_code(self):
-        ifsc_code = self.cleaned_data.get('ifsc_code')
-        if ifsc_code and not re.match(r'^[A-Za-z]{4}\d{7}$', ifsc_code):
-            raise forms.ValidationError("Invalid IFSC code format.")
-        return ifsc_code
-
     def clean(self):
         cleaned_data = super().clean()
         user_type = cleaned_data.get('user_type')
 
         if user_type == 'Owner':
-            # Validate Owner-specific fields
             organisation_name = cleaned_data.get('organisation_name')
+            gst_number = cleaned_data.get('gst_number')
             account_number = cleaned_data.get('account_number')
             confirm_account_number = cleaned_data.get('confirm_account_number')
+
+            # Validate GST and IFSC using helper functions
+            cleaned_data['gst_number'] = validate_gst_number(gst_number)
+            cleaned_data['ifsc_code'] = validate_ifsc_code(cleaned_data.get('ifsc_code'))
+
+            # Account number validation for owner
             if account_number and confirm_account_number and account_number != confirm_account_number:
                 self.add_error('confirm_account_number', 'Account numbers do not match.')
+
         return cleaned_data
 
 
@@ -58,39 +74,46 @@ class ProfileEditForm(forms.ModelForm):
     class Meta:
         model = Profile
         fields = [
-            'theme_preference',
-            'organisation_name',
-            'organisation_address',
-            'contact_number',
-            'account_number',
-            'ifsc_code',
-            'gst_number',
-            'company',  # Assuming users can change their company if needed
+            'theme_preference', 'organisation_name', 'organisation_address',
+            'contact_number', 'account_number', 'ifsc_code', 'gst_number', 'company'
         ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Customize fields (e.g., make some fields read-only, optional, etc.)
+        # Customize company field
         self.fields['company'].empty_label = "Select Company"
+        self.fields['company'].widget.attrs.update({'class': 'form-select'})
 
 
-# User login Form
+# User login form
 class LoginForm(AuthenticationForm):
-    username = forms.CharField(max_length=254, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    password = forms.CharField(label="Password", widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    username = forms.CharField(max_length=254,
+                               widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Username'}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'}))
 
+
+# Employee form
 class EmployeeForm(forms.ModelForm):
     class Meta:
         model = Employee
         fields = ['employee_code', 'name', 'father_name', 'basic', 'transport', 'canteen', 'pf', 'esic', 'advance']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Employee Name'}),
+        }
 
+
+# Excel upload form
 class ExcelUploadForm(forms.Form):
-    file = forms.FileField()
+    file = forms.FileField(widget=forms.ClearableFileInput(attrs={'class': 'form-control'}))
 
+
+# Employee search form
 class EmployeeSearchForm(forms.Form):
-    employee_code_or_name = forms.CharField(label='Employee Code or Name', max_length=100)
+    employee_code_or_name = forms.CharField(label='Employee Code or Name', max_length=100, widget=forms.TextInput(
+        attrs={'class': 'form-control', 'placeholder': 'Search by Code or Name'}))
 
 
+# Task form
 class TaskForm(forms.ModelForm):
     class Meta:
         model = Task
@@ -100,24 +123,38 @@ class TaskForm(forms.ModelForm):
         }
 
 
+# Payment form
 class PaymentForm(forms.ModelForm):
     payment_date = forms.DateField(widget=forms.SelectDateWidget)
+
     class Meta:
         model = Payment
-        fields = ['company_name', 'amount_received', 'payment_date', 'account_of_own_company', 'payment_against_bill']
+        fields = ['company_name', 'payment_against_bill', 'amount_received', 'payment_date']
+        widgets = {
+            'company_name': forms.TextInput(attrs={'class': 'form-control'}),
+        }
 
 
+# Purchase Item form
 class PurchaseItemForm(forms.ModelForm):
     date_of_purchase = forms.DateField(widget=forms.SelectDateWidget)
 
     class Meta:
         model = PurchaseItem
         fields = [
-            'organization_code', 'organization_name', 'gst_number', 'bill_number',
-            'purchased_item', 'category', 'hsn_code', 'date_of_purchase',
-            'per_unit_cost', 'units_bought', 'cgst_rate', 'sgst_rate', 'igst_rate'
+            'organization_code', 'organization_name', 'gst_number', 'bill_number', 'purchased_item',
+            'category', 'hsn_code', 'date_of_purchase', 'per_unit_cost', 'units_bought', 'cgst_rate',
+            'sgst_rate', 'igst_rate'
         ]
-# Adding Vendor forms
+        widgets = {
+            'organization_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'purchased_item': forms.TextInput(attrs={'class': 'form-control'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
+            'date_of_purchase': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        }
+
+
+# Vendor Information form
 class VendorInformationForm(forms.ModelForm):
     class Meta:
         model = VendorInformation
@@ -125,16 +162,24 @@ class VendorInformationForm(forms.ModelForm):
             'vendor_id', 'firm_code', 'vendor_name', 'vendor_address', 'vendor_gst_number', 'vendor_account_number',
             'vendor_ifsc_code', 'vendor_contact_person_name', 'vendor_contact_person_number'
         ]
+        widgets = {
+            'vendor_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'vendor_contact_person_name': forms.TextInput(attrs={'class': 'form-control'}),
+        }
 
 
-# Adding company name to the main list
+# Company form
 class CompanyForm(forms.ModelForm):
     class Meta:
         model = Company
         fields = ['company_code', 'company_name', 'company_address', 'company_gst_number', 'company_account_number',
                   'company_ifsc_code', 'company_contact_person_name', 'company_contact_person_number']
+        widgets = {
+            'company_address': forms.Textarea(attrs={'class': 'form-control'}),
+        }
 
 
+# Adding Company form
 class AddCompanyForm(forms.Form):
     company_code = forms.CharField(max_length=4)
     company_name = forms.CharField(max_length=100)
@@ -147,37 +192,35 @@ class AddCompanyForm(forms.Form):
 
     def clean_company_gst_number(self):
         gst_number = self.cleaned_data.get('company_gst_number')
-        if gst_number and not re.match(r'\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[Z]{1}[A-Z\d]{1}', gst_number):
-            raise forms.ValidationError("Invalid GST number format.")
-        return gst_number
+        return validate_gst_number(gst_number)
 
     def clean_company_ifsc_code(self):
         ifsc_code = self.cleaned_data.get('company_ifsc_code')
-        if ifsc_code and not re.match(r'^[A-Za-z]{4}\d{7}$', ifsc_code):
-            raise forms.ValidationError("Invalid IFSC code format.")
-        return ifsc_code
+        return validate_ifsc_code(ifsc_code)
 
 
-# staff salary form
+# Staff salary form
 class StaffSalaryForm(forms.ModelForm):
     class Meta:
         model = StaffSalary
         fields = [
             'pf_no', 'name', 'father_name', 'gross_rate', 'esic_applicable', 'pf_applicable', 'lwf_applicable',
             'pd', 'gross_salary', 'esic_deduction', 'pf_deduction', 'lwf_deduction', 'net_salary', 'advance_given',
-            'advance_deduction', 'advance_pending', 'salary_paid_from_account', 'date', 'opening_balance', 'amount_paid_to_employee',
+            'advance_deduction', 'advance_pending', 'salary_paid_from_account', 'date', 'opening_balance',
+            'amount_paid_to_employee',
             'amount_recovered', 'amount_left', 'comment', 'column_1'
         ]
         widgets = {
             'date': forms.SelectDateWidget(),
         }
 
-#additional advance form for staff
+
+# Advance Transaction form for staff
 class AdvanceTransactionForm(forms.ModelForm):
     class Meta:
         model = AdvanceTransaction
-        fields = ['date', 'advance_taken', 'advance_deducted', 'nature','company',
-                  'mode', 'cheque_no', 'paid_received_by', 'paid_received_account', 'comment']
+        fields = ['date', 'advance_taken', 'advance_deducted', 'nature', 'company', 'mode', 'cheque_no',
+                  'paid_received_by', 'paid_received_account', 'comment']
         widgets = {
             'date': forms.SelectDateWidget(),
         }
