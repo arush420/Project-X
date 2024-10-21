@@ -3,53 +3,79 @@
 {% block title %}Generate Salary{% endblock %}
 
 {% block content %}
-    <h1>Generate Salary</h1>
+<div class="container mt-5">
+    <h1 class="mb-4 text-center">Generate Salary</h1>
 
+    <!-- Displaying messages -->
     {% if messages %}
-        <ul class="messages">
+    <div class="alert alert-info">
+        <ul class="list-unstyled">
             {% for message in messages %}
-                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            <li{% if message.tags %} class="alert-{{ message.tags }}"{% endif %}>{{ message }}</li>
             {% endfor %}
         </ul>
+    </div>
     {% endif %}
 
-    <form method="POST">
+    <!-- Salary Generation Form -->
+    <form method="POST" class="shadow-sm p-4 rounded">
         {% csrf_token %}
-        <label for="month">Select Month:</label>
-        <select name="month" id="month" required>
-            <option value="">Select Month</option>
-            {% for value, name in months %}
+
+        <!-- Month Selection -->
+        <div class="form-group">
+            <label for="month">Select Month:</label>
+            <select name="month" id="month" class="form-control" required>
+                <option value="">Select Month</option>
+                {% for value, name in months %}
                 <option value="{{ value }}">{{ name }}</option>
-            {% endfor %}
-        </select>
-
-        <label for="year">Select Year:</label>
-        <input type="number" name="year" value="{{ current_year }}" required>
-
-        <label for="days_in_month">Number of Days in Month:</label>
-        <input type="number" name="days_in_month" required>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Employee Code</th>
-                    <th>Employee Name</th>
-                    <th>Days Worked</th>
-                    <th>Advance Deduction</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for employee in employees %}
-                <tr>
-                    <td>{{ employee.employee_code }}</td>
-                    <td>{{ employee.name }}</td>
-                    <td><input type="number" name="days_worked_{{ employee.id }}" value="0" required></td>
-                    <td><input type="number" name="advance_{{ employee.id }}" value="0"></td>
-                </tr>
                 {% endfor %}
-            </tbody>
-        </table>
+            </select>
+        </div>
 
-        <button type="submit">Generate Salary</button>
+        <!-- Year Selection -->
+        <div class="form-group">
+            <label for="year">Select Year:</label>
+            <input type="number" name="year" class="form-control" value="{{ current_year }}" required>
+        </div>
+
+        <!-- Number of Days in Month -->
+        <div class="form-group">
+            <label for="days_in_month">Number of Days in Month:</label>
+            <input type="number" name="days_in_month" class="form-control" min="1" max="31" required>
+        </div>
+
+        <!-- Employees Table -->
+        <div class="table-responsive mt-4">
+            <table class="table table-bordered table-hover">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Employee Code</th>
+                        <th>Employee Name</th>
+                        <th>Days Worked</th>
+                        <th>Advance Deduction</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees %}
+                    <tr>
+                        <td>{{ employee.employee_code }}</td>
+                        <td>{{ employee.name }}</td>
+                        <td>
+                            <input type="number" name="days_worked_{{ employee.id }}" class="form-control" value="0" min="0" max="{{ days_in_month }}" required>
+                        </td>
+                        <td>
+                            <input type="number" name="advance_{{ employee.id }}" class="form-control" value="0" min="0">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary w-100">Generate Salary</button>
+        </div>
     </form>
+</div>
 {% endblock %}

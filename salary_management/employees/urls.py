@@ -23,6 +23,7 @@ urlpatterns = [
     path('employee_detail/', views.employee_detail, name='employee_detail'),
     path('employee/<int:id>/', views.employee_detail, name='employee_details'),
     path('generate_salary/', views.GenerateSalaryView.as_view(), name='generate_salary'),
+    path('salary_list/', views.salary_list, name='salary_list'),
     path('download-template/', views.download_template, name='download_template'),
     path('payment-input/', views.payment_input, name='payment_input'),
     path('payment/edit/<int:payment_id>/', views.edit_payment, name='edit_payment'),

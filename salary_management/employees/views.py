@@ -20,6 +20,7 @@ from django.views.generic import ListView
 from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.contrib.auth.mixins import PermissionRequiredMixin
 
 # Import your models and forms
 from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company,
@@ -532,6 +533,8 @@ def handle_file_upload(file):
 
 
 class GenerateSalaryView(View):
+    permission_required = 'employees.can_generate_payroll'
+
     @transaction.atomic
     def post(self, request):
         month, year, days_in_month = self.get_salary_params(request)
@@ -637,20 +640,47 @@ def employee_detail(request):
 
 
 def salary_list(request):
-    month = request.GET.get('month')
-    year = request.GET.get('year')
+    # Get the selected month and year from the request
+    month = request.GET.get('month', '') # Default to ''(empty) for "All"
+    year = request.GET.get('year', '')
 
-    salaries = Salary.objects.select_related('employee').all()
+    # Filter salaries based on month and year
+    salaries = Salary.objects.all()
 
     if month:
         salaries = salaries.filter(month=month)
     if year:
         salaries = salaries.filter(year=year)
 
+    # Calculate total number of unique employees
+    total_employees = salaries.values('employee_id').distinct().count()
+
+    # Calculate totals for each column
+    totals = salaries.aggregate(
+        total_basic_salary=Sum('basic_salary'),
+        total_transport=Sum('transport'),
+        total_canteen=Sum('canteen'),
+        total_pf=Sum('pf'),
+        total_esic=Sum('esic'),
+        total_advance=Sum('advance_deduction'),
+        total_gross_salary=Sum('gross_salary'),
+        total_net_salary=Sum('net_salary')
+    )
+
+    # Provide the necessary context to the template
+    month_choices = [
+        (1, 'January'), (2, 'February'), (3, 'March'), (4, 'April'),
+        (5, 'May'), (6, 'June'), (7, 'July'), (8, 'August'),
+        (9, 'September'), (10, 'October'), (11, 'November'), (12, 'December')
+    ]
+
     context = {
         'salaries': salaries,
+        'month_choices' : month_choices,
         'month': month,
         'year': year,
+        'total_employees': total_employees,
+        'totals': totals
     }
     return render(request, 'employees/salary_list.html', context)
 
