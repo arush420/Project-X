@@ -1,25 +1,37 @@
 {% extends 'base.html' %}
 
-{% block title %}Add Employee{% endblock %}
+{% block title %}Manage Employees{% endblock %}
 
 {% block content %}
-    <h1>Add Employee</h1>
-
-    <!-- Add Employee Form -->
-    <form method="post">
-        {% csrf_token %}
-        {{ add_employee_form.as_p }}
-        <button type="submit" name="submit_type" value="add_employee">Add Employee</button>
-    </form>
-
-    <h1>Upload Employees via Excel</h1>
-
-    <!-- Excel Upload Form -->
-    <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ upload_form.as_p }}
-        <button type="submit" name="submit_type" value="upload_employees" class="btn btn-primary">Upload</button>
-    </form>
-
-    <a href="{% url 'employees:download_template' %}">Download Employee Upload Template</a>
+<div class="container mt-5">
+    <!-- Page Heading -->
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Manage Employees</h2>
+        </div>
+    </div>
+    <!-- Add Employee Section -->
+    <div class="row">
+        <div class="col-md-6">
+            <h4>Add Employee</h4>
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                {{ add_employee_form.as_p }}
+                <button type="submit" name="submit_type" value="add_employee" class="btn btn-success mt-3">Add Employee</button>
+            </form>
+        </div>
+        <!-- Upload Employees via Excel Section -->
+        <div class="col-md-6">
+            <h4>Upload Employees via Excel</h4>
+            <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+                {{ upload_form.as_p }}
+                <div class="d-flex align-items-center mt-3">
+                    <button type="submit" name="submit_type" value="upload_employees" class="btn btn-primary mr-2">Upload</button>
+                    <a href="{% url 'employees:download_template' %}" class="btn btn-link">Download Template</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}

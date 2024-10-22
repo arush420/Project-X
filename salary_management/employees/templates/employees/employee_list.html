@@ -15,47 +15,67 @@
 
     <!-- Employee table -->
     <div class="table-responsive">
-        <table class="table table-bordered table-striped">
-            <thead class="thead-dark">
-                <tr>
-                    <th>Employee Code</th>
-                    <th>Name</th>
-                    <th>Father Name</th>
-                    <th>Basic</th>
-                    <th>Transport</th>
-                    <th>Canteen</th>
-                    <th>PF</th>
-                    <th>ESIC</th>
-                    <th>Advance</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if employees %}
-                    {% for employee in employees %}
+        <form id="delete-multiple-form" method="POST" action="{% url 'employees:delete_multiple_employees' %}">
+            {% csrf_token %}
+            <table class="table table-bordered table-striped">
+                <thead class="thead-dark">
                     <tr>
-                        <td><a href="{% url 'employees:employee_details' employee.id %}">{{ employee.employee_code }}</a></td>
-                        <td>{{ employee.name }}</td>
-                        <td>{{ employee.father_name }}</td>
-                        <td>{{ employee.basic }}</td>
-                        <td>{{ employee.transport }}</td>
-                        <td>{{ employee.canteen }}</td>
-                        <td>{{ employee.pf }}</td>
-                        <td>{{ employee.esic }}</td>
-                        <td>{{ employee.advance }}</td>
-                        <td>
-                            <a href="{% url 'employees:delete_employee' employee.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this employee?');">Delete</a>
-                        </td>
+                        {% if user.is_superuser %}
+                            <th style="display: none;" id="select-header">Select</th> <!-- Hidden initially -->
+                        {% endif %}
+                        <th>Employee Code</th>
+                        <th>Name</th>
+                        <th>Father Name</th>
+                        <th>Basic</th>
+                        <th>Transport</th>
+                        <th>Canteen</th>
+                        <th>PF</th>
+                        <th>ESIC</th>
+                        <th>Advance</th>
+                        <th>Actions</th>
                     </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="10" class="text-center">No employees found matching your search.</td>
-                    </tr>
-                {% endif %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {% if employees %}
+                        {% for employee in employees %}
+                        <tr>
+                            {% if user.is_superuser %}
+                                <!-- Checkbox for multiple delete, hidden initially -->
+                                <td style="display: none;" class="checkbox-column">
+                                    <input form="delete-multiple-form" type="checkbox" name="employee_ids" value="{{ employee.id }}">
+                                </td>
+                            {% endif %}
+                            <td><a href="{% url 'employees:employee_details' employee.id %}">{{ employee.employee_code }}</a></td>
+                            <td>{{ employee.name }}</td>
+                            <td>{{ employee.father_name }}</td>
+                            <td>{{ employee.basic }}</td>
+                            <td>{{ employee.transport }}</td>
+                            <td>{{ employee.canteen }}</td>
+                            <td>{{ employee.pf }}</td>
+                            <td>{{ employee.esic }}</td>
+                            <td>{{ employee.advance }}</td>
+                            <td>
+                                <a href="{% url 'employees:delete_employee' employee.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this employee?');">Delete</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="10" class="text-center">No employees found matching your search.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </form>
     </div>
+
+    {% if user.is_superuser %}
+        <!-- Button to toggle checkbox visibility -->
+        <button id="toggle-delete" class="btn btn-danger float-right mb-3">Delete Multiple Employees</button>
+
+        <!-- Button to submit form for multiple employee deletion, hidden initially -->
+        <button id="delete-selected" class="btn btn-danger mt-3" style="display: none;" form="delete-multiple-form">Delete Selected Employees</button>
+    {% endif %}
 
     <!-- Enhanced Pagination controls -->
     <nav aria-label="Page navigation">
@@ -99,4 +119,34 @@
         </ul>
     </nav>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const toggleDeleteBtn = document.getElementById('toggle-delete');
+        const deleteSelectedBtn = document.getElementById('delete-selected');
+        const checkboxes = document.querySelectorAll('.checkbox-column');
+        const selectHeader = document.getElementById('select-header');
+        let isDeleteMode = false;
+
+        // Toggle visibility of checkboxes
+        toggleDeleteBtn.addEventListener('click', function () {
+            isDeleteMode = !isDeleteMode;  // Toggle delete mode
+            // Show or hide checkboxes and delete button based on delete mode
+            checkboxes.forEach(function (checkbox) {
+                checkbox.style.display = isDeleteMode ? '' : 'none';
+            });
+            selectHeader.style.display = isDeleteMode ? '' : 'none';
+            deleteSelectedBtn.style.display = isDeleteMode ? '' : 'none';
+        });
+
+        // Confirmation dialog for multiple employee deletion
+        deleteSelectedBtn.addEventListener('click', function (event) {
+            if (!confirm('Are you sure you want to delete the selected employees?')) {
+                event.preventDefault();  // Prevent form submission if user cancels
+            }
+        });
+    });
+</script>
 {% endblock %}

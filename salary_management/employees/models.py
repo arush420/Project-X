@@ -216,6 +216,7 @@ class PurchaseItem(models.Model):
 class Task(models.Model):
     title = models.CharField(max_length=255)
     completed = models.BooleanField(default=False)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='transferred_tasks')
 
     def __str__(self):
         return self.title

@@ -18,6 +18,7 @@ urlpatterns = [
     path('add_task/', views.add_task, name='add_task'),
     path('complete_task/<int:task_id>/', views.complete_task, name='complete_task'),
     path('delete_task/<int:task_id>/', views.delete_task, name='delete_task'),
+    path('transfer_task/<int:task_id>/', views.transfer_task, name='transfer_task'),
     path('add_employee/', views.AddEmployeeAndUploadView.as_view(), name='add_employee_and_upload'),
     path('employees/delete_multiple/', views.delete_multiple_employees, name='delete_multiple_employees'), # Multi delete
     path('employee/<int:employee_id>/delete/', views.delete_employee, name='delete_employee'),  # Single delete

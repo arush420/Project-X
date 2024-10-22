@@ -20,6 +20,8 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 import csv
 
+from openpyxl.utils.datetime import days_to_time
+
 # Import your models and forms
 from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company,
                      StaffSalary, AdvanceTransaction)
@@ -327,10 +329,14 @@ def admin_dashboard(request):
 # Home page with tasks
 def home(request):
     total_employees = Employee.objects.count()
-    tasks = Task.objects.all()
+    tasks = Task.objects.filter(user=request.user)
+    users = User.objects.all() # Get all users for the transfer dropdown
+
     if request.method == 'POST':
         form = TaskForm(request.POST)
         if form.is_valid():
+            task = form.save(commit=False)
+            task.user = request.user # Assign the task to the current user
             form.save()
             return redirect('employees:home')
     else:
@@ -339,6 +345,7 @@ def home(request):
     context = {
         'total_employees': total_employees,
         'tasks': tasks,
+        'users': users, # PAss users for the transfer dropdown
         'form': form
     }
     return render(request, 'employees/home.html', context)
@@ -347,7 +354,7 @@ def home(request):
 def add_task(request):
     if request.method == 'POST':
         title = request.POST.get('title')
-        Task.objects.create(title=title)
+        Task.objects.create(title=title, user=request.user) #Associated task with logged-in user
     return redirect('employees:home')
 
 def complete_task(request, task_id):
@@ -359,6 +366,16 @@ def complete_task(request, task_id):
 def delete_task(request, task_id):
     task = get_object_or_404(Task, id=task_id)
     task.delete()
+    return redirect('employees:home')
+
+def transfer_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    if request.method == 'POST':
+        new_user_id = request.POST.get('user')
+        new_user = get_object_or_404(User, id=new_user_id)
+        task.user = new_user
+        task.save()
+        messages.success(request, f'Task transferred to {new_user.username}.')
     return redirect('employees:home')
 
 
@@ -531,7 +548,7 @@ def handle_file_upload(file):
         raise ValidationError(errors)
 
 
-class GenerateSalaryView(View):
+class GenerateSalaryView(PermissionRequiredMixin, View):
     permission_required = 'employees.can_generate_payroll'
 
     @transaction.atomic
@@ -560,46 +577,56 @@ class GenerateSalaryView(View):
         })
 
     def get_salary_params(self, request):
-        return request.POST.get('month'), request.POST.get('year'), request.POST.get('days_in_month')
+        month = request.POST.get('month')
+        year = request.POST.get
+        days_in_month =request.POST.get('days_in_month')
+
+        if not month or not year or not days_in_month:
+            return None, None, None # This will trigger an error message
+        return month, year, days_in_month
 
     def calculate_salaries(self, request, employees, days_in_month, month, year):
         salary_data = []
-        total_gross_salary = total_pf = total_esic = total_canteen = total_advance = total_net_salary = Decimal(0)
+        total_gross_salary = total_pf = total_esic = total_canteen = total_advance = total_net_salary = Decimal(0.00)
 
         for employee in employees:
-            days_worked = int(request.POST.get(f'days_worked_{employee.id}', 0))
-            advance = Decimal(request.POST.get(f'advance_{employee.id}', 0))
+            try:
+                days_worked = int(request.POST.get(f'days_worked_{employee.id}', 0))
+                advance = Decimal(request.POST.get(f'advance_{employee.id}', 0))
 
-            # calculate gross salary, net salary, pf, esic, and canteen
-            gross_salary, net_salary, pf, esic, canteen = self.calculate_salary(employee, days_worked, days_in_month)
-            net_salary -= advance
+                # calculate gross salary, net salary, pf, esic, and canteen
+                gross_salary, net_salary, pf, esic, canteen = self.calculate_salary(employee, days_worked, days_in_month)
+                net_salary -= advance
 
-            # Update or create salary record
-            Salary.objects.update_or_create(
-                employee=employee, month=month, year=year,
-                defaults={'gross_salary': gross_salary, 'net_salary': net_salary, 'advance': advance}
-            )
+                # Update or create salary record
+                Salary.objects.update_or_create(
+                    employee=employee, month=month, year=year,
+                    defaults={'gross_salary': gross_salary, 'net_salary': net_salary, 'advance': advance}
+                )
 
-            # Append salary data for each employee
-            salary_data.append({
-                'employee_code': employee.employee_code,
-                'name': employee.name,
-                'gross_salary': gross_salary,
-                'pf': pf,
-                'esic': esic,
-                'canteen': canteen,
-                'advance': advance,
-                'net_salary': net_salary
-            })
+                # Append salary data for each employee
+                salary_data.append({
+                    'employee_code': employee.employee_code,
+                    'name': employee.name,
+                    'gross_salary': gross_salary,
+                    'pf': pf,
+                    'esic': esic,
+                    'canteen': canteen,
+                    'advance': advance,
+                    'net_salary': net_salary
+                })
 
-            # Calculate totals for each column
-            total_gross_salary += gross_salary
-            total_pf += pf
-            total_esic += esic
-            total_canteen += canteen
-            total_advance += advance
-            total_net_salary += net_salary
-
+                # Calculate totals for each column
+                total_gross_salary += gross_salary
+                total_pf += pf
+                total_esic += esic
+                total_canteen += canteen
+                total_advance += advance
+                total_net_salary += net_salary
+            except Exception as e:
+                # Log the error for debugging
+                print(f"Error calculating salary for {employee.name}:e")
+                messages.error(request, f"Error calculating salary for {employee.name}.")
         return salary_data, total_gross_salary, total_pf, total_esic, total_canteen, total_advance, total_net_salary
 
 
@@ -654,6 +681,7 @@ def delete_employee(request, employee_id):
 
 
 @login_required
+@user_passes_test(lambda u: u.is_superuser)
 def delete_multiple_employees(request):
     if request.method == 'POST':
         employee_ids = request.POST.getlist('employee_ids')  # Get list of selected employee IDs
