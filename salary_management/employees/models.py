@@ -14,6 +14,8 @@ from django.db.models.signals import post_migrate, post_save
 from django.dispatch import receiver
 from django.core.validators import RegexValidator
 from pyexpat.errors import messages
+from django.contrib import messages
+
 
 # Constants for salary fields
 CURRENCY_MAX_DIGITS = 10
@@ -51,6 +53,7 @@ class Company(models.Model):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)  # Linking to the User model
     theme_preference = models.CharField(max_length=10, default='light')  # choosing 'light' or 'dark'
+    database =models.CharField(max_length=255, default="yada yada") # Add a field to reference the company's database if needed
     USER_TYPE_CHOICES = [
         ('Owner', 'Owner'),
         ('Manager', 'Manager'),
@@ -278,11 +281,6 @@ class StaffSalary(models.Model):
     amount_recovered = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     amount_left = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
-    opening_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    amount_paid_to_employee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    amount_recovered = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    amount_left = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-
     comment = models.TextField(null=True, blank=True)
     column_1 = models.CharField(max_length=100, null=True, blank=True)
 
@@ -304,7 +302,8 @@ class AdvanceTransaction(models.Model):
     # New fields added
     serial_number = models.IntegerField(default=1)  # S.NO
     name = models.CharField(max_length=100, default='unknown')  # Name
-    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Amount
+    amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, default="") # Amount
+    ifsc_code = models.CharField(max_length=11, null=True, blank=True, default="")
     paid_received = models.CharField(max_length=10,
                                      choices=[('paid', 'Paid'), ('received', 'Received')], default='paid')  # Paid to/Received
     NATURE_CHOICES = [
@@ -318,7 +317,7 @@ class AdvanceTransaction(models.Model):
         ('bank', 'Bank')]
     mode = models.CharField(max_length=50, choices=MODE_CHOICES, default='cash')  # Mode
     cheque_no = models.CharField(max_length=50, null=True, blank=True)  # Cheque No.
-    month = models.CharField(max_length=20, default=datetime.now)  # Month
+    month = models.CharField(max_length=20, default=datetime.now().strftime('%B'))  # Month
     net_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Net Amount
     account = models.CharField(max_length=50, null=True, blank=True, default=0.00)  # A/C
     ifsc_code = models.CharField(max_length=50, null=True, blank=True, default=0.00)  # IFSC Code

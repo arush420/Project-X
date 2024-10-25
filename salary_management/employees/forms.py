@@ -4,6 +4,8 @@ from .models import (Employee, Task, Payment, PurchaseItem, VendorInformation,
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 import re
+from django.core.exceptions import ValidationError
+
 
 # Constants for validation
 GST_REGEX = r'\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[Z]{1}[A-Z\d]{1}'
@@ -38,34 +40,22 @@ class CustomUserCreationForm(UserCreationForm):
                                 widget=forms.TextInput(attrs={'placeholder': 'Enter Last Name'}))
     user_type = forms.ChoiceField(choices=USER_TYPE_CHOICES, required=True)
 
-    company_name = forms.ModelChoiceField(queryset=Company.objects.all(), required=False, empty_label="Select Company")
+    company_name = forms.ModelChoiceField(queryset=Company.objects.all(), required=True, empty_label="Select Company")
 
     class Meta:
         model = User
         fields = ('username', 'password1', 'password2', 'first_name', 'last_name', 'user_type', 'company_name')
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Adding "Other" option manually to company_name
-        self.fields['company_name'].choices = list(self.fields['company_name'].choices) + [("Other", "Other")]
 
     def clean(self):
         cleaned_data = super().clean()
         user_type = cleaned_data.get('user_type')
 
         if user_type == 'Owner':
-            organisation_name = cleaned_data.get('organisation_name')
+            # Owner-specific validation
             gst_number = cleaned_data.get('gst_number')
-            account_number = cleaned_data.get('account_number')
-            confirm_account_number = cleaned_data.get('confirm_account_number')
-
-            # Validate GST and IFSC using helper functions
+            ifsc_code = cleaned_data.get('ifsc_code')
             cleaned_data['gst_number'] = validate_gst_number(gst_number)
-            cleaned_data['ifsc_code'] = validate_ifsc_code(cleaned_data.get('ifsc_code'))
-
-            # Account number validation for owner
-            if account_number and confirm_account_number and account_number != confirm_account_number:
-                self.add_error('confirm_account_number', 'Account numbers do not match.')
+            cleaned_data['ifsc_code'] = validate_ifsc_code(ifsc_code)
 
         return cleaned_data
 
@@ -77,6 +67,9 @@ class ProfileEditForm(forms.ModelForm):
             'theme_preference', 'organisation_name', 'organisation_address',
             'contact_number', 'account_number', 'ifsc_code', 'gst_number', 'company'
         ]
+        widgets = {
+            'company': forms.Select(attrs={'class': 'form-select'}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -90,6 +83,13 @@ class LoginForm(AuthenticationForm):
     username = forms.CharField(max_length=254,
                                widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Username'}))
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'}))
+    company_name = forms.ModelChoiceField(
+        queryset=Company.objects.all(),
+        required=True,
+        empty_label="Select Company",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
 
 
 # Employee form
@@ -184,19 +184,11 @@ class AddCompanyForm(forms.Form):
     company_code = forms.CharField(max_length=4)
     company_name = forms.CharField(max_length=100)
     company_address = forms.CharField(widget=forms.Textarea)
-    company_gst_number = forms.CharField(max_length=20)
+    company_gst_number = forms.CharField(max_length=20, validators=[validate_gst_number])
     company_account_number = forms.CharField(max_length=20)
-    company_ifsc_code = forms.CharField(max_length=11)
+    company_ifsc_code = forms.CharField(max_length=11, validators=[validate_ifsc_code])
     company_contact_person_name = forms.CharField(max_length=100)
     company_contact_person_number = forms.CharField(max_length=10)
-
-    def clean_company_gst_number(self):
-        gst_number = self.cleaned_data.get('company_gst_number')
-        return validate_gst_number(gst_number)
-
-    def clean_company_ifsc_code(self):
-        ifsc_code = self.cleaned_data.get('company_ifsc_code')
-        return validate_ifsc_code(ifsc_code)
 
 
 # Staff salary form

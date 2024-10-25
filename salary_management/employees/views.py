@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import Group, User
 from django.db import IntegrityError, transaction
 import pandas as pd
@@ -27,7 +27,7 @@ from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, Ven
                      StaffSalary, AdvanceTransaction)
 from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm,
                     CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm,
-                    AdvanceTransactionForm, ProfileEditForm)
+                    AdvanceTransactionForm, ProfileEditForm, LoginForm)
 
 
 def get_user_role_flags(user):
@@ -234,33 +234,30 @@ def register_view(request):
 # Logging in a user
 def login_view(request):
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST or None)
+        form = LoginForm(request, data=request.POST)
         if form.is_valid():
-            user = form.get_user()
-            login(request, user)
+            company = form.cleaned_data.get('company_name')
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
 
-            # Use role flags to decide the redirect
-            role_flags = get_user_role_flags(user)
+            # Authenticate the user
+            user = authenticate(request, username=username, password=password)
 
-            messages.success(request, "Login successful! Welcome back.")
-
-            if role_flags['is_superuser']:
-                return redirect('employees:superuser_dashboard')
-            elif role_flags['is_read_write']:
-                return redirect('employees:read_write_dashboard')
-            elif role_flags['is_read_only']:
-                return redirect('employees:read_only_dashboard')
+            if user is not None:
+                # Verify that the user belongs to the selected company
+                if user.profile.company == company:
+                    login(request, user)
+                    return redirect('employees:home')
+                else:
+                    # Show error if user is not associated with the selected company
+                    form.add_error(None, "This account is not associated with the selected company.")
             else:
-                return redirect('employees:home')  # Default fallback
-
-        else:
-            messages.error(request, "Invalid username or password. Please try again.")
-
+                # Show generic error for failed authentication
+                form.add_error(None, "Invalid username or password.")
     else:
-        form = AuthenticationForm()
+        form = LoginForm()
 
     return render(request, 'employees/login.html', {'form': form})
-
 
 def logout_view(request):
     logout(request)
