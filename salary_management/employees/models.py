@@ -35,18 +35,37 @@ class MyModel(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
 
+from django.db import models
+
 class Company(models.Model):
     company_code = models.CharField(max_length=4, default="0000")
     company_name = models.CharField(max_length=100, default="")
     company_address = models.TextField()
-    company_gst_number = models.CharField(max_length=20)
-    company_account_number = models.CharField(max_length=20)
-    company_ifsc_code = models.CharField(max_length=11)
-    company_contact_person_name = models.CharField(max_length=100)
-    company_contact_person_number = models.CharField(validators=[phone_regex], max_length=10)
+    company_contact_person_name = models.CharField(max_length=100, default="")
+    company_contact_person_number = models.CharField(validators=[phone_regex], max_length=10, default="0")
+    company_contact_person_email = models.CharField(max_length=100, default="")
+    company_gst_number = models.CharField(max_length=20, default="0")
+    company_pf_code = models.CharField(max_length=20, default="0")
+    company_esic_code = models.CharField(max_length=20, default="0")
+    company_service_charge_salary = models.CharField(max_length=20, default="0")
+    company_service_charge_over_time = models.CharField(max_length=20, default="0")
+    company_account_number = models.CharField(max_length=20, default="0")
+    company_ifsc_code = models.CharField(max_length=11, default="0")
+    company_salary_component_type = models.CharField(max_length=20, default="0")
+    USER_TYPE_CHOICES = [
+        ('Hour', 'Hour'),
+        ('Day', 'Day'),
+        ('Month', 'Month')
+    ]
+    company_ot_rule = models.CharField(max_length=20, default="0")
+    company_bonus_formula = models.CharField(max_length=20, default="0")
+    company_pf_deduction = models.CharField(max_length=20, default="0")
+    company_esic_deduction_rule = models.CharField(max_length=20, default="0")
+    company_welfare_deduction_rule = models.CharField(max_length=20, default="0")
 
     def __str__(self):
         return self.company_name
+
 
 
 # User Profile details

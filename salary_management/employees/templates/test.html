@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Registration Form</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+    <h1>Employee Registration Form</h1>
+
+    <!-- Personal Information -->
+    <h3>Personal Information</h3>
+    <div class="form-group row">
+        <div class="col-md-6">
+            <label for="employeeNumber">Employee Number</label>
+            <input type="text" class="form-control" id="employeeNumber" name="employeeNumber">
+        </div>
+        <div class="col-md-6">
+            <label for="fullName">Full Name</label>
+            <input type="text" class="form-control" id="fullName" name="fullName">
+        </div>
+        <div class="col-md-6 mt-3">
+            <label for="fatherName">Father’s Name</label>
+            <input type="text" class="form-control" id="fatherName" name="fatherName">
+        </div>
+        <div class="col-md-6 mt-3">
+            <label for="motherName">Mother’s Name</label>
+            <input type="text" class="form-control" id="motherName" name="motherName">
+        </div>
+        <div class="col-md-6 mt-3">
+            <label for="gender">Gender</label>
+            <select class="form-control" id="gender" name="gender">
+                <option>Male</option>
+                <option>Female</option>
+                <option>Other</option>
+            </select>
+        </div>
+        <div class="col-md-6 mt-3">
+            <label for="dob">Date of Birth</label>
+            <input type="date" class="form-control" id="dob" name="dob">
+        </div>
+        <div class="col-md-6 mt-3">
+            <label for="maritalStatus">Marital Status</label>
+            <select class="form-control" id="maritalStatus" name="maritalStatus">
+                <option>Single</option>
+                <option>Married</option>
+            </select>
+        </div>
+        <div class="col-md-6 mt-3">
+            <label for="spouseName">Spouse Name (if applicable)</label>
+            <input type="text" class="form-control" id="spouseName" name="spouseName">
+        </div>
+    </div>
+
+    <!-- Educational Qualification -->
+    <h3>Educational Qualification</h3>
+    <div class="form-group row">
+        <div class="col-md-6">
+            <label for="highestQualification">Highest Qualification</label>
+            <input type="text" class="form-control" id="highestQualification" name="highestQualification">
+        </div>
+        <div class="col-md-6">
+            <label for="skills">Skills</label>
+            <select class="form-control" id="skills" name="skills">
+                <option>Helper</option>
+                <option>Press Operator</option>
+                <option>Mig Welder</option>
+                <option>Lift Driver</option>
+                <option>Crane Operator</option>
+                <option>Electrician</option>
+                <option>Die Maintenance</option>
+                <option>Die Fitter</option>
+                <option>Dispatch</option>
+                <option>House Keeping</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Site Information -->
+    <h3>Site Information</h3>
+    <div class="form-group row">
+        <div class="col-md-6">
+            <label for="organizationName">Organization Name</label>
+            <input type="text" class="form-control" id="organizationName" name="organizationName">
+        </div>
+        <div class="col-md-6">
+            <label for="department">Department</label>
+            <input type="text" class="form-control" id="department" name="department">
+        </div>
+    </div>
+
+    <!-- Employment Information -->
+    <h3>Employment Information</h3>
+    <div class="form-group row">
+        <div class="col-md-6">
+            <label for="euid">EUID</label>
+            <input type="text" class="form-control" id="euid" name="euid">
+        </div>
+        <div class="col-md-6">
+            <label for="aadharNumber">Aadhar Number</label>
+            <input type="text" class="form-control" id="aadharNumber" name="aadharNumber">
+        </div>
+        <div class="col-md-6 mt-3">
+            <label for="pfNumber">PF Number</label>
+            <input type="text" class="form-control" id="pfNumber" name="pfNumber">
+        </div>
+        <div class="col-md-6 mt-3">
+            <label for="esiNumber">ESI Number</label>
+            <input type="text" class="form-control" id="esiNumber" name="esiNumber">
+        </div>
+        <div class="col-md-6 mt-3">
+            <label for="uan">UAN</label>
+            <input type="text" class="form-control" id="uan" name="uan">
+        </div>
+        <div class="col-md-6 mt-3">
+            <label for="epf">EPF</label>
+            <input type="text" class="form-control" id="epf" name="epf">
+        </div>
+        <div class="col-md-6 mt-3">
+            <label for="dispensary">Dispensary</label>
+            <input type="text" class="form-control" id="dispensary" name="dispensary">
+        </div>
+    </div>
+
+    <!-- Account Information -->
+    <h3>Account Information</h3>
+    <div class="form-group row">
+        <div class="col-md-6">
+            <label for="paymentMode">Payment Mode</label>
+            <select class="form-control" id="paymentMode" name="paymentMode">
+                <option>Bank</option>
+                <option>Cash</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label for="accountNumber">Account Number</label>
+            <input type="text" class="form-control" id="accountNumber" name="accountNumber">
+        </div>
+        <div class="col-md-6 mt-3">
+            <label for="ifscCode">IFSC Code</label>
+            <input type="text" class="form-control" id="ifscCode" name="ifscCode">
+        </div>
+    </div>
+
+    <!-- Pay Scale Head -->
+    <h3>Pay Scale Head</h3>
+    <div class="form-group row">
+        <div class="col-md-6">
+            <label for="basic">Basic</label>
+            <input type="text" class="form-control" id="basic" name="basic">
+        </div>
+        <div class="col-md-6">
+            <label for="srAllowance">Sr Allowance</label>
+            <input type="text" class="form-control" id="srAllowance" name="srAllowance">
+        </div>
+        <div class="col-md-6 mt-3">
+            <label for="da">DA</label>
+            <input type="text" class="form-control" id="da" name="da">
+        </div>
+        <div class="col-md-6 mt-3">
+            <label for="hra">HRA</label>
+            <input type="text" class="form-control" id="hra" name="hra">
+        </div>
+    </div>
+
+    <!-- Additional Suggested Fields -->
+    <h3>Additional Suggested Fields</h3>
+    <div class="form-group row">
+        <div class="col-md-6">
+            <label for="acceptedBy">Accepted by</label>
+            <select class="form-control" id="acceptedBy" name="acceptedBy">
+                <option>Rajesh</option>
+                <option>Amresh</option>
+                <option>Prashant</option>
+                <option>Raja</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label for="emergencyContactName">Emergency Contact Name</label>
+            <input type="text" class="form-control" id="emergencyContactName" name="emergencyContactName">
+        </div>
+        <div class="col-md-6 mt-3">
+            <label for="emergencyContactNumber">Emergency Contact Number</label>
+            <input type="text" class="form-control" id="emergencyContactNumber" name="emergencyContactNumber">
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,22 +1,17 @@
 {% extends 'base.html' %}
-
 {% block title %}Company List{% endblock %}
-
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-lg-10">
-            <h2>Company List</h2>
-
+            <h2 class="mb-4">Company List</h2>
             <!-- Search Bar -->
             <form method="GET" action="{% url 'employees:company_list' %}" class="form-inline mb-3">
                 <input class="form-control mr-sm-2" type="search" name="q" value="{{ query }}" placeholder="Search for a company" aria-label="Search">
-                <button class="btn btn-outline-primary" type="submit">Search</button>
+                <button class="btn btn-outline-primary my-2 my-sm-0" type="submit">Search</button>
             </form>
-
             <!-- Add Company Button -->
             <button class="btn btn-success mb-3" id="toggleAddCompanyForm">Add New Company</button>
-
             <!-- Add Company Form (hidden by default) -->
             <div id="addCompanyForm" style="display: none;">
                 <h4>Add Company</h4>
@@ -26,10 +21,9 @@
                     <button type="submit" name="add_company" class="btn btn-primary w-100">Add Company</button>
                 </form>
             </div>
-
             <!-- Company List Table -->
-            <table class="table table-striped mt-3">
-                <thead>
+            <table class="table table-hover mt-3">
+                <thead class="thead-light">
                     <tr>
                         <th>Company Code</th>
                         <th>Company Name</th>
@@ -55,12 +49,25 @@
                             </td>
                         </tr>
                         <!-- Hidden Company Details -->
-                        <tr id="company-details-{{ company.id }}" style="display: none;">
+                        <tr id="company-details-{{ company.id }}" style="display: none;" class="bg-light">
                             <td colspan="5">
-                                <strong>Address:</strong> {{ company.company_address }}<br>
-                                <strong>Account Number:</strong> {{ company.company_account_number }}<br>
-                                <strong>IFSC Code:</strong> {{ company.company_ifsc_code }}<br>
-                                <strong>Contact Number:</strong> {{ company.company_contact_person_number }}<br>
+                                <div class="p-3">
+                                    <strong>Address:</strong> {{ company.company_address }}<br>
+                                    <strong>Account Number:</strong> {{ company.company_account_number }}<br>
+                                    <strong>IFSC Code:</strong> {{ company.company_ifsc_code }}<br>
+                                    <strong>Contact Number:</strong> {{ company.company_contact_person_number }}<br>
+                                    <strong>Email:</strong> {{ company.company_contact_person_email }}<br>
+                                    <strong>PF Code:</strong> {{ company.company_pf_code }}<br>
+                                    <strong>ESIC Code:</strong> {{ company.company_esic_code }}<br>
+                                    <strong>Service Charge (Salary):</strong> {{ company.company_service_charge_salary }}<br>
+                                    <strong>Service Charge (Over Time):</strong> {{ company.company_service_charge_over_time }}<br>
+                                    <strong>Salary Component Type:</strong> {{ company.company_salary_component_type }}<br>
+                                    <strong>OT Rule:</strong> {{ company.company_ot_rule }}<br>
+                                    <strong>Bonus Formula:</strong> {{ company.company_bonus_formula }}<br>
+                                    <strong>PF Deduction:</strong> {{ company.company_pf_deduction }}<br>
+                                    <strong>ESIC Deduction Rule:</strong> {{ company.company_esic_deduction_rule }}<br>
+                                    <strong>Welfare Deduction Rule:</strong> {{ company.company_welfare_deduction_rule }}<br>
+                                </div>
                             </td>
                         </tr>
                     {% endfor %}
@@ -69,7 +76,6 @@
         </div>
     </div>
 </div>
-
 <script>
     // Toggle Add Company Form visibility
     document.getElementById('toggleAddCompanyForm').onclick = function () {

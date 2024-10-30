@@ -172,12 +172,17 @@ class VendorInformationForm(forms.ModelForm):
 class CompanyForm(forms.ModelForm):
     class Meta:
         model = Company
-        fields = ['company_code', 'company_name', 'company_address', 'company_gst_number', 'company_account_number',
-                  'company_ifsc_code', 'company_contact_person_name', 'company_contact_person_number']
+        fields = [
+            'company_code', 'company_name', 'company_address', 'company_gst_number', 'company_account_number',
+            'company_ifsc_code', 'company_contact_person_name', 'company_contact_person_number',
+            'company_contact_person_email', 'company_pf_code', 'company_esic_code',
+            'company_service_charge_salary', 'company_service_charge_over_time', 'company_salary_component_type',
+            'company_ot_rule', 'company_bonus_formula', 'company_pf_deduction',
+            'company_esic_deduction_rule', 'company_welfare_deduction_rule'
+        ]
         widgets = {
             'company_address': forms.Textarea(attrs={'class': 'form-control'}),
         }
-
 
 # Adding Company form
 class AddCompanyForm(forms.Form):
@@ -189,6 +194,18 @@ class AddCompanyForm(forms.Form):
     company_ifsc_code = forms.CharField(max_length=11, validators=[validate_ifsc_code])
     company_contact_person_name = forms.CharField(max_length=100)
     company_contact_person_number = forms.CharField(max_length=10)
+    company_contact_person_email = forms.EmailField()
+    company_pf_code = forms.CharField(max_length=20)
+    company_esic_code = forms.CharField(max_length=20)
+    company_service_charge_salary = forms.CharField(max_length=20)
+    company_service_charge_over_time = forms.CharField(max_length=20)
+    company_salary_component_type = forms.ChoiceField(choices=Company.USER_TYPE_CHOICES)
+    company_ot_rule = forms.CharField(max_length=20)
+    company_bonus_formula = forms.CharField(max_length=20)
+    company_pf_deduction = forms.CharField(max_length=20)
+    company_esic_deduction_rule = forms.CharField(max_length=20)
+    company_welfare_deduction_rule = forms.CharField(max_length=20)
+
 
 
 # Staff salary form
