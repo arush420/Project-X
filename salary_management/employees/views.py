@@ -1,5 +1,7 @@
 from decimal import Decimal
 from sqlite3 import IntegrityError
+from sys import prefix
+
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q, Sum
@@ -24,10 +26,10 @@ from openpyxl.utils.datetime import days_to_time
 
 # Import your models and forms
 from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company,
-                     StaffSalary, AdvanceTransaction)
+                     StaffSalary, AdvanceTransaction, SalaryRule)
 from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm,
                     CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm,
-                    AdvanceTransactionForm, ProfileEditForm, LoginForm)
+                    AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet)
 
 
 def get_user_role_flags(user):
@@ -839,45 +841,65 @@ def vendor_information_input(request):
 
 
 def company_list(request):
-    # Search functionality (correct method for retrieving GET parameters)
-    query = request.GET.get('q', '')  # Note the lowercase 'get'
-    if query:
-        companies = Company.objects.filter(company_name__icontains=query)
-    else:
-        companies = Company.objects.all()
+    # Search functionality
+    query = request.GET.get('q', '')
+    companies = Company.objects.filter(company_name__icontains=query) if query else Company.objects.all()
 
-    selected_company = None
+    company_forms = {}
+    salary_rule_formsets = {}
+
+    # Define default values for salary rules
+    default_salary_rule_data = [
+        {
+            'standard_head': 'Basic Salary',
+            'Basic_rate_type': 'Per Month',
+            'Basic_pay_type': 'PayDay',
+            'Sr_All_rate_type': 'Per Month',
+            'Sr_All_pay_type': 'PayDay',
+            'DA_rate_type': 'Per Month',
+            'DA_pay_type': 'PayDay',
+            # Add other default fields here as needed
+        }
+    ]
 
     if request.method == 'POST':
-        if 'company' in request.POST and request.POST['company']:
-            selected_company_id = request.POST['company']
-            selected_company = get_object_or_404(Company, id=selected_company_id)
-            company_form = CompanyForm(instance=selected_company)
-
-        elif 'add_company' in request.POST:
+        # Handle form submission (Add or Update)
+        if 'add_company' in request.POST:
             company_form = CompanyForm(request.POST)
             if company_form.is_valid():
-                company_form.save()
+                company = company_form.save()
                 messages.success(request, "Company added successfully!")
                 return redirect('employees:company_list')
 
-        elif 'update_company' in request.POST:
-            selected_company_id = request.POST['selected_company_id']
-            selected_company = get_object_or_404(Company, id=selected_company_id)
-            company_form = CompanyForm(request.POST, instance=selected_company)
-            if company_form.is_valid():
-                company_form.save()
-                messages.success(request, "Company details updated successfully!")
+        elif 'update_salary_rules' in request.POST:
+            company_id = request.POST.get('company_id')
+            company = get_object_or_404(Company, id=company_id)
+            formset = SalaryRuleFormSet(request.POST, queryset=company.salary_rules.all(), prefix=str(company.id))
+            if formset.is_valid():
+                salary_rules = formset.save(commit=False)
+                for rule in salary_rules:
+                    rule.company = company
+                    rule.save()
+                messages.success(request, "Salary rules updated successfully!")
                 return redirect('employees:company_list')
 
-    else:
-        company_form = CompanyForm()
+    # Initialize forms and formsets for each company (for both GET and POST requests)
+    for company in companies:
+        company_forms[company.id] = CompanyForm(instance=company)
+
+        # Check if the company has salary rules; if not, provide initial default values
+        if company.salary_rules.exists():
+            salary_rule_formsets[company.id] = SalaryRuleFormSet(queryset=company.salary_rules.all(),
+                                                                 prefix=str(company.id))
+        else:
+            salary_rule_formsets[company.id] = SalaryRuleFormSet(queryset=company.salary_rules.none(), initial=default_salary_rule_data, prefix=str(company.id))
 
     context = {
         'companies': companies,
-        'company_form': company_form,
-        'selected_company': selected_company,
-        'query': query,  # Pass the search query to the template
+        'company_forms': company_forms,
+        'salary_rule_formsets': salary_rule_formsets,
+        'query': query,
+        'company_form': CompanyForm(),  # Form for adding a new company
     }
     return render(request, 'employees/company_list.html', context)
 

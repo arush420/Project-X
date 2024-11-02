@@ -1,5 +1,6 @@
 from datetime import datetime
 from os import times
+from random import choices
 
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db import models
@@ -35,7 +36,6 @@ class MyModel(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
 
-from django.db import models
 
 class Company(models.Model):
     company_code = models.CharField(max_length=4, default="0000")
@@ -63,8 +63,75 @@ class Company(models.Model):
     company_esic_deduction_rule = models.CharField(max_length=20, default="0")
     company_welfare_deduction_rule = models.CharField(max_length=20, default="0")
 
+    # New fields for salary rules
+    USER_SALARY_RULES = [
+        ('yes', 'Yes'),
+        ('no', 'No')
+    ]
+
+    hra = models.CharField(max_length=10, choices=USER_SALARY_RULES, default='no')
+    allowance = models.CharField(max_length=10, choices=USER_SALARY_RULES, default='no')
     def __str__(self):
         return self.company_name
+
+
+class SalaryRule(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='salary_rules')
+
+    RATE_TYPE_CHOICES = [
+        ('Per Month', 'Per Month'),
+        ('Per Day', 'Per Day' )
+    ]
+
+    PAY_TYPE_CHOICES = [
+        ('PayDay', 'PayDay'),
+        ('OTHour', 'OTHour')
+    ]
+
+    standard_head = models.CharField(max_length=20)
+
+    # Fields with both rate type and pay type choices
+    Basic_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Basic_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Sr_All_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Sr_All_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    DA_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    DA_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    HRA_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    HRA_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    TA_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    TA_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Med_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Med_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Conv_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Conv_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Wash_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Wash_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Eff_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Eff_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Other_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Other_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Incentive_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Incentive_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Bonus_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Bonus_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Over_Time_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Over_Time_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    def __str__(self):
+        return f"{self.company.company_name} - {self.standard_head}"
 
 
 

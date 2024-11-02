@@ -10,9 +10,9 @@
                 <input class="form-control mr-sm-2" type="search" name="q" value="{{ query }}" placeholder="Search for a company" aria-label="Search">
                 <button class="btn btn-outline-primary my-2 my-sm-0" type="submit">Search</button>
             </form>
-            <!-- Add Company Button -->
-            <button class="btn btn-success mb-3" id="toggleAddCompanyForm">Add New Company</button>
-            <!-- Add Company Form (hidden by default) -->
+
+            <button class="btn btn-success mb-3" id="toggleAddCompanyForm" aria-expanded="false" aria-controls="addCompanyForm">Add New Company</button>
+
             <div id="addCompanyForm" style="display: none;">
                 <h4>Add Company</h4>
                 <form method="POST" action="{% url 'employees:company_list' %}">
@@ -21,72 +21,117 @@
                     <button type="submit" name="add_company" class="btn btn-primary w-100">Add Company</button>
                 </form>
             </div>
-            <!-- Company List Table -->
-            <table class="table table-hover mt-3">
-                <thead class="thead-light">
-                    <tr>
-                        <th>Company Code</th>
-                        <th>Company Name</th>
-                        <th>GST Number</th>
-                        <th>Contact Person</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for company in companies %}
+
+            <div class="table-responsive">
+                <table class="table table-hover mt-3">
+                    <thead class="thead-light">
                         <tr>
-                            <td>{{ company.company_code }}</td>
-                            <td>{{ company.company_name }}</td>
-                            <td>{{ company.company_gst_number }}</td>
-                            <td>{{ company.company_contact_person_name }}</td>
-                            <td>
-                                <button class="btn btn-info btn-sm" onclick="toggleCompanyDetails('{{ company.id }}')">View</button>
-                                <button class="btn btn-warning btn-sm" onclick="editCompany('{{ company.id }}')">Edit</button>
-                                <form method="POST" action="{% url 'employees:delete_company' company.id %}" style="display:inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                </form>
-                            </td>
+                            <th>Company Code</th>
+                            <th>Company Name</th>
+                            <th>GST Number</th>
+                            <th>Contact Person</th>
+                            <th>Actions</th>
                         </tr>
-                        <!-- Hidden Company Details -->
-                        <tr id="company-details-{{ company.id }}" style="display: none;" class="bg-light">
-                            <td colspan="5">
-                                <div class="p-3">
-                                    <strong>Address:</strong> {{ company.company_address }}<br>
-                                    <strong>Account Number:</strong> {{ company.company_account_number }}<br>
-                                    <strong>IFSC Code:</strong> {{ company.company_ifsc_code }}<br>
-                                    <strong>Contact Number:</strong> {{ company.company_contact_person_number }}<br>
-                                    <strong>Email:</strong> {{ company.company_contact_person_email }}<br>
-                                    <strong>PF Code:</strong> {{ company.company_pf_code }}<br>
-                                    <strong>ESIC Code:</strong> {{ company.company_esic_code }}<br>
-                                    <strong>Service Charge (Salary):</strong> {{ company.company_service_charge_salary }}<br>
-                                    <strong>Service Charge (Over Time):</strong> {{ company.company_service_charge_over_time }}<br>
-                                    <strong>Salary Component Type:</strong> {{ company.company_salary_component_type }}<br>
-                                    <strong>OT Rule:</strong> {{ company.company_ot_rule }}<br>
-                                    <strong>Bonus Formula:</strong> {{ company.company_bonus_formula }}<br>
-                                    <strong>PF Deduction:</strong> {{ company.company_pf_deduction }}<br>
-                                    <strong>ESIC Deduction Rule:</strong> {{ company.company_esic_deduction_rule }}<br>
-                                    <strong>Welfare Deduction Rule:</strong> {{ company.company_welfare_deduction_rule }}<br>
-                                </div>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for company in companies %}
+                            <tr>
+                                <td>{{ company.company_code }}</td>
+                                <td>{{ company.company_name }}</td>
+                                <td>{{ company.company_gst_number }}</td>
+                                <td>{{ company.company_contact_person_name }}</td>
+                                <td>
+                                    <button class="btn btn-info btn-sm" onclick="toggleCompanyDetails('{{ company.id }}')">View</button>
+                                    <button class="btn btn-warning btn-sm" onclick="editCompany('{{ company.id }}')">Edit</button>
+                                    <form method="POST" action="{% url 'employees:delete_company' company.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this company?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr id="company-details-{{ company.id }}" style="display: none;" class="bg-light">
+                                <td colspan="5">
+                                    <form method="post" action="{% url 'employees:company_list' %}">
+                                        {% csrf_token %}
+                                        <h4>Salary Rules for {{ company.company_name }}</h4>
+                                        <input type="hidden" name="company_id" value="{{ company.id }}">
+                                        {% with formset=salary_rule_formsets|default_if_none:'' %}
+                                            {{ formset.management_form }}
+                                            {% for form in formset %}
+                                                <div class="salary-rule-form mb-3 p-2 border">
+                                                    <div class="row">
+                                                        <div class="col-md-2">
+                                                            {{ form.standard_head.label_tag }} {{ form.standard_head }}
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            {{ form.Basic_rate_type.label_tag }} {{ form.Basic_rate_type }}
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            {{ form.Basic_pay_type.label_tag }} {{ form.Basic_pay_type }}
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            {{ form.Sr_All_rate_type.label_tag }} {{ form.Sr_All_rate_type }}
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            {{ form.Sr_All_pay_type.label_tag }} {{ form.Sr_All_pay_type }}
+                                                        </div>
+                                                        <div class="col-md-2 text-center">
+                                                            <button type="submit" class="btn btn-success add-rule-btn">Save</button>
+                                                            <span class="success-tick" style="display: none;">✔</span>
+                                                        </div>
+                                                    </div>
+                                                    <!-- Continue adding more fields as needed -->
+                                                    <div class="row">
+                                                        <div class="col-md-2">
+                                                            {{ form.DA_rate_type.label_tag }} {{ form.DA_rate_type }}
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            {{ form.DA_pay_type.label_tag }} {{ form.DA_pay_type }}
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            {{ form.HRA_rate_type.label_tag }} {{ form.HRA_rate_type }}
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            {{ form.HRA_pay_type.label_tag }} {{ form.HRA_pay_type }}
+                                                        </div>
+                                                        <!-- Add additional rows as necessary for other fields -->
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        {% endwith %}
+                                        <button type="submit" name="update_salary_rules" class="btn btn-primary">Save All Salary Rules</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
+
 <script>
-    // Toggle Add Company Form visibility
     document.getElementById('toggleAddCompanyForm').onclick = function () {
         var form = document.getElementById('addCompanyForm');
         form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        this.setAttribute('aria-expanded', form.style.display === 'block');
     };
 
-    // Toggle visibility of company details
     function toggleCompanyDetails(companyId) {
         var detailsRow = document.getElementById('company-details-' + companyId);
         detailsRow.style.display = detailsRow.style.display === 'none' ? 'table-row' : 'none';
     }
+
+    document.querySelectorAll('.add-rule-btn').forEach(button => {
+        button.addEventListener('click', function (e) {
+            e.preventDefault();
+            let form = this.closest('form');
+            form.submit();
+            let successTick = this.nextElementSibling;
+            successTick.style.display = 'inline';
+            setTimeout(() => successTick.style.display = 'none', 2000);
+        });
+    });
 </script>
 {% endblock %}

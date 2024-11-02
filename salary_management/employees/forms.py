@@ -1,9 +1,10 @@
 from django import forms
 from .models import (Employee, Task, Payment, PurchaseItem, VendorInformation,
-                     Company, Profile, StaffSalary, AdvanceTransaction)
+                     Company, SalaryRule, Profile, StaffSalary, AdvanceTransaction)
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 import re
+from django.forms import modelformset_factory
 from django.core.exceptions import ValidationError
 
 
@@ -178,11 +179,35 @@ class CompanyForm(forms.ModelForm):
             'company_contact_person_email', 'company_pf_code', 'company_esic_code',
             'company_service_charge_salary', 'company_service_charge_over_time', 'company_salary_component_type',
             'company_ot_rule', 'company_bonus_formula', 'company_pf_deduction',
-            'company_esic_deduction_rule', 'company_welfare_deduction_rule'
+            'company_esic_deduction_rule', 'company_welfare_deduction_rule',
+            'hra', 'allowance'  # add new fields here
         ]
         widgets = {
             'company_address': forms.Textarea(attrs={'class': 'form-control'}),
         }
+
+class SalaryRuleForm(forms.ModelForm):
+    class Meta:
+        model = SalaryRule
+        fields = [
+            'standard_head',
+            'Basic_rate_type', 'Basic_pay_type',
+            'Sr_All_rate_type', 'Sr_All_pay_type',
+            'DA_rate_type', 'DA_pay_type',
+            'HRA_rate_type', 'HRA_pay_type',
+            'TA_rate_type', 'TA_pay_type',
+            'Med_rate_type', 'Med_pay_type',
+            'Conv_rate_type', 'Conv_pay_type',
+            'Wash_rate_type', 'Wash_pay_type',
+            'Eff_rate_type', 'Eff_pay_type',
+            'Other_rate_type', 'Other_pay_type',
+            'Incentive_rate_type', 'Incentive_pay_type',
+            'Bonus_rate_type', 'Bonus_pay_type',
+            'Over_Time_rate_type', 'Over_Time_pay_type'
+        ]
+
+# Define a formset for adding multiple salary rules at once
+SalaryRuleFormSet = modelformset_factory(SalaryRule, form=SalaryRuleForm, extra=1)
 
 # Adding Company form
 class AddCompanyForm(forms.Form):
@@ -204,7 +229,9 @@ class AddCompanyForm(forms.Form):
     company_bonus_formula = forms.CharField(max_length=20)
     company_pf_deduction = forms.CharField(max_length=20)
     company_esic_deduction_rule = forms.CharField(max_length=20)
-    company_welfare_deduction_rule = forms.CharField(max_length=20)
+    company_welfare_deduction_rule = forms.CharField(max_length=20),
+    hra = forms.BooleanField(required=False, initial=False, label="HRA")
+    allowance = forms.BooleanField(required=False, initial=False, label="Allowance")
 
 
 
