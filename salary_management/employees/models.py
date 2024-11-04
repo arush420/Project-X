@@ -40,10 +40,10 @@ class MyModel(models.Model):
 class Company(models.Model):
     company_code = models.CharField(max_length=4, default="0000")
     company_name = models.CharField(max_length=100, default="")
-    company_address = models.TextField()
+    company_address = models.CharField(max_length=255, default="")
     company_contact_person_name = models.CharField(max_length=100, default="")
-    company_contact_person_number = models.CharField(validators=[phone_regex], max_length=10, default="0")
-    company_contact_person_email = models.CharField(max_length=100, default="")
+    company_contact_person_number = models.CharField(validators=[phone_regex], max_length=10, default="0000000000")
+    company_contact_person_email = models.EmailField(max_length=100, default="")
     company_gst_number = models.CharField(max_length=20, default="0")
     company_pf_code = models.CharField(max_length=20, default="0")
     company_esic_code = models.CharField(max_length=20, default="0")
@@ -51,26 +51,18 @@ class Company(models.Model):
     company_service_charge_over_time = models.CharField(max_length=20, default="0")
     company_account_number = models.CharField(max_length=20, default="0")
     company_ifsc_code = models.CharField(max_length=11, default="0")
-    company_salary_component_type = models.CharField(max_length=20, default="0")
     USER_TYPE_CHOICES = [
         ('Hour', 'Hour'),
         ('Day', 'Day'),
         ('Month', 'Month')
     ]
+    company_salary_component_type = models.CharField(max_length=20,choices=USER_TYPE_CHOICES , default="0")
     company_ot_rule = models.CharField(max_length=20, default="0")
     company_bonus_formula = models.CharField(max_length=20, default="0")
     company_pf_deduction = models.CharField(max_length=20, default="0")
     company_esic_deduction_rule = models.CharField(max_length=20, default="0")
     company_welfare_deduction_rule = models.CharField(max_length=20, default="0")
 
-    # New fields for salary rules
-    USER_SALARY_RULES = [
-        ('yes', 'Yes'),
-        ('no', 'No')
-    ]
-
-    hra = models.CharField(max_length=10, choices=USER_SALARY_RULES, default='no')
-    allowance = models.CharField(max_length=10, choices=USER_SALARY_RULES, default='no')
     def __str__(self):
         return self.company_name
 

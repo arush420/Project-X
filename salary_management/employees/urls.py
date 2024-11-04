@@ -38,8 +38,14 @@ urlpatterns = [
     path('payment/delete/<int:payment_id>/', views.delete_payment, name='delete_payment'),
     path('purchase-item-input/', views.purchase_item_input, name='purchase_item_input'),
     path('vendor-information-input/', views.vendor_information_input, name='vendor_information_input'),
+
+    # company
     path('companies/', views.company_list, name='company_list'),
+    path('companies/add/', views.company_add, name='company_add'),
+    path('companies/update/<int:company_id>/', views.company_update, name='company_update'),
     path('companies/delete/<int:company_id>/', views.delete_company, name='delete_company'),
+
+    # office staff
     path('salaries/', views.staff_salary_list, name='staff_salary_list'),
     path('salaries/new/', views.staff_salary_create, name='staff_salary_create'),
     path('salaries/edit/<int:pk>/', views.staff_salary_update, name='staff_salary_update'),

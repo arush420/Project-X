@@ -200,10 +200,10 @@ class CompanyForm(forms.ModelForm):
             'company_service_charge_salary', 'company_service_charge_over_time', 'company_salary_component_type',
             'company_ot_rule', 'company_bonus_formula', 'company_pf_deduction',
             'company_esic_deduction_rule', 'company_welfare_deduction_rule',
-            'hra', 'allowance'  # add new fields here
+             # add new fields here
         ]
         widgets = {
-            'company_address': forms.Textarea(attrs={'class': 'form-control'}),
+            'company_address': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
 class SalaryRuleForm(forms.ModelForm):
