@@ -832,25 +832,45 @@ def company_list(request):
 def company_add(request):
     if request.method == 'POST':
         company_form = CompanyForm(request.POST)
-        if company_form.is_valid():
+        salary_rule_formset = SalaryRuleFormSet(request.POST, instance=company_form.instance)
+
+        if company_form.is_valid() and salary_rule_formset.is_valid():
             company_form.save()
+            salary_rule_formset.instance = company
+            salary_rule_formset.save()
             messages.success(request, "Company added successfully!")
             return redirect('employees:company_list')
     else:
         company_form = CompanyForm()
-    return render(request, 'employees/company_add_update.html', {'company_form': company_form, 'is_update': False})
+        salary_rule_formset = SalaryRuleFormSet()
+
+    return render(request, 'employees/company_add_update.html', {
+        'company_form': company_form,
+        'salary_rule_formset': salary_rule_formset,
+        'is_update': False,
+    })
+
 
 def company_update(request, company_id):
     company = get_object_or_404(Company, id=company_id)
     if request.method == 'POST':
         company_form = CompanyForm(request.POST, instance=company)
-        if company_form.is_valid():
+        salary_rule_formset = SalaryRuleFormSet(request.POST, instance=company)
+
+        if company_form.is_valid() and salary_rule_formset.is_valid():
             company_form.save()
-            messages.success(request, "Company updated successfully!")
+            salary_rule_formset.save()
+            messages.success(request, "Company and salary rules updated successfully!")
             return redirect('employees:company_list')
     else:
         company_form = CompanyForm(instance=company)
-    return render(request, 'employees/company_add_update.html', {'company_form': company_form, 'is_update': True, 'company': company})
+        salary_rule_formset = SalaryRuleFormSet(instance=company)
+
+    return render(request, 'employees/company_add_update.html', {
+        'company_form': company_form,
+        'salary_rule_formset': salary_rule_formset,
+        'is_update': True,
+    })
 
 def delete_company(request, company_id):
     company = get_object_or_404(Company, id=company_id)

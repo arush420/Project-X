@@ -11,8 +11,8 @@
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card shadow-sm">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow-lg">
                 <div class="card-header bg-primary text-white text-center">
                     <h4 class="mb-0">
                         {% if is_update %}
@@ -23,7 +23,7 @@
                     </h4>
                 </div>
 
-                <div class="card-body p-4">
+                <div class="card-body">
                     {% if messages %}
                         <div class="alert alert-info" role="alert">
                             {% for message in messages %}
@@ -34,10 +34,33 @@
 
                     <form method="POST" action="">
                         {% csrf_token %}
-                        <div class="form-group">
+
+                        <!-- Company Form Fields -->
+                        <div class="form-row">
                             {{ company_form.as_p }}
                         </div>
-                        <button type="submit" class="btn btn-primary btn-block mt-3">
+
+                        <!-- Salary Rules Section -->
+                        <h5 class="mt-4 text-center">Salary Rules</h5>
+                        <hr>
+                        <div class="form-group">
+                            {{ salary_rule_formset.management_form }}
+                            {% for form in salary_rule_formset %}
+                                <div class="border p-3 rounded mb-3">
+                                    <h6 class="text-muted mb-3">Rule {{ forloop.counter }}</h6>
+                                    <div class="form-row">
+                                        {% for field in form.visible_fields %}
+                                            <div class="col-md-6 mb-2">
+                                                {{ field.label_tag }} {{ field }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-success btn-block mt-4">
                             {% if is_update %}
                                 Update Company
                             {% else %}
