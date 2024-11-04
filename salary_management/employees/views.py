@@ -432,9 +432,10 @@ class AddEmployeeAndUploadView(View):
             if form.is_valid():
                 form.save()
                 messages.success(request, 'Employee added successfully!')
-                return redirect('employees:employee_list')
+                return redirect('employees:employee_list')  # Redirect to employee list view or appropriate URL
             else:
                 messages.error(request, 'Failed to add employee. Please check the form.')
+            return render(request, 'employees/add_employee.html', {'add_employee_form': form, 'upload_form': ExcelUploadForm()})
 
         elif request.POST.get('submit_type') == 'upload_employees':
             form = ExcelUploadForm(request.POST, request.FILES)
@@ -448,53 +449,44 @@ class AddEmployeeAndUploadView(View):
 
         return self.get(request)
 
+def download_template(request):
+    # Define columns for the template
+    columns = [
+        'employee_code', 'name', 'father_name', 'mother_name', 'gender', 'dob', 'marital_status', 'spouse_name',
+        'mobile', 'email', 'address', 'district', 'state', 'pincode',
+        'pf_no', 'esi_no', 'uan', 'pan', 'company', 'department', 'designation', 'doj', 'doe',
+        'pay_mode', 'employer_account', 'employee_account', 'ifsc', 'kyc_status', 'handicap', 'remarks',
+        'basic', 'transport', 'canteen', 'pf_contribution', 'esic_contribution', 'advance'
+    ]
+
+    # Create an empty DataFrame with the specified columns
+    df = pd.DataFrame(columns=columns)
+
+    # Create a response object for downloading the Excel file
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=employee_upload_template.xlsx'
+
+    # Write the empty DataFrame to Excel and serve as a download
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='EmployeeTemplate')
+
+    return response
+
+
 def handle_file_upload(file):
-    errors = []
+    # Example for handling Excel file upload
     try:
         df = pd.read_excel(file)
-
-        required_columns = ['employee_code', 'name', 'father_name', 'basic', 'transport', 'canteen', 'pf', 'esic', 'advance']
-        for col in required_columns:
-            if col not in df.columns:
-                raise ValidationError(f"Missing required column: {col}")
-
-        for _, row in df.iterrows():
-            try:
-                employee_code = str(row['employee_code']).strip()
-                name = str(row['name']).strip()
-                father_name = str(row['father_name']).strip()
-                basic = Decimal(row['basic'])
-                transport = Decimal(row.get('transport', 0))
-                canteen = Decimal(row.get('canteen', 0))
-                pf = Decimal(row.get('pf', 0))
-                esic = Decimal(row.get('esic', 0))
-                advance = Decimal(row.get('advance', 0))
-
-                if Employee.objects.filter(employee_code=employee_code).exists():
-                    continue
-
-                Employee.objects.create(
-                    employee_code=employee_code,
-                    name=name,
-                    father_name=father_name,
-                    basic=basic,
-                    transport=transport,
-                    canteen=canteen,
-                    pf=pf,
-                    esic=esic,
-                    advance=advance
-                )
-            except Exception as e:
-                errors.append(f"Error processing row: {row}. Error: {e}")
-                continue
+        # Process dataframe to add employees; adjust column names as per your Excel structure
+        for index, row in df.iterrows():
+            Employee.objects.create(
+                employee_code=row['Employee Code'],
+                name=row['Name'],
+                # Map other fields from the DataFrame row to Employee fields
+            )
     except Exception as e:
         raise ValidationError(f"Error processing file: {e}")
 
-    if errors:
-        raise ValidationError(errors)
-
-
-from django.core.exceptions import ValidationError
 
 def handle_file_upload(file):
     errors = []
@@ -629,18 +621,6 @@ class GenerateSalaryView(PermissionRequiredMixin, View):
         return salary_data, total_gross_salary, total_pf, total_esic, total_canteen, total_advance, total_net_salary
 
 
-def download_template(request):
-    # Define columns for the template
-    columns = ['employee_code', 'name', 'father_name', 'basic', 'transport', 'canteen', 'pf', 'esic', 'advance']
-    df = pd.DataFrame(columns=columns)
-
-    # Create a response object for downloading the Excel file
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=employee_upload_template.xlsx'
-
-    # Write the empty dataframe to Excel and serve as a download
-    df.to_excel(response, index=False)
-    return response
 
 
 def employee_detail(request):

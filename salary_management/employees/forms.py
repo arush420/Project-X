@@ -92,14 +92,34 @@ class LoginForm(AuthenticationForm):
     )
 
 
-
-# Employee form
+# Employee Form
 class EmployeeForm(forms.ModelForm):
     class Meta:
         model = Employee
-        fields = ['employee_code', 'name', 'father_name', 'basic', 'transport', 'canteen', 'pf', 'esic', 'advance']
+        fields = [
+            # Personal Details
+            'employee_code', 'name', 'father_name', 'mother_name', 'gender', 'dob', 'marital_status', 'spouse_name',
+            'mobile', 'email', 'address', 'district', 'state', 'pincode',
+
+            # Professional Details
+            'pf_no', 'esi_no', 'uan', 'pan', 'company', 'department', 'designation', 'doj', 'doe',
+
+            # Account Details
+            'pay_mode', 'employer_account', 'employee_account', 'ifsc', 'kyc_status', 'handicap', 'remarks',
+
+            # Salary Details
+            'basic', 'transport', 'canteen', 'pf_contribution', 'esic_contribution', 'advance'
+        ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Employee Name'}),
+            'father_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Father\'s Name'}),
+            'mobile': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Mobile Number'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Address'}),
+            'remarks': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Remarks'}),
+            'dob': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'doj': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'doe': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            # Add more widgets as needed
         }
 
 
