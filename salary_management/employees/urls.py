@@ -19,9 +19,12 @@ urlpatterns = [
     path('complete_task/<int:task_id>/', views.complete_task, name='complete_task'),
     path('delete_task/<int:task_id>/', views.delete_task, name='delete_task'),
     path('transfer_task/<int:task_id>/', views.transfer_task, name='transfer_task'),
+    # Employee datail
     path('add_employee/', views.AddEmployeeAndUploadView.as_view(), name='add_employee_and_upload'),
     path('employees/delete_multiple/', views.delete_multiple_employees, name='delete_multiple_employees'), # Multi delete
     path('employee/<int:employee_id>/delete/', views.delete_employee, name='delete_employee'),  # Single delete
+    path('upload/', views.employees_upload_details, name='employees_upload_details'), # upload advance, attendance
+    path('sample-download/', views.sample_download, name='sample_download'), # sample to upload advance, attendance
     # Download template to add bulk employees
     path('download-template/', views.download_template, name='download_template'),
     path('employee_list/', views.EmployeeListView.as_view(), name='employee_list'),

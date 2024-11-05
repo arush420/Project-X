@@ -31,11 +31,21 @@
                                 <td>{{ company.company_gst_number }}</td>
                                 <td>{{ company.company_contact_person_name }}</td>
                                 <td>
+                                    <button class="btn btn-info btn-sm" onclick="toggleDetails('details-{{ company.id }}')">View</button>
                                     <a href="{% url 'employees:company_update' company.id %}" class="btn btn-warning btn-sm">Edit</a>
                                     <form method="POST" action="{% url 'employees:delete_company' company.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this company?');">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                     </form>
+                                </td>
+                            </tr>
+                            <!-- Hidden row for company details -->
+                            <tr id="details-{{ company.id }}" style="display: none;">
+                                <td colspan="5">
+                                    <strong>Address:</strong> {{ company.address }}<br>
+                                    <strong>Email:</strong> {{ company.email }}<br>
+                                    <strong>Phone:</strong> {{ company.phone }}<br>
+                                    <strong>Additional Info:</strong> {{ company.additional_info }}
                                 </td>
                             </tr>
                         {% endfor %}
@@ -45,4 +55,11 @@
         </div>
     </div>
 </div>
+
+<script>
+    function toggleDetails(id) {
+        var row = document.getElementById(id);
+        row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+    }
+</script>
 {% endblock %}

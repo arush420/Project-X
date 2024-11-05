@@ -253,6 +253,25 @@ class Employee(models.Model):
     def __str__(self):
         return f'{self.name} ({self.employee_code})'
 
+class EmployeesAttendance(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="attendance_records")
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="attendance_records")
+    year = models.PositiveIntegerField()
+    month = models.PositiveIntegerField(choices=[
+        (1, "January"), (2, "February"), (3, "March"), (4, "April"),
+        (5, "May"), (6, "June"), (7, "July"), (8, "August"),
+        (9, "September"), (10, "October"), (11, "November"), (12, "December")
+    ])
+    days_worked = models.PositiveIntegerField()
+
+    class Meta:
+        unique_together = ('company', 'employee', 'year', 'month')
+        verbose_name = "Employee Attendance"
+        verbose_name_plural = "Employee Attendance Records"
+
+    def __str__(self):
+        return f"{self.employee.name} - {self.company.company_name} ({self.month}/{self.year})"
+
 
 class Salary(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='salaries')

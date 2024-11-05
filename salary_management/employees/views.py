@@ -621,8 +621,6 @@ class GenerateSalaryView(PermissionRequiredMixin, View):
         return salary_data, total_gross_salary, total_pf, total_esic, total_canteen, total_advance, total_net_salary
 
 
-
-
 def employee_detail(request):
     form = EmployeeSearchForm()
     employee = None
@@ -673,6 +671,39 @@ def delete_multiple_employees(request):
             messages.warning(request, 'No employees selected for deletion.')
 
     return redirect('employees:employee_list')
+
+
+# Upload various parameters like attendance, advance
+def employees_upload_details(request):
+    companies = Company.objects.all()
+
+    if request.method == 'POST':
+        company_id = request.POST.get('company')
+        month = request.POST.get('month')
+        year = request.POST.get('year')
+        upload_type = request.POST.get('upload_type')
+        upload_file = request.FILES.get('upload_file')
+
+        if upload_type == 'attendance':
+            # Handle attendance file processing
+            pass
+        elif upload_type == 'advance':
+            # Handle advance file processing
+            pass
+
+        return redirect('employees:attendance_list')  # Redirect after successful upload
+
+    return render(request, 'employees/employees_upload_details.html', {
+        'companies': companies
+    })
+
+
+# Sample template download to upload employee attendence
+def sample_download(request):
+    response = HttpResponse(content_type='application/vnd.ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="sample_template.xlsx"'
+    # Generate or attach your template content here
+    return response
 
 
 def salary_list(request):
@@ -832,6 +863,7 @@ def company_list(request):
 def company_add(request):
     if request.method == 'POST':
         company_form = CompanyForm(request.POST)
+        salary_rule_formset = SalaryRuleFormSet(request.POST, instance=company_form.instance)
         salary_rule_formset = SalaryRuleFormSet(request.POST, instance=company_form.instance)
 
         if company_form.is_valid() and salary_rule_formset.is_valid():
