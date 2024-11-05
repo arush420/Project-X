@@ -205,6 +205,14 @@ class CompanyForm(forms.ModelForm):
 
 
 class SalaryRuleForm(forms.ModelForm):
+    # Checkbox fields
+    pf = forms.BooleanField(required=False)
+    esic = forms.BooleanField(required=False)
+    lwf = forms.BooleanField(required=False)
+    ot = forms.BooleanField(required=False)
+    tr = forms.BooleanField(required=False)
+    add = forms.BooleanField(required=False)
+
     class Meta:
         model = SalaryRule
         fields = [
@@ -220,7 +228,8 @@ class SalaryRuleForm(forms.ModelForm):
             'Other_rate_type', 'Other_pay_type',
             'Incentive_rate_type', 'Incentive_pay_type',
             'Bonus_rate_type', 'Bonus_pay_type',
-            'Over_Time_rate_type', 'Over_Time_pay_type'
+            'Over_Time_rate_type', 'Over_Time_pay_type',
+
         ]
 
 # Define a formset for adding multiple salary rules at once
