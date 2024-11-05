@@ -208,7 +208,6 @@ class SalaryRuleForm(forms.ModelForm):
     class Meta:
         model = SalaryRule
         fields = [
-            'standard_head',
             'Basic_rate_type', 'Basic_pay_type',
             'Sr_All_rate_type', 'Sr_All_pay_type',
             'DA_rate_type', 'DA_pay_type',

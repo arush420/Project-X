@@ -853,9 +853,10 @@ def company_add(request):
 
 def company_update(request, company_id):
     company = get_object_or_404(Company, id=company_id)
+
     if request.method == 'POST':
         company_form = CompanyForm(request.POST, instance=company)
-        salary_rule_formset = SalaryRuleFormSet(request.POST, instance=company)
+        salary_rule_formset = SalaryRuleFormSet(request.POST, queryset=company.salary_rules.all())
 
         if company_form.is_valid() and salary_rule_formset.is_valid():
             company_form.save()

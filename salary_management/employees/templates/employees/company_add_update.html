@@ -45,18 +45,86 @@
                         <hr>
                         <div class="form-group">
                             {{ salary_rule_formset.management_form }}
-                            {% for form in salary_rule_formset %}
-                                <div class="border p-3 rounded mb-3">
-                                    <h6 class="text-muted mb-3">Rule {{ forloop.counter }}</h6>
-                                    <div class="form-row">
-                                        {% for field in form.visible_fields %}
-                                            <div class="col-md-6 mb-2">
-                                                {{ field.label_tag }} {{ field }}
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            {% endfor %}
+
+                            <!-- Salary Rules Table -->
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Standard Head</th>
+                                        <th>RATE_TYPE_CHOICES</th>
+                                        <th>PAY_TYPE_CHOICES</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for form in salary_rule_formset %}
+                                        <tr>
+                                            <td>Basic</td>
+                                            <td>{{ form.Basic_rate_type.label_tag }} {{ form.Basic_rate_type }}</td>
+                                            <td>{{ form.Basic_pay_type.label_tag }} {{ form.Basic_pay_type }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Sr Allowance</td>
+                                            <td>{{ form.Sr_All_rate_type.label_tag }} {{ form.Sr_All_rate_type }}</td>
+                                            <td>{{ form.Sr_All_pay_type.label_tag }} {{ form.Sr_All_pay_type }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>DA</td>
+                                            <td>{{ form.DA_rate_type.label_tag }} {{ form.DA_rate_type }}</td>
+                                            <td>{{ form.DA_pay_type.label_tag }} {{ form.DA_pay_type }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>HRA</td>
+                                            <td>{{ form.HRA_rate_type.label_tag }} {{ form.HRA_rate_type }}</td>
+                                            <td>{{ form.HRA_pay_type.label_tag }} {{ form.HRA_pay_type }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Travel Allowance</td>
+                                            <td>{{ form.TA_rate_type.label_tag }} {{ form.TA_rate_type }}</td>
+                                            <td>{{ form.TA_pay_type.label_tag }} {{ form.TA_pay_type }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Med rate</td>
+                                            <td>{{ form.Med_rate_type.label_tag }} {{ form.Med_rate_type }}</td>
+                                            <td>{{ form.Med_pay_type.label_tag }} {{ form.Med_pay_type }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Convenience</td>
+                                            <td>{{ form.Conv_rate_type.label_tag }} {{ form.Conv_rate_type }}</td>
+                                            <td>{{ form.Conv_pay_type.label_tag }} {{ form.Conv_pay_type }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Wash rate</td>
+                                            <td>{{ form.Wash_rate_type.label_tag }} {{ form.Wash_rate_type }}</td>
+                                            <td>{{ form.Wash_pay_type.label_tag }} {{ form.Wash_pay_type }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Efficiency</td>
+                                            <td>{{ form.Eff_rate_type.label_tag }} {{ form.Eff_rate_type }}</td>
+                                            <td>{{ form.Eff_pay_type.label_tag }} {{ form.Eff_pay_type }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Other rate</td>
+                                            <td>{{ form.Other_rate_type.label_tag }} {{ form.Other_rate_type }}</td>
+                                            <td>{{ form.Other_pay_type.label_tag }} {{ form.Other_pay_type }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Incentive</td>
+                                            <td>{{ form.Incentive_rate_type.label_tag }} {{ form.Incentive_rate_type }}</td>
+                                            <td>{{ form.Incentive_pay_type.label_tag }} {{ form.Incentive_pay_type }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Bonus</td>
+                                            <td>{{ form.Bonus_rate_type.label_tag }} {{ form.Bonus_rate_type }}</td>
+                                            <td>{{ form.Bonus_pay_type.label_tag }} {{ form.Bonus_pay_type }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Overtime</td>
+                                            <td>{{ form.Over_Time_rate_type.label_tag }} {{ form.Over_Time_rate_type }}</td>
+                                            <td>{{ form.Over_Time_pay_type.label_tag }} {{ form.Over_Time_pay_type }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
 
                         <!-- Submit Button -->

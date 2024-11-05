@@ -80,7 +80,6 @@ class SalaryRule(models.Model):
         ('OTHour', 'OTHour')
     ]
 
-    standard_head = models.CharField(max_length=20)
 
     # Fields with both rate type and pay type choices
     Basic_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
