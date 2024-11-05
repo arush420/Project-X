@@ -477,3 +477,42 @@ class AdvanceTransaction(models.Model):
 
     def __str__(self):
         return f"Transaction on {self.date} for {self.staff_salary.name}"
+
+
+# E - Invoice
+class EInvoice(models.Model):
+    site = models.CharField(max_length=100)
+    department = models.BooleanField(default=False)
+    month = models.CharField(max_length=20)
+    invoice_no = models.CharField(max_length=50)
+    date = models.DateField()
+    type = models.CharField(max_length=50)
+    category = models.CharField(max_length=50)
+    service = models.CharField(max_length=100)
+    po_number = models.CharField(max_length=50, blank=True, null=True)
+    buyer = models.CharField(max_length=100, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    gstin = models.CharField(max_length=15, blank=True, null=True)
+    contact_person = models.CharField(max_length=100, blank=True, null=True)
+    mobile = models.CharField(max_length=15, blank=True, null=True)
+    state = models.CharField(max_length=50, blank=True, null=True)
+    city = models.CharField(max_length=50, blank=True, null=True)
+    pincode = models.CharField(max_length=10, blank=True, null=True)
+    taxable = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    igst = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    cgst = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    sgst = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    cess = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    st_cess = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    cess_non_adv = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    bill_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    deduction_narration_1 = models.CharField(max_length=255, blank=True, null=True)
+    deduction_amount_1 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    deduction_narration_2 = models.CharField(max_length=255, blank=True, null=True)
+    deduction_amount_2 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    cancelled = models.BooleanField(default=False)
+    print_proprietor_name = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Invoice {self.invoice_no} - {self.buyer}"

@@ -56,4 +56,9 @@ urlpatterns = [
     path('edit-transaction/<int:pk>/', views.edit_transaction, name='edit_transaction'),
     path('settings/', views.settings_view, name='settings'),  # Add this for the settings page
     path('save-theme-preference/', views.save_theme_preference, name='save_theme_preference'), #added this to save theme preference
+
+    # E-Invoice
+    path('e-invoices/', views.e_invoice_list, name='e_invoice_list'),
+    path('e-invoices/new/', views.e_invoice_create, name='e_invoice_create'),
+    path('e-invoices/edit/<int:pk>/', views.e_invoice_update, name='e_invoice_update'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

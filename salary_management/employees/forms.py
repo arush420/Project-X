@@ -1,6 +1,7 @@
 from django import forms
 from .models import (Employee, Task, Payment, PurchaseItem, VendorInformation,
-                     Company, SalaryRule, Profile, StaffSalary, AdvanceTransaction)
+                     Company, SalaryRule, Profile, StaffSalary, AdvanceTransaction,
+                     EInvoice)
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 import re
@@ -285,4 +286,19 @@ class AdvanceTransactionForm(forms.ModelForm):
                   'paid_received_by', 'paid_received_account', 'comment']
         widgets = {
             'date': forms.SelectDateWidget(),
+        }
+
+# E invoice for company
+class EInvoiceForm(forms.ModelForm):
+    class Meta:
+        model = EInvoice
+        fields = [
+            'site', 'department', 'month', 'invoice_no', 'date', 'type', 'category', 'service',
+            'po_number', 'buyer', 'address', 'gstin', 'contact_person', 'mobile', 'state', 'city',
+            'pincode', 'taxable', 'igst', 'cgst', 'sgst', 'cess', 'st_cess', 'cess_non_adv', 'total',
+            'bill_amount', 'deduction_narration_1', 'deduction_amount_1', 'deduction_narration_2', 'deduction_amount_2',
+            'cancelled', 'print_proprietor_name'
+        ]
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date'}),
         }
