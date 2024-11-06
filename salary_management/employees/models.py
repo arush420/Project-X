@@ -255,19 +255,78 @@ def create_user_profile(sender, instance, created, **kwargs):
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
 
+
 class Employee(models.Model):
+    # Personal Details
     employee_code = models.CharField(max_length=10, unique=True)
     name = models.CharField(max_length=100)
     father_name = models.CharField(max_length=100)
+    mother_name = models.CharField(max_length=100, blank=True, null=True)
+    gender = models.CharField(max_length=10, choices=[('Male', 'Male'), ('Female', 'Female')], blank=True)
+    dob = models.DateField("Date of Birth", blank=True, null=True)
+    marital_status = models.CharField(max_length=15, choices=[('UnMarried', 'UnMarried'), ('Married', 'Married'),
+                                                              ('Divorced', 'Divorced'),
+                                                              ('Widow/Widower', 'Widow/Widower')], blank=True)
+    spouse_name = models.CharField(max_length=100, blank=True, null=True)
+    mobile = models.CharField(max_length=15, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    district = models.CharField(max_length=50, blank=True, null=True)
+    state = models.CharField(max_length=50, blank=True, null=True)
+    pincode = models.CharField(max_length=6, blank=True, null=True)
+
+    # professional details
+    pf_no = models.CharField(max_length=20, blank=True, null=True)
+    esi_no = models.CharField(max_length=20, blank=True, null=True)
+    uan = models.CharField(max_length=20, blank=True, null=True)
+    pan = models.CharField(max_length=20, blank=True, null=True)
+    company = models.CharField(max_length=100, blank=True, null=True)
+    department = models.CharField(max_length=50, blank=True, null=True)
+    designation = models.CharField(max_length=50, blank=True, null=True)
+    doj = models.DateField("Date of Joining", blank=True, null=True)
+    doe = models.DateField("Date of Exit", blank=True, null=True)
+
+    # Account details
+    pay_mode = models.CharField(max_length=50, blank=True, null=True)
+    employer_account = models.CharField(max_length=50, blank=True, null=True)
+    employee_account = models.CharField(max_length=50, blank=True, null=True)
+    ifsc = models.CharField(max_length=11, blank=True, null=True)
+    kyc_status = models.CharField(max_length=10, choices=[('Verified', 'Verified'), ('Pending', 'Pending')], blank=True)
+    handicap = models.BooleanField(default=False)
+    remarks = models.TextField(blank=True, null=True)
+
+    # Salary details
     basic = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES, default=0.00)
-    transport = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES, default=0.00)
+    transport = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES,
+                                    default=0.00)
     canteen = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES, default=0.00)
-    pf = models.DecimalField(max_digits=PERCENTAGE_MAX_DIGITS, decimal_places=PERCENTAGE_DECIMAL_PLACES, default=0.00)
-    esic = models.DecimalField(max_digits=PERCENTAGE_MAX_DIGITS, decimal_places=PERCENTAGE_DECIMAL_PLACES, default=0.00)
+    pf_contribution = models.DecimalField(max_digits=PERCENTAGE_MAX_DIGITS, decimal_places=PERCENTAGE_DECIMAL_PLACES,
+                                          default=0.00)
+    esic_contribution = models.DecimalField(max_digits=PERCENTAGE_MAX_DIGITS, decimal_places=PERCENTAGE_DECIMAL_PLACES,
+                                            default=0.00)
     advance = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES, default=0.00)
 
     def __str__(self):
         return f'{self.name} ({self.employee_code})'
+
+class EmployeesAttendance(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="attendance_records")
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="attendance_records")
+    year = models.PositiveIntegerField()
+    month = models.PositiveIntegerField(choices=[
+        (1, "January"), (2, "February"), (3, "March"), (4, "April"),
+        (5, "May"), (6, "June"), (7, "July"), (8, "August"),
+        (9, "September"), (10, "October"), (11, "November"), (12, "December")
+    ])
+    days_worked = models.PositiveIntegerField()
+
+    class Meta:
+        unique_together = ('company', 'employee', 'year', 'month')
+        verbose_name = "Employee Attendance"
+        verbose_name_plural = "Employee Attendance Records"
+
+    def __str__(self):
+        return f"{self.employee.name} - {self.company.company_name} ({self.month}/{self.year})"
 
 
 class Salary(models.Model):
@@ -474,6 +533,7 @@ class AdvanceTransaction(models.Model):
 
     def __str__(self):
         return f"Transaction on {self.date} for {self.staff_salary.name}"
+
 
 # E - Invoice
 class EInvoice(models.Model):
