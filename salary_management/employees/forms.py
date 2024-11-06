@@ -1,6 +1,6 @@
 from django import forms
 from .models import (Employee, Task, Payment, PurchaseItem, VendorInformation,
-                     Company, SalaryRule, Profile, StaffSalary, AdvanceTransaction)
+                     Company, SalaryRule, Profile, StaffSalary, AdvanceTransaction, SalaryOtherField, EInvoice)
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 import re
@@ -180,17 +180,21 @@ class CompanyForm(forms.ModelForm):
             'company_service_charge_salary', 'company_service_charge_over_time', 'company_salary_component_type',
             'company_ot_rule', 'company_bonus_formula', 'company_pf_deduction',
             'company_esic_deduction_rule', 'company_welfare_deduction_rule',
-            'hra', 'allowance'  # add new fields here
+             # add new fields here
         ]
-        widgets = {
-            'company_address': forms.Textarea(attrs={'class': 'form-control'}),
-        }
 
 class SalaryRuleForm(forms.ModelForm):
+    # Checkbox fields
+    pf = forms.BooleanField(required=False)
+    esic = forms.BooleanField(required=False)
+    lwf = forms.BooleanField(required=False)
+    ot = forms.BooleanField(required=False)
+    tr = forms.BooleanField(required=False)
+    add = forms.BooleanField(required=False)
+
     class Meta:
         model = SalaryRule
         fields = [
-            'standard_head',
             'Basic_rate_type', 'Basic_pay_type',
             'Sr_All_rate_type', 'Sr_All_pay_type',
             'DA_rate_type', 'DA_pay_type',
@@ -203,11 +207,43 @@ class SalaryRuleForm(forms.ModelForm):
             'Other_rate_type', 'Other_pay_type',
             'Incentive_rate_type', 'Incentive_pay_type',
             'Bonus_rate_type', 'Bonus_pay_type',
-            'Over_Time_rate_type', 'Over_Time_pay_type'
+            'Over_Time_rate_type', 'Over_Time_pay_type',
+
         ]
 
 # Define a formset for adding multiple salary rules at once
 SalaryRuleFormSet = modelformset_factory(SalaryRule, form=SalaryRuleForm, extra=1)
+
+class SalaryOtherFieldForm(forms.ModelForm):
+    # Checkbox fields
+    pf = forms.BooleanField(required=False)
+    esic = forms.BooleanField(required=False)
+    lwf = forms.BooleanField(required=False)
+    ot = forms.BooleanField(required=False)
+    tr = forms.BooleanField(required=False)
+    add = forms.BooleanField(required=False)
+
+    class Meta:
+        model = SalaryOtherField
+        fields = [
+            'Good_Work_Allowance_rate_type', 'Good_Work_Allowance_pay_type',
+            'ABRY_rate_type', 'ABRY_pay_type',
+            'Add_Bonus_rate_type', 'Add_Bonus_pay_type',
+            'Arrears_rate_type', 'Arrears_pay_type',
+            'Attnd_Award_rate_type', 'Attnd_Award_pay_type',
+            'Attnd_Incentive_rate_type', 'Attnd_Incentive_pay_type',
+            'Bonus_Allowance_rate_type', 'Bonus_Allowance_pay_type',
+            'Conveyance_Allowance_rate_type', 'Conveyance_Allowance_pay_type',
+            'Festival_Bonus_refund_rate_type', 'Festival_Bonus_refund_pay_type',
+            'Gratuity_rate_type', 'Gratuity_pay_type',
+            'Night_Allowance_rate_type', 'Night_Allowance_pay_type',
+            'Production_incentive_rate_type', 'Production_incentive_pay_type',
+            'Welding_Allowance_rate_type', 'Welding_Allowance_pay_type'
+        ]
+
+# Define a formset for adding multiple salary rules at once
+SalaryOtherFieldFormSet = modelformset_factory(SalaryOtherField, form=SalaryOtherFieldForm, extra=1)
+
 
 # Adding Company form
 class AddCompanyForm(forms.Form):
@@ -259,4 +295,20 @@ class AdvanceTransactionForm(forms.ModelForm):
                   'paid_received_by', 'paid_received_account', 'comment']
         widgets = {
             'date': forms.SelectDateWidget(),
+        }
+
+
+# E invoice for company
+class EInvoiceForm(forms.ModelForm):
+    class Meta:
+        model = EInvoice
+        fields = [
+            'site', 'department', 'month', 'invoice_no', 'date', 'type', 'category', 'service',
+            'po_number', 'buyer', 'address', 'gstin', 'contact_person', 'mobile', 'state', 'city',
+            'pincode', 'taxable', 'igst', 'cgst', 'sgst', 'cess', 'st_cess', 'cess_non_adv', 'total',
+            'bill_amount', 'deduction_narration_1', 'deduction_amount_1', 'deduction_narration_2', 'deduction_amount_2',
+            'cancelled', 'print_proprietor_name'
+        ]
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date'}),
         }

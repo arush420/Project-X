@@ -38,7 +38,10 @@ urlpatterns = [
     path('payment/delete/<int:payment_id>/', views.delete_payment, name='delete_payment'),
     path('purchase-item-input/', views.purchase_item_input, name='purchase_item_input'),
     path('vendor-information-input/', views.vendor_information_input, name='vendor_information_input'),
+    # company
     path('companies/', views.company_list, name='company_list'),
+    path('companies/add/', views.company_add, name='company_add'),
+    path('companies/update/<int:company_id>/', views.company_update, name='company_update'),
     path('companies/delete/<int:company_id>/', views.delete_company, name='delete_company'),
     path('salaries/', views.staff_salary_list, name='staff_salary_list'),
     path('salaries/new/', views.staff_salary_create, name='staff_salary_create'),
@@ -47,4 +50,9 @@ urlpatterns = [
     path('edit-transaction/<int:pk>/', views.edit_transaction, name='edit_transaction'),
     path('settings/', views.settings_view, name='settings'),  # Add this for the settings page
     path('save-theme-preference/', views.save_theme_preference, name='save_theme_preference'), #added this to save theme preference
+    # E-Invoice
+    path('e-invoices/', views.e_invoice_list, name='e_invoice_list'),
+    path('e-invoices/new/', views.e_invoice_create, name='e_invoice_create'),
+    path('e-invoices/edit/<int:pk>/', views.e_invoice_update, name='e_invoice_update'),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

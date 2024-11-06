@@ -40,10 +40,10 @@ class MyModel(models.Model):
 class Company(models.Model):
     company_code = models.CharField(max_length=4, default="0000")
     company_name = models.CharField(max_length=100, default="")
-    company_address = models.TextField()
+    company_address = models.CharField(max_length=255, default="")
     company_contact_person_name = models.CharField(max_length=100, default="")
-    company_contact_person_number = models.CharField(validators=[phone_regex], max_length=10, default="0")
-    company_contact_person_email = models.CharField(max_length=100, default="")
+    company_contact_person_number = models.CharField(validators=[phone_regex], max_length=10, default="0000000000")
+    company_contact_person_email = models.EmailField(max_length=100, default="")
     company_gst_number = models.CharField(max_length=20, default="0")
     company_pf_code = models.CharField(max_length=20, default="0")
     company_esic_code = models.CharField(max_length=20, default="0")
@@ -51,26 +51,18 @@ class Company(models.Model):
     company_service_charge_over_time = models.CharField(max_length=20, default="0")
     company_account_number = models.CharField(max_length=20, default="0")
     company_ifsc_code = models.CharField(max_length=11, default="0")
-    company_salary_component_type = models.CharField(max_length=20, default="0")
     USER_TYPE_CHOICES = [
         ('Hour', 'Hour'),
         ('Day', 'Day'),
         ('Month', 'Month')
     ]
+    company_salary_component_type = models.CharField(max_length=20,choices=USER_TYPE_CHOICES , default="0")
     company_ot_rule = models.CharField(max_length=20, default="0")
     company_bonus_formula = models.CharField(max_length=20, default="0")
     company_pf_deduction = models.CharField(max_length=20, default="0")
     company_esic_deduction_rule = models.CharField(max_length=20, default="0")
     company_welfare_deduction_rule = models.CharField(max_length=20, default="0")
 
-    # New fields for salary rules
-    USER_SALARY_RULES = [
-        ('yes', 'Yes'),
-        ('no', 'No')
-    ]
-
-    hra = models.CharField(max_length=10, choices=USER_SALARY_RULES, default='no')
-    allowance = models.CharField(max_length=10, choices=USER_SALARY_RULES, default='no')
     def __str__(self):
         return self.company_name
 
@@ -88,7 +80,6 @@ class SalaryRule(models.Model):
         ('OTHour', 'OTHour')
     ]
 
-    standard_head = models.CharField(max_length=20)
 
     # Fields with both rate type and pay type choices
     Basic_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
@@ -133,6 +124,62 @@ class SalaryRule(models.Model):
     def __str__(self):
         return f"{self.company.company_name} - {self.standard_head}"
 
+
+class SalaryOtherField(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='salary_other_fields')
+
+    RATE_TYPE_CHOICES = [
+        ('Per Month', 'Per Month'),
+        ('Per Day', 'Per Day' )
+    ]
+
+    PAY_TYPE_CHOICES = [
+        ('PayDay', 'PayDay'),
+        ('OTHour', 'OTHour')
+    ]
+
+    # Fields with both rate type and pay type choices
+    Good_Work_Allowance_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Good_Work_Allowance_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    ABRY_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    ABRY_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Add_Bonus_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Add_Bonus_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Arrears_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Arrears_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Attnd_Award_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Attnd_Award_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Attnd_Incentive_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Attnd_Incentive_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Bonus_Allowance_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Bonus_Allowance_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Conveyance_Allowance_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Conveyance_Allowance_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Festival_Bonus_refund_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Festival_Bonus_refund_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Gratuity_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Gratuity_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Night_Allowance_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Night_Allowance_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Production_incentive_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Production_incentive_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Welding_Allowance_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Welding_Allowance_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    def __str__(self):
+        return f"{self.company.company_name} - Salary Other Fields"
 
 
 # User Profile details
@@ -427,3 +474,41 @@ class AdvanceTransaction(models.Model):
 
     def __str__(self):
         return f"Transaction on {self.date} for {self.staff_salary.name}"
+
+# E - Invoice
+class EInvoice(models.Model):
+    site = models.CharField(max_length=100)
+    department = models.BooleanField(default=False)
+    month = models.CharField(max_length=20)
+    invoice_no = models.CharField(max_length=50)
+    date = models.DateField()
+    type = models.CharField(max_length=50)
+    category = models.CharField(max_length=50)
+    service = models.CharField(max_length=100)
+    po_number = models.CharField(max_length=50, blank=True, null=True)
+    buyer = models.CharField(max_length=100, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    gstin = models.CharField(max_length=15, blank=True, null=True)
+    contact_person = models.CharField(max_length=100, blank=True, null=True)
+    mobile = models.CharField(max_length=15, blank=True, null=True)
+    state = models.CharField(max_length=50, blank=True, null=True)
+    city = models.CharField(max_length=50, blank=True, null=True)
+    pincode = models.CharField(max_length=10, blank=True, null=True)
+    taxable = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    igst = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    cgst = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    sgst = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    cess = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    st_cess = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    cess_non_adv = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    bill_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    deduction_narration_1 = models.CharField(max_length=255, blank=True, null=True)
+    deduction_amount_1 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    deduction_narration_2 = models.CharField(max_length=255, blank=True, null=True)
+    deduction_amount_2 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    cancelled = models.BooleanField(default=False)
+    print_proprietor_name = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Invoice {self.invoice_no} - {self.buyer}"

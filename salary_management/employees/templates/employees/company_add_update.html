@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if is_update %}
+        Update Company
+    {% else %}
+        Add Company
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">
+                        {% if is_update %}
+                            Update Company
+                        {% else %}
+                            Add New Company
+                        {% endif %}
+                    </h4>
+                </div>
+
+                <div class="card-body">
+                    {% if messages %}
+                        <div class="alert alert-info" role="alert">
+                            {% for message in messages %}
+                                <p class="mb-0">{{ message }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <form method="POST" action="">
+                        {% csrf_token %}
+
+                        <!-- Company Form Fields -->
+                        <div class="form-row mb-4">
+                            {{ company_form.as_p }}
+                        </div>
+
+                        <!-- Salary Rules Section -->
+                        <h5 class="mt-4 text-center">Salary Rules</h5>
+                        <hr>
+                        <div class="form-group">
+                            {{ salary_rule_formset.management_form }}
+
+                            <!-- Salary Rules Table -->
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover text-center">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Standard Head</th>
+                                            <th>RATE TYPE</th>
+                                            <th>PAY TYPE</th>
+                                            <th>PF</th>
+                                            <th>ESIC</th>
+                                            <th>LWF</th>
+                                            <th>OT</th>
+                                            <th>TR</th>
+                                            <th>Add</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for form in salary_rule_formset %}
+                                            <tr>
+                                                <td>Basic</td>
+                                                <td>{{ form.Basic_rate_type }}</td>
+                                                <td>{{ form.Basic_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Sr All</td>
+                                                <td>{{ form.Sr_All_rate_type }}</td>
+                                                <td>{{ form.Sr_All_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>DA</td>
+                                                <td>{{ form.DA_rate_type }}</td>
+                                                <td>{{ form.DA_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>HRA</td>
+                                                <td>{{ form.HRA_rate_type }}</td>
+                                                <td>{{ form.HRA_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>TA</td>
+                                                <td>{{ form.TA_rate_type }}</td>
+                                                <td>{{ form.TA_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Med</td>
+                                                <td>{{ form.Med_rate_type }}</td>
+                                                <td>{{ form.Med_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Conv</td>
+                                                <td>{{ form.Conv_rate_type }}</td>
+                                                <td>{{ form.Conv_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Wash</td>
+                                                <td>{{ form.Wash_rate_type }}</td>
+                                                <td>{{ form.Wash_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Eff</td>
+                                                <td>{{ form.Eff_rate_type }}</td>
+                                                <td>{{ form.Eff_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Other</td>
+                                                <td>{{ form.Other_rate_type }}</td>
+                                                <td>{{ form.Other_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Incentive</td>
+                                                <td>{{ form.Incentive_rate_type }}</td>
+                                                <td>{{ form.Incentive_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Bonus</td>
+                                                <td>{{ form.Bonus_rate_type }}</td>
+                                                <td>{{ form.Bonus_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Over Time</td>
+                                                <td>{{ form.Over_Time_rate_type }}</td>
+                                                <td>{{ form.Over_Time_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+
+                                            <!-- Repeat similar structure for other fields -->
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Salary Other Fields Section -->
+                        <h5 class="mt-4 text-center">Salary Other Fields</h5>
+                        <hr>
+                        <div class="form-group">
+                            {{ salary_other_field_formset.management_form }}
+
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover text-center">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Allowance Type</th>
+                                            <th>Rate Type</th>
+                                            <th>Pay Type</th>
+                                            <th>PF</th>
+                                            <th>ESIC</th>
+                                            <th>LWF</th>
+                                            <th>OT</th>
+                                            <th>TR</th>
+                                            <th>Add</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for form in salary_other_field_formset %}
+                                            <tr>
+                                                <td>Good Work Allowance</td>
+                                                <td>{{ form.Good_Work_Allowance_rate_type }}</td>
+                                                <td>{{ form.Good_Work_Allowance_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>ABRY</td>
+                                                <td>{{ form.ABRY_rate_type }}</td>
+                                                <td>{{ form.ABRY_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Add Bonus</td>
+                                                <td>{{ form.Add_Bonus_rate_type }}</td>
+                                                <td>{{ form.Add_Bonus_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Arrears</td>
+                                                <td>{{ form.Arrears_rate_type }}</td>
+                                                <td>{{ form.Arrears_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Attendance Award</td>
+                                                <td>{{ form.Attnd_Award_rate_type }}</td>
+                                                <td>{{ form.Attnd_Award_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Attendance Incentive</td>
+                                                <td>{{ form.Attnd_Incentive_rate_type }}</td>
+                                                <td>{{ form.Attnd_Incentive_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Bonus Allowance</td>
+                                                <td>{{ form.Bonus_Allowance_rate_type }}</td>
+                                                <td>{{ form.Bonus_Allowance_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Conveyance Allowance</td>
+                                                <td>{{ form.Conveyance_Allowance_rate_type }}</td>
+                                                <td>{{ form.Conveyance_Allowance_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Festival Bonus Refund</td>
+                                                <td>{{ form.Festival_Bonus_refund_rate_type }}</td>
+                                                <td>{{ form.Festival_Bonus_refund_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Gratuity</td>
+                                                <td>{{ form.Gratuity_rate_type }}</td>
+                                                <td>{{ form.Gratuity_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Night Allowance</td>
+                                                <td>{{ form.Night_Allowance_rate_type }}</td>
+                                                <td>{{ form.Night_Allowance_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Production Incentive</td>
+                                                <td>{{ form.Production_incentive_rate_type }}</td>
+                                                <td>{{ form.Production_incentive_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Welding Allowance</td>
+                                                <td>{{ form.Welding_Allowance_rate_type }}</td>
+                                                <td>{{ form.Welding_Allowance_pay_type }}</td>
+                                                <td><div class="form-check">{{ form.pf }}</div></td>
+                                                <td><div class="form-check">{{ form.esic }}</div></td>
+                                                <td><div class="form-check">{{ form.lwf }}</div></td>
+                                                <td><div class="form-check">{{ form.ot }}</div></td>
+                                                <td><div class="form-check">{{ form.tr }}</div></td>
+                                                <td><div class="form-check">{{ form.add }}</div></td>
+                                            </tr>
+
+                                            <!-- Repeat similar structure for other fields -->
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                {% if is_update %}
+                                    Update Company
+                                {% else %}
+                                    Add Company
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card-footer text-center">
+                    <a href="{% url 'employees:company_list' %}" class="btn btn-link">Back to Company List</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
