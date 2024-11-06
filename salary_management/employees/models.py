@@ -125,6 +125,62 @@ class SalaryRule(models.Model):
         return f"{self.company.company_name} - {self.standard_head}"
 
 
+class SalaryOtherField(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='salary_other_fields')
+
+    RATE_TYPE_CHOICES = [
+        ('Per Month', 'Per Month'),
+        ('Per Day', 'Per Day' )
+    ]
+
+    PAY_TYPE_CHOICES = [
+        ('PayDay', 'PayDay'),
+        ('OTHour', 'OTHour')
+    ]
+
+    # Fields with both rate type and pay type choices
+    Good_Work_Allowance_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Good_Work_Allowance_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    ABRY_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    ABRY_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Add_Bonus_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Add_Bonus_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Arrears_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Arrears_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Attnd_Award_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Attnd_Award_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Attnd_Incentive_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Attnd_Incentive_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Bonus_Allowance_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Bonus_Allowance_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Conveyance_Allowance_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Conveyance_Allowance_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Festival_Bonus_refund_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Festival_Bonus_refund_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Gratuity_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Gratuity_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Night_Allowance_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Night_Allowance_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Production_incentive_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Production_incentive_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    Welding_Allowance_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
+    Welding_Allowance_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    def __str__(self):
+        return f"{self.company.company_name} - Salary Other Fields"
+
 
 # User Profile details
 class Profile(models.Model):

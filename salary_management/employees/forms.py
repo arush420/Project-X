@@ -1,6 +1,6 @@
 from django import forms
 from .models import (Employee, Task, Payment, PurchaseItem, VendorInformation,
-                     Company, SalaryRule, Profile, StaffSalary, AdvanceTransaction,
+                     Company, SalaryRule,SalaryOtherField, Profile, StaffSalary, AdvanceTransaction,
                      EInvoice)
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
@@ -236,6 +236,35 @@ class SalaryRuleForm(forms.ModelForm):
 # Define a formset for adding multiple salary rules at once
 SalaryRuleFormSet = modelformset_factory(SalaryRule, form=SalaryRuleForm, extra=1)
 
+class SalaryOtherFieldForm(forms.ModelForm):
+    # Checkbox fields
+    pf = forms.BooleanField(required=False)
+    esic = forms.BooleanField(required=False)
+    lwf = forms.BooleanField(required=False)
+    ot = forms.BooleanField(required=False)
+    tr = forms.BooleanField(required=False)
+    add = forms.BooleanField(required=False)
+
+    class Meta:
+        model = SalaryOtherField
+        fields = [
+            'Good_Work_Allowance_rate_type', 'Good_Work_Allowance_pay_type',
+            'ABRY_rate_type', 'ABRY_pay_type',
+            'Add_Bonus_rate_type', 'Add_Bonus_pay_type',
+            'Arrears_rate_type', 'Arrears_pay_type',
+            'Attnd_Award_rate_type', 'Attnd_Award_pay_type',
+            'Attnd_Incentive_rate_type', 'Attnd_Incentive_pay_type',
+            'Bonus_Allowance_rate_type', 'Bonus_Allowance_pay_type',
+            'Conveyance_Allowance_rate_type', 'Conveyance_Allowance_pay_type',
+            'Festival_Bonus_refund_rate_type', 'Festival_Bonus_refund_pay_type',
+            'Gratuity_rate_type', 'Gratuity_pay_type',
+            'Night_Allowance_rate_type', 'Night_Allowance_pay_type',
+            'Production_incentive_rate_type', 'Production_incentive_pay_type',
+            'Welding_Allowance_rate_type', 'Welding_Allowance_pay_type'
+        ]
+
+# Define a formset for adding multiple salary rules at once
+SalaryOtherFieldFormSet = modelformset_factory(SalaryOtherField, form=SalaryOtherFieldForm, extra=1)
 # Adding Company form
 class AddCompanyForm(forms.Form):
     company_code = forms.CharField(max_length=4)

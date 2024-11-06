@@ -26,10 +26,11 @@ from openpyxl.utils.datetime import days_to_time
 
 # Import your models and forms
 from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company,
-                     StaffSalary, AdvanceTransaction, SalaryRule, EInvoice)
+                     StaffSalary, AdvanceTransaction, SalaryRule, EInvoice, SalaryOtherField)
 from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm,
                     CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm,
-                    AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, EInvoiceForm)
+                    AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, SalaryOtherFieldForm,
+                    EInvoiceForm, SalaryOtherFieldFormSet)
 
 
 def get_user_role_flags(user):
@@ -864,21 +865,29 @@ def company_add(request):
     if request.method == 'POST':
         company_form = CompanyForm(request.POST)
         salary_rule_formset = SalaryRuleFormSet(request.POST, instance=company_form.instance)
-        salary_rule_formset = SalaryRuleFormSet(request.POST, instance=company_form.instance)
+        salary_other_field_formset = SalaryOtherFieldFormSet(request.POST, queryset=SalaryOtherField.objects.none())
 
-        if company_form.is_valid() and salary_rule_formset.is_valid():
-            company_form.save()
+        if company_form.is_valid()  and salary_rule_formset.is_valid() and salary_other_field_formset.is_valid():
+            company = company_form.save()
             salary_rule_formset.instance = company
             salary_rule_formset.save()
+
+            # Set the instance for each SalaryOtherField entry to the company
+            for form in salary_other_field_formset:
+                salary_other_field = form.save(commit=False)
+                salary_other_field.company = company
+                salary_other_field.save()
             messages.success(request, "Company added successfully!")
             return redirect('employees:company_list')
     else:
         company_form = CompanyForm()
         salary_rule_formset = SalaryRuleFormSet()
+        salary_other_field_formset = SalaryOtherFieldFormSet(queryset=SalaryOtherField.objects.none())
 
     return render(request, 'employees/company_add_update.html', {
         'company_form': company_form,
         'salary_rule_formset': salary_rule_formset,
+        'salary_other_field_formset': salary_other_field_formset,
         'is_update': False,
     })
 
@@ -889,19 +898,27 @@ def company_update(request, company_id):
     if request.method == 'POST':
         company_form = CompanyForm(request.POST, instance=company)
         salary_rule_formset = SalaryRuleFormSet(request.POST, queryset=company.salary_rules.all())
+        salary_other_field_formset = SalaryOtherFieldFormSet(request.POST, queryset=SalaryOtherField.objects.filter(company=company))
 
-        if company_form.is_valid() and salary_rule_formset.is_valid():
+        if company_form.is_valid() and salary_rule_formset.is_valid() and salary_other_field_formset.is_valid():
             company_form.save()
             salary_rule_formset.save()
+
+            for form in salary_other_field_formset:
+                salary_other_field = form.save(commit=False)
+                salary_other_field.company = company
+                salary_other_field.save()
             messages.success(request, "Company and salary rules updated successfully!")
             return redirect('employees:company_list')
     else:
         company_form = CompanyForm(instance=company)
         salary_rule_formset = SalaryRuleFormSet(instance=company)
+        salary_other_field_formset = SalaryOtherFieldFormSet(queryset=SalaryOtherField.objects.filter(company=company))
 
     return render(request, 'employees/company_add_update.html', {
         'company_form': company_form,
         'salary_rule_formset': salary_rule_formset,
+        'salary_other_field_formset': salary_other_field_formset,
         'is_update': True,
     })
 
