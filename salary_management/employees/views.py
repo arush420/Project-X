@@ -26,10 +26,10 @@ from openpyxl.utils.datetime import days_to_time
 
 # Import your models and forms
 from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company,
-                     StaffSalary, AdvanceTransaction, SalaryRule)
+                     StaffSalary, AdvanceTransaction, SalaryRule, SalaryOtherField)
 from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm,
                     CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm,
-                    AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet)
+                    AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, SalaryOtherFieldFormSet)
 
 
 def get_user_role_flags(user):
@@ -494,7 +494,6 @@ def handle_file_upload(file):
         raise ValidationError(errors)
 
 
-from django.core.exceptions import ValidationError
 
 def handle_file_upload(file):
     errors = []
@@ -841,74 +840,81 @@ def vendor_information_input(request):
 
 
 def company_list(request):
-    # Search functionality
     query = request.GET.get('q', '')
     companies = Company.objects.filter(company_name__icontains=query) if query else Company.objects.all()
-
-    company_forms = {}
-    salary_rule_formsets = {}
-
-    # Define default values for salary rules
-    default_salary_rule_data = [
-        {
-            'standard_head': 'Basic Salary',
-            'Basic_rate_type': 'Per Month',
-            'Basic_pay_type': 'PayDay',
-            'Sr_All_rate_type': 'Per Month',
-            'Sr_All_pay_type': 'PayDay',
-            'DA_rate_type': 'Per Month',
-            'DA_pay_type': 'PayDay',
-            # Add other default fields here as needed
-        }
-    ]
-
-    if request.method == 'POST':
-        # Handle form submission (Add or Update)
-        if 'add_company' in request.POST:
-            company_form = CompanyForm(request.POST)
-            if company_form.is_valid():
-                company = company_form.save()
-                messages.success(request, "Company added successfully!")
-                return redirect('employees:company_list')
-
-        elif 'update_salary_rules' in request.POST:
-            company_id = request.POST.get('company_id')
-            company = get_object_or_404(Company, id=company_id)
-            formset = SalaryRuleFormSet(request.POST, queryset=company.salary_rules.all(), prefix=str(company.id))
-            if formset.is_valid():
-                salary_rules = formset.save(commit=False)
-                for rule in salary_rules:
-                    rule.company = company
-                    rule.save()
-                messages.success(request, "Salary rules updated successfully!")
-                return redirect('employees:company_list')
-
-    # Initialize forms and formsets for each company (for both GET and POST requests)
-    for company in companies:
-        company_forms[company.id] = CompanyForm(instance=company)
-
-        # Check if the company has salary rules; if not, provide initial default values
-        if company.salary_rules.exists():
-            salary_rule_formsets[company.id] = SalaryRuleFormSet(queryset=company.salary_rules.all(),
-                                                                 prefix=str(company.id))
-        else:
-            salary_rule_formsets[company.id] = SalaryRuleFormSet(queryset=company.salary_rules.none(), initial=default_salary_rule_data, prefix=str(company.id))
-
     context = {
         'companies': companies,
-        'company_forms': company_forms,
-        'salary_rule_formsets': salary_rule_formsets,
         'query': query,
-        'company_form': CompanyForm(),  # Form for adding a new company
     }
     return render(request, 'employees/company_list.html', context)
 
+def company_add(request):
+    if request.method == 'POST':
+        company_form = CompanyForm(request.POST)
+        salary_rule_formset = SalaryRuleFormSet(request.POST, instance=company_form.instance)
+        salary_other_field_formset = SalaryOtherFieldFormSet(request.POST, queryset=SalaryOtherField.objects.none())
+
+        if company_form.is_valid()  and salary_rule_formset.is_valid() and salary_other_field_formset.is_valid():
+            company = company_form.save()
+            salary_rule_formset.instance = company
+            salary_rule_formset.save()
+
+            # Set the instance for each SalaryOtherField entry to the company
+            for form in salary_other_field_formset:
+                salary_other_field = form.save(commit=False)
+                salary_other_field.company = company
+                salary_other_field.save()
+            messages.success(request, "Company added successfully!")
+            return redirect('employees:company_list')
+    else:
+        company_form = CompanyForm()
+        salary_rule_formset = SalaryRuleFormSet()
+        salary_other_field_formset = SalaryOtherFieldFormSet(queryset=SalaryOtherField.objects.none())
+
+    return render(request, 'employees/company_add_update.html', {
+        'company_form': company_form,
+        'salary_rule_formset': salary_rule_formset,
+        'salary_other_field_formset': salary_other_field_formset,
+        'is_update': False,
+    })
+
+
+def company_update(request, company_id):
+    company = get_object_or_404(Company, id=company_id)
+
+    if request.method == 'POST':
+        company_form = CompanyForm(request.POST, instance=company)
+        salary_rule_formset = SalaryRuleFormSet(request.POST, queryset=company.salary_rules.all())
+        salary_other_field_formset = SalaryOtherFieldFormSet(request.POST, queryset=SalaryOtherField.objects.filter(company=company))
+
+        if company_form.is_valid() and salary_rule_formset.is_valid() and salary_other_field_formset.is_valid():
+            company_form.save()
+            salary_rule_formset.save()
+
+            for form in salary_other_field_formset:
+                salary_other_field = form.save(commit=False)
+                salary_other_field.company = company
+                salary_other_field.save()
+            messages.success(request, "Company and salary rules updated successfully!")
+            return redirect('employees:company_list')
+    else:
+        company_form = CompanyForm(instance=company)
+        salary_rule_formset = SalaryRuleFormSet(instance=company)
+        salary_other_field_formset = SalaryOtherFieldFormSet(queryset=SalaryOtherField.objects.filter(company=company))
+
+    return render(request, 'employees/company_add_update.html', {
+        'company_form': company_form,
+        'salary_rule_formset': salary_rule_formset,
+        'salary_other_field_formset': salary_other_field_formset,
+        'is_update': True,
+    })
 
 def delete_company(request, company_id):
     company = get_object_or_404(Company, id=company_id)
     company.delete()
     messages.success(request, "Company deleted successfully!")
     return redirect('employees:company_list')
+
 
 
 # Staff Salary view
