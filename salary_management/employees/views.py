@@ -26,10 +26,11 @@ from openpyxl.utils.datetime import days_to_time
 
 # Import your models and forms
 from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company,
-                     StaffSalary, AdvanceTransaction, SalaryRule, SalaryOtherField)
+                     StaffSalary, AdvanceTransaction, SalaryRule, SalaryOtherField, EInvoice)
 from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm,
                     CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm,
-                    AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, SalaryOtherFieldFormSet)
+                    AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, SalaryOtherFieldFormSet,
+                    EInvoiceForm)
 
 
 def get_user_role_flags(user):
@@ -942,3 +943,30 @@ def staff_salary_update(request, pk):
     else:
         form = StaffSalaryForm(instance=salary)
     return render(request, 'employees/staff_salary_form.html', {'form': form})
+
+# Creating, editing invoice
+def e_invoice_list(request):
+    invoices = EInvoice.objects.all()
+    return render(request, 'employees/e_invoice_list.html', {'invoices': invoices})
+
+def e_invoice_create(request):
+    if request.method == 'POST':
+        form = EInvoiceForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('e_invoice_list')
+    else:
+        form = EInvoiceForm()
+    return render(request, 'employees/e_invoice_form.html', {'form': form})
+
+# Update existing invoice
+def e_invoice_update(request, pk):
+    invoice = get_object_or_404(EInvoice, pk=pk)
+    if request.method == 'POST':
+        form = EInvoiceForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('employees:e_invoice_list')
+    else:
+        form = EInvoiceForm(instance=invoice)
+    return render(request, 'employees/e_invoice_form.html', {'form': form})
