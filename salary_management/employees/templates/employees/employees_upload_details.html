@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Upload Employee Details{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Upload Employee Details</h2>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <!-- Company Selection Dropdown -->
+        <div class="form-group">
+            <label for="company">Select Company</label>
+            <select id="company" name="company" class="form-control" required>
+                <option value="">-- Select Company --</option>
+                {% for company in companies %}
+                    <option value="{{ company.id }}">{{ company.company_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Month Selection Dropdown -->
+        <div class="form-group">
+            <label for="month">Select Month</label>
+            <select id="month" name="month" class="form-control" required>
+                <option value="">-- Select Month --</option>
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+            </select>
+        </div>
+
+        <!-- Year Selection Input -->
+        <div class="form-group">
+            <label for="year">Select Year</label>
+            <input type="number" id="year" name="year" class="form-control" placeholder="YYYY" min="2000" max="2100" required>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="form-group">
+            <label for="upload_type">Upload Type</label>
+            <div class="input-group">
+                <!-- Dropdown for Attendance and Advance -->
+                <select id="upload_type" name="upload_type" class="form-control" required>
+                    <option value="">-- Select Upload Type --</option>
+                    <option value="attendance">Attendance</option>
+                    <option value="advance">Advance</option>
+                </select>
+
+                <!-- File Upload Input -->
+                <input type="file" id="upload_file" name="upload_file" class="form-control-file ml-3" accept=".xlsx, .xls, .csv" required>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary">Upload</button>
+
+        <!-- Sample Template Download Link -->
+        <a href="{% url 'employees:sample_download' %}" class="btn btn-info ml-2">Download Sample Template</a>
+    </form>
+</div>
+{% endblock %}
