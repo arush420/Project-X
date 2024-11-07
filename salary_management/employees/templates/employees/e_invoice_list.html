@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}E-Invoice List{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="text-primary">E-Invoice List</h2>
+        <a href="{% url 'employees:e_invoice_create' %}" class="btn btn-success">+ Create New Invoice</a>
+    </div>
+
+    <div class="table-responsive mt-4">
+        <table class="table table-striped table-bordered shadow-sm">
+            <thead class="table-dark"> <!-- Updated for Bootstrap 5 -->
+                <tr>
+                    <th scope="col">Invoice No.</th>
+                    <th scope="col">Buyer</th>
+                    <th scope="col">Date</th>
+                    <th scope="col" class="text-end">Amount</th> <!-- Bootstrap 5 uses text-end instead of text-right -->
+                    <th scope="col" class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invoice in invoices %}
+                    <tr>
+                        <td>{{ invoice.invoice_no }}</td>
+                        <td>{{ invoice.buyer }}</td>
+                        <td>{{ invoice.date|date:"M d, Y" }}</td>
+                        <td class="text-end">₹{{ invoice.bill_amount|floatformat:2 }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'employees:e_invoice_update' invoice.pk %}" class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">No invoices found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
