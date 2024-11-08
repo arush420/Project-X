@@ -3,99 +3,139 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-    <div class="container-fluid mt-5 px-3">
-        <h1>Welcome to the Employee Management System</h1>
+    <div class="container-fluid mt-5 px-4">
+        <h1 class="display-5 text-primary mb-4">Welcome to the Employee Management System</h1>
 
         <!-- Display total employees if the variable is passed -->
-        <p>Total Employees: {{ total_employees|default:"Not available" }}</p>
+        <p class="lead">Total Employees: <strong>{{ total_employees|default:"Not available" }}</strong></p>
 
-        <!-- Buttons for navigation -->
-        <div class="btn-group mb-4" role="group">
-            <a href="{% url 'employees:employee_list' %}" class="btn btn-primary">View Employees</a>
-            <a href="{% url 'employees:generate_salary' %}" class="btn btn-primary">Generate Salary</a>
-            <a href="{% url 'employees:salary_list' %}" class="btn btn-primary">Salary List</a>
-            <a href="{% url 'employees:add_employee_and_upload' %}" class="btn btn-primary">Add Employee / Upload Excel</a>
-            <a href="{% url 'employees:payment_input' %}" class="btn btn-primary">Payment Input</a>
-            <a href="{% url 'employees:purchase_item_input' %}" class="btn btn-primary">Purchase Item</a>
-            <a href="{% url 'employees:vendor_information_input' %}" class="btn btn-primary">Vendor Information</a>
-            <a href="{% url 'employees:employee_detail' %}" class="btn btn-primary">Employee Detail</a>
-            <a href="{% url 'employees:company_add' %}" class="btn btn-primary">Add Company</a>
-            <a href="{% url 'employees:company_list' %}" class="btn btn-primary">Company List</a>
-            <a href="{% url 'employees:admin_dashboard' %}" class="btn btn-primary">Admin Dashboard</a>
-            <a href="{% url 'employees:e_invoice_create' %}" class="btn btn-primary">E Invoice</a>
-            <a href="{% url 'employees:e_invoice_list' %}" class="btn btn-primary">E Invoice List</a>
+        <!-- Buttons for navigation in grid layout -->
+        <div class="row row-cols-1 row-cols-md-3 g-2 mb-4">
+            <div class="col">
+                <a href="{% url 'employees:employee_list' %}" class="btn btn-outline-primary w-100 py-2">👤 View Employees</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'employees:generate_salary' %}" class="btn btn-outline-primary w-100 py-2">💸 Generate Salary</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'employees:salary_list' %}" class="btn btn-outline-primary w-100 py-2">📃 Salary List</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'employees:add_employee_and_upload' %}" class="btn btn-outline-primary w-100 py-2">➕ Add Employee / Upload Excel</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'employees:payment_input' %}" class="btn btn-outline-primary w-100 py-2">💰 Payment Input</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'employees:purchase_item_input' %}" class="btn btn-outline-primary w-100 py-2">🛒 Purchase Item</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'employees:vendor_information_input' %}" class="btn btn-outline-primary w-100 py-2">🏢 Vendor Information</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'employees:employee_detail' %}" class="btn btn-outline-primary w-100 py-2">🔍 Employee Detail</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'employees:company_add' %}" class="btn btn-outline-primary w-100 py-2">🏢 Add Company</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'employees:company_list' %}" class="btn btn-outline-primary w-100 py-2">🏢 Company List</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'employees:admin_dashboard' %}" class="btn btn-outline-primary w-100 py-2">📊 Admin Dashboard</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'employees:e_invoice_create' %}" class="btn btn-outline-primary w-100 py-2">🧾 E Invoice</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'employees:e_invoice_list' %}" class="btn btn-outline-primary w-100 py-2">🗂️ E Invoice List</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'employees:employees_upload_details' %}" class="btn btn-outline-primary w-100 py-2">🗂️ Upload</a>
+            </div>
         </div>
 
         <div class="row">
             <div class="col-md-9">
-                <h2>Hello, {{ request.user.first_name }}</h2>
+                <h2 class="h4 text-secondary">Hello, {{ request.user.first_name }}</h2>
                 <p>Ready to tackle today's tasks?</p>
             </div>
             <div class="col-md-3 todo-list">
-                <h3>To-Do List</h3>
-
-                <!-- Form to add a new task -->
-                <form method="POST" action="{% url 'employees:add_task' %}">
-                    {% csrf_token %}
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control" name="title" placeholder="Add a new task..." required>
-                        <button class="btn btn-primary" type="submit">Add</button>
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="h5">To-Do List</h3>
                     </div>
-                </form>
+                    <div class="card-body">
+                        <!-- Form to add a new task -->
+                        <form method="POST" action="{% url 'employees:add_task' %}">
+                            {% csrf_token %}
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" name="title" placeholder="Add a new task..." required>
+                                <button class="btn btn-outline-primary" type="submit">Add</button>
+                            </div>
+                        </form>
 
-                <!-- Display tasks with checkbox and delete button -->
-                <ul class="list-group">
-                    {% for task in tasks %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <!-- Strike through if completed -->
-                            <form method="POST" action="{% url 'employees:complete_task' task.id %}" class="d-flex align-items-center">
-                                {% csrf_token %}
-                                <input type="checkbox" name="completed" {% if task.completed %} checked {% endif %} onchange="this.form.submit();">
-                                <span class="ms-2 {% if task.completed %}text-decoration-line-through{% endif %}">{{ task.title }}</span>
-                            </form>
+                        <!-- Display tasks with checkbox and delete button -->
+                        <ul class="list-group">
+                            {% for task in tasks %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <!-- Strike through if completed -->
+                                    <form method="POST" action="{% url 'employees:complete_task' task.id %}" class="d-flex align-items-center">
+                                        {% csrf_token %}
+                                        <input type="checkbox" name="completed" {% if task.completed %} checked {% endif %} onchange="this.form.submit();">
+                                        <span class="ms-2 {% if task.completed %}text-decoration-line-through{% endif %}">{{ task.title }}</span>
+                                    </form>
 
-                            <!-- Three-dot menu for superuser -->
-                            {% if request.user.is_superuser %}
-                                <div class="dropdown">
-                                    <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                        <i class="bi bi-three-dots"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li>
-                                            <form method="POST" action="{% url 'employees:transfer_task' task.id %}">
-                                                {% csrf_token %}
-                                                <select name="user" class="form-select form-select-sm">
-                                                    {% for user in users %}
-                                                        <option value="{{ user.id }}">{{ user.username }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                                <button type="submit" class="btn btn-link">Transfer Task</button>
-                                            </form>
-                                        </li>
-                                        <li><a href="{% url 'employees:delete_task' task.id %}" class="dropdown-item text-danger">Remove</a></li>
-                                    </ul>
-                                </div>
-                            {% endif %}
-                        </li>
-                    {% empty %}
-                        <li class="list-group-item">No tasks available.</li>
-                    {% endfor %}
-                </ul>
-
+                                    <!-- Three-dot menu for superuser -->
+                                    {% if request.user.is_superuser %}
+                                        <div class="dropdown">
+                                            <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                <li>
+                                                    <form method="POST" action="{% url 'employees:transfer_task' task.id %}">
+                                                        {% csrf_token %}
+                                                        <select name="user" class="form-select form-select-sm">
+                                                            {% for user in users %}
+                                                                <option value="{{ user.id }}">{{ user.username }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <button type="submit" class="btn btn-link">Transfer Task</button>
+                                                    </form>
+                                                </li>
+                                                <li><a href="{% url 'employees:delete_task' task.id %}" class="dropdown-item text-danger">Remove</a></li>
+                                            </ul>
+                                        </div>
+                                    {% endif %}
+                                </li>
+                            {% empty %}
+                                <li class="list-group-item">No tasks available.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 {% endblock %}
 
-<!-- Optional: Additional CSS for reduced padding -->
+<!-- Optional: Additional CSS for reduced padding and enhanced layout -->
 <style>
     .container-fluid {
         max-width: 1200px;
-        padding-left: 15px;
-        padding-right: 15px;
+        padding-left: 10px;
+        padding-right: 10px;
     }
-    .todo-list {
-        padding-top: 20px;
+    .todo-list .card {
+        margin-top: 20px;
+    }
+    .card-header {
+        font-weight: bold;
+    }
+    .btn-group .btn {
+        white-space: nowrap;
+        text-align: left;
     }
 </style>
 

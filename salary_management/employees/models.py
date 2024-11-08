@@ -64,6 +64,7 @@ class Company(models.Model):
         return self.company_name
 
 
+
 class SalaryRule(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='salary_rules')
 
@@ -178,6 +179,26 @@ class SalaryOtherField(models.Model):
     def __str__(self):
         return f"{self.company.company_name} - Salary Other Fields"
 
+
+class EmployeesAttendance(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    employee_id = models.CharField(max_length=50)
+    month = models.IntegerField()
+    year = models.IntegerField()
+    days_present = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.employee_id} - {self.month}/{self.year}"
+
+class CompanyAdvanceTransaction(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    employee_id = models.CharField(max_length=50)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    month = models.IntegerField()
+    year = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.employee_id} - Advance for {self.month}/{self.year}"
 
 
 # User Profile details

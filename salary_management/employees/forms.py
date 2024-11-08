@@ -269,6 +269,16 @@ class AddCompanyForm(forms.Form):
     hra = forms.BooleanField(required=False, initial=False, label="HRA")
     allowance = forms.BooleanField(required=False, initial=False, label="Allowance")
 
+
+# attendance and advance upload form
+class UploadForm(forms.Form):
+    company = forms.ModelChoiceField(queryset=Company.objects.all(), required=True, label="Select Company", widget=forms.Select(attrs={'class': 'form-control'}))
+    month = forms.ChoiceField(choices=[(i, i) for i in range(1, 13)], required=True, label="Select Month", widget=forms.Select(attrs={'class': 'form-control'}))
+    year = forms.IntegerField(min_value=2000, max_value=2100, required=True, label="Select Year", widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'YYYY'}))
+    upload_type = forms.ChoiceField(choices=[('attendance', 'Attendance'), ('advance', 'Advance')], required=True, label="Upload Type", widget=forms.Select(attrs={'class': 'form-control'}))
+    upload_file = forms.FileField(required=True, label="Upload File", widget=forms.ClearableFileInput(attrs={'class': 'form-control-file'}))
+
+
 # Staff salary form
 class StaffSalaryForm(forms.ModelForm):
     class Meta:

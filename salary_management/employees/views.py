@@ -30,7 +30,7 @@ from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, Ven
 from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm,
                     CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm,
                     AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, SalaryOtherFieldFormSet,
-                    EInvoiceForm)
+                    EInvoiceForm, UploadForm)
 
 
 def get_user_role_flags(user):
@@ -916,6 +916,41 @@ def delete_company(request, company_id):
     messages.success(request, "Company deleted successfully!")
     return redirect('employees:company_list')
 
+
+# Upload view for attendance and advance files
+def employees_upload_details(request):
+    form = UploadForm()
+
+    if request.method == 'POST':
+        form = UploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            company = form.cleaned_data['company']
+            month = form.cleaned_data['month']
+            year = form.cleaned_data['year']
+            upload_type = form.cleaned_data['upload_type']
+            upload_file = form.cleaned_data['upload_file']
+
+            if upload_type == 'attendance':
+                # Handle attendance file processing here
+                # Example: process data and save to EmployeesAttendance
+                pass
+            elif upload_type == 'advance':
+                # Handle advance file processing here
+                # Example: process data and save to CompanyAdvanceTransaction
+                pass
+
+            return redirect('employees:employees_upload_details')
+
+    return render(request, 'employees/employees_upload_details.html', {
+        'form': form
+    })
+
+# Sample template download view for file upload
+def sample_download(request):
+    response = HttpResponse(content_type='application/vnd.ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="sample_template.xlsx"'
+    # Here you can create a sample file or provide existing content
+    return response
 
 
 # Staff Salary view

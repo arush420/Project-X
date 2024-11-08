@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Upload Employee Details{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Upload Employee Details</h2>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Upload</button>
+        <a href="{% url 'employees:sample_download' %}" class="btn btn-info ml-2">Download Sample Template</a>
+    </form>
+</div>
+{% endblock %}
