@@ -30,6 +30,13 @@ MONTH_CHOICES = [
     (9, 'September'), (10, 'October'), (11, 'November'), (12, 'December')
 ]
 
+GENDER_CHOICES = [('Male', 'Male'), ('Female', 'Female')]
+MARITAL_STATUS_CHOICES = [
+    ('UnMarried', 'UnMarried'), ('Married', 'Married'),
+    ('Divorced', 'Divorced'), ('Widow/Widower', 'Widow/Widower')
+]
+KYC_STATUS_CHOICES = [('Verified', 'Verified'), ('Pending', 'Pending')]
+
 phone_regex = RegexValidator(regex=r'^\+?1?\d{9,15}$', message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.")
 
 
@@ -180,15 +187,6 @@ class SalaryOtherField(models.Model):
         return f"{self.company.company_name} - Salary Other Fields"
 
 
-class EmployeesAttendance(models.Model):
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    employee_id = models.CharField(max_length=50)
-    month = models.IntegerField()
-    year = models.IntegerField()
-    days_present = models.IntegerField()
-
-    def __str__(self):
-        return f"{self.employee_id} - {self.month}/{self.year}"
 
 class CompanyAdvanceTransaction(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
@@ -199,6 +197,25 @@ class CompanyAdvanceTransaction(models.Model):
 
     def __str__(self):
         return f"{self.employee_id} - Advance for {self.month}/{self.year}"
+
+
+class Arrear(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    employee_id = models.CharField(max_length=50)
+    month = models.IntegerField()
+    year = models.IntegerField()
+
+    # Subcategories for arrears
+    basic_salary_arrears = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    bonus_arrears = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    overtime_arrears = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    allowances_arrears = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    leave_encashment_arrears = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    salary_increment_arrears = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return f"{self.employee_id} - Arrears for {self.month}/{self.year}"
+
 
 
 # User Profile details
@@ -278,16 +295,60 @@ class Employee(models.Model):
     employee_code = models.CharField(max_length=10, unique=True)
     name = models.CharField(max_length=100)
     father_name = models.CharField(max_length=100)
-    basic = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES, default=0.00)
-    transport = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES, default=0.00)
-    canteen = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES, default=0.00)
-    pf = models.DecimalField(max_digits=PERCENTAGE_MAX_DIGITS, decimal_places=PERCENTAGE_DECIMAL_PLACES, default=0.00)
-    esic = models.DecimalField(max_digits=PERCENTAGE_MAX_DIGITS, decimal_places=PERCENTAGE_DECIMAL_PLACES, default=0.00)
-    advance = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES, default=0.00)
+    mother_name = models.CharField(max_length=100, blank=True, null=True)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True)
+    dob = models.DateField("Date of Birth", blank=True, null=True)
+    marital_status = models.CharField(max_length=15, choices=MARITAL_STATUS_CHOICES, blank=True)
+    spouse_name = models.CharField(max_length=100, blank=True, null=True)
+    mobile = models.CharField(max_length=15, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    district = models.CharField(max_length=50, blank=True, null=True)
+    state = models.CharField(max_length=50, blank=True, null=True)
+    pincode = models.CharField(max_length=6, blank=True, null=True)
+
+    pf_no = models.CharField(max_length=20, blank=True, null=True)
+    esi_no = models.CharField(max_length=20, blank=True, null=True)
+    uan = models.CharField(max_length=20, blank=True, null=True)
+    pan = models.CharField(max_length=20, blank=True, null=True)
+    company = models.CharField(max_length=100, blank=True, null=True)
+    department = models.CharField(max_length=50, blank=True, null=True)
+    designation = models.CharField(max_length=50, blank=True, null=True)
+    doj = models.DateField("Date of Joining", blank=True, null=True)
+    doe = models.DateField("Date of Exit", blank=True, null=True)
+
+    pay_mode = models.CharField(max_length=50, blank=True, null=True)
+    employer_account = models.CharField(max_length=50, blank=True, null=True)
+    employee_account = models.CharField(max_length=50, blank=True, null=True)
+    ifsc = models.CharField(max_length=11, blank=True, null=True)
+    kyc_status = models.CharField(max_length=10, choices=KYC_STATUS_CHOICES, blank=True)
+    handicap = models.BooleanField(default=False)
+    remarks = models.TextField(blank=True, null=True)
+
+    basic = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    transport = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    canteen = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    pf_contribution = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
+    esic_contribution = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
+    advance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
 
     def __str__(self):
         return f'{self.name} ({self.employee_code})'
 
+class EmployeesAttendance(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="attendance_records")
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="attendance_records")
+    year = models.PositiveIntegerField()
+    month = models.PositiveIntegerField(choices=MONTH_CHOICES)
+    days_worked = models.PositiveIntegerField()
+
+    class Meta:
+        unique_together = ('company', 'employee', 'year', 'month')
+        verbose_name = "Employee Attendance"
+        verbose_name_plural = "Employee Attendance Records"
+
+    def __str__(self):
+        return f"{self.employee.name} - {self.company.company_name} ({self.month}/{self.year})"
 
 class Salary(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='salaries')
@@ -448,6 +509,7 @@ class StaffSalary(models.Model):
         return self.name
 
 
+# Staff Advance transaction
 class AdvanceTransaction(models.Model):
     staff_salary = models.ForeignKey(StaffSalary, on_delete=models.CASCADE, related_name='transactions')
 
