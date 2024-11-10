@@ -595,3 +595,52 @@ class EInvoice(models.Model):
         return f"Invoice {self.invoice_no} - {self.buyer}"
 
 
+REPORT_TYPE_CHOICES = [
+    ('Salary', 'Salary'),
+    ('Attendance', 'Attendance'),
+    ('Arrear', 'Arrear'),
+    ('Advance', 'Advance'),
+    ('PF', 'PF'),
+    ('ESIC', 'ESIC'),
+]
+
+class Report(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="reports")
+    report_type = models.CharField(max_length=20, choices=REPORT_TYPE_CHOICES)
+    from_date = models.DateField()
+    to_date = models.DateField()
+
+    def __str__(self):
+        return f"{self.report_type} Report for {self.company.company_name} ({self.from_date} to {self.to_date})"
+
+    def clean(self):
+        # Ensure from_date is not later than to_date
+        if self.from_date > self.to_date:
+            raise ValidationError("From Date cannot be later than To Date.")
+
+    def generate_report_data(self):
+        """Generate data for the report based on the selected report type and date range."""
+        filters = {
+            'employee__company': self.company,
+            'year__gte': self.from_date.year,
+            'year__lte': self.to_date.year,
+            'month__gte': self.from_date.month,
+            'month__lte': self.to_date.month,
+        }
+
+        if self.report_type == 'Salary':
+            return Salary.objects.filter(**filters)
+        elif self.report_type == 'Attendance':
+            return EmployeesAttendance.objects.filter(company=self.company, **filters)
+        elif self.report_type == 'Arrear':
+            return Arrear.objects.filter(company=self.company, **filters)
+        elif self.report_type == 'Advance':
+            return CompanyAdvanceTransaction.objects.filter(company=self.company, **filters)
+        elif self.report_type == 'PF':
+            return Salary.objects.filter(employee__company=self.company, year__gte=self.from_date.year,
+                                         year__lte=self.to_date.year).values('pf')
+        elif self.report_type == 'ESIC':
+            return Salary.objects.filter(employee__company=self.company, year__gte=self.from_date.year,
+                                         year__lte=self.to_date.year).values('esic')
+        return None
+

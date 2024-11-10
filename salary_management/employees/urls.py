@@ -3,6 +3,8 @@ from . import views
 from django.conf import settings
 from django.conf.urls.static import static
 
+from .views import ReportView
+
 urlpatterns = [
     path('', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
@@ -60,4 +62,7 @@ urlpatterns = [
     path('e-invoices/', views.e_invoice_list, name='e_invoice_list'),  # List all e-invoices
     path('e-invoices/create/', views.e_invoice_create, name='e_invoice_create'),  # Create a new e-invoice
     path('e-invoices/<int:pk>/update/', views.e_invoice_update, name='e_invoice_update'),
+
+    # Report
+    path('generate/', ReportView.as_view(), name='generate_report'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

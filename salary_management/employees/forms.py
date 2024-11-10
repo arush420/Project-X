@@ -1,6 +1,6 @@
 from django import forms
 from .models import (Employee, Task, Payment, PurchaseItem, VendorInformation,
-                     Company, SalaryRule, Profile, StaffSalary, AdvanceTransaction, SalaryOtherField, EInvoice)
+                     Company, SalaryRule, Profile, StaffSalary, AdvanceTransaction, SalaryOtherField, EInvoice, Report)
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 import re
@@ -355,3 +355,20 @@ class EInvoiceForm(forms.ModelForm):
             'date': forms.DateInput(attrs={'type': 'date'}),
         }
 
+
+class ReportForm(forms.ModelForm):
+    class Meta:
+        model = Report
+        fields = ['company', 'report_type', 'from_date', 'to_date']
+        widgets = {
+            'from_date': forms.DateInput(attrs={'type': 'date'}),
+            'to_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        from_date = cleaned_data.get('from_date')
+        to_date = cleaned_data.get('to_date')
+
+        if from_date and to_date and from_date > to_date:
+            raise ValidationError("From Date cannot be later than To Date.")

@@ -30,7 +30,7 @@ from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, Ven
 from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm,
                     CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm,
                     AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, SalaryOtherFieldFormSet,
-                    EInvoiceForm, UploadForm)
+                    EInvoiceForm, UploadForm, ReportForm)
 
 
 def get_user_role_flags(user):
@@ -945,3 +945,36 @@ def e_invoice_update(request, pk):
     else:
         form = EInvoiceForm(instance=invoice)
     return render(request, 'employees/e_invoice_form.html', {'form': form})
+
+# Report from all model
+class ReportView(View):
+    template_name = 'employees/report.html'
+
+    def get(self, request):
+        form = ReportForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        form = ReportForm(request.POST)
+        if form.is_valid():
+            report = form.save(commit=False)
+            report_data = report.generate_report_data()
+
+            if not report_data:
+                return render(request, self.template_name, {
+                    'form': form,
+                    'message': 'No data found for the selected criteria.'
+                })
+
+            # Generate a downloadable report as Excel file
+            if 'download' in request.POST:
+                df = pd.DataFrame(list(report_data.values()))
+                response = HttpResponse(
+                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = f'attachment; filename={report.report_type}_report.xlsx'
+                with pd.ExcelWriter(response, engine='openpyxl') as writer:
+                    df.to_excel(writer, index=False, sheet_name='Report')
+                return response
+
+            return render(request, self.template_name, {'form': form, 'report_data': report_data})
+        return render(request, self.template_name, {'form': form})

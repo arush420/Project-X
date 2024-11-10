@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Generate Report</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" name="download" class="btn btn-primary">Download Report</button>
+        <button type="submit" class="btn btn-secondary">View Report</button>
+    </form>
+
+    {% if message %}
+        <div class="alert alert-warning mt-4">{{ message }}</div>
+    {% endif %}
+
+    {% if report_data %}
+        <h3 class="mt-4">Report Data</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    {% for field in report_data.0.keys %}
+                        <th>{{ field|title }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in report_data %}
+                    <tr>
+                        {% for value in row.values %}
+                            <td>{{ value }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+{% endblock %}
