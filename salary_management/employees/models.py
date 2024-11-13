@@ -3,6 +3,7 @@ from os import times
 from random import choices
 
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.context_processors import request
@@ -292,6 +293,7 @@ def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
 
 class Employee(models.Model):
+    # Personal Details
     employee_code = models.CharField(max_length=10, unique=True)
     name = models.CharField(max_length=100)
     father_name = models.CharField(max_length=100)
@@ -306,7 +308,7 @@ class Employee(models.Model):
     district = models.CharField(max_length=50, blank=True, null=True)
     state = models.CharField(max_length=50, blank=True, null=True)
     pincode = models.CharField(max_length=6, blank=True, null=True)
-
+    # Professional details
     pf_no = models.CharField(max_length=20, blank=True, null=True)
     esi_no = models.CharField(max_length=20, blank=True, null=True)
     uan = models.CharField(max_length=20, blank=True, null=True)
@@ -316,21 +318,42 @@ class Employee(models.Model):
     designation = models.CharField(max_length=50, blank=True, null=True)
     doj = models.DateField("Date of Joining", blank=True, null=True)
     doe = models.DateField("Date of Exit", blank=True, null=True)
-
-    pay_mode = models.CharField(max_length=50, blank=True, null=True)
+    PAY_MODE_CHOICES = [
+        ('bank', 'Bank'),
+        ('cash', 'Cash')]
+    pay_mode = models.CharField(max_length=50, blank=True, null=False, choices=PAY_MODE_CHOICES, default='bank')
     employer_account = models.CharField(max_length=50, blank=True, null=True)
     employee_account = models.CharField(max_length=50, blank=True, null=True)
     ifsc = models.CharField(max_length=11, blank=True, null=True)
     kyc_status = models.CharField(max_length=10, choices=KYC_STATUS_CHOICES, blank=True)
     handicap = models.BooleanField(default=False)
     remarks = models.TextField(blank=True, null=True)
-
+    # Salary details
     basic = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
-    transport = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
-    canteen = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
-    pf_contribution = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
-    esic_contribution = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
-    advance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    sr_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    da = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    hra = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    travel_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    medical = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    conveyance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    wash_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    efficiency = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    other_payable = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+
+
+    EMPLOYEE_STATUS_CHOICES = [
+        ('working', 'Working'),
+        ('not_working', 'Not Working')
+    ]
+
+    PERFORMANCE_COLOR_CHOICES = [
+        ('green', 'Green'),
+        ('yellow', 'Yellow'),
+        ('red', 'Red')
+    ]
+
+    employee_status = models.CharField(max_length=15, choices=EMPLOYEE_STATUS_CHOICES, default='working')
+    performance_color = models.CharField(max_length=10, choices=PERFORMANCE_COLOR_CHOICES, default='green')
 
     def __str__(self):
         return f'{self.name} ({self.employee_code})'
@@ -349,6 +372,7 @@ class EmployeesAttendance(models.Model):
 
     def __str__(self):
         return f"{self.employee.name} - {self.company.company_name} ({self.month}/{self.year})"
+
 
 class Salary(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='salaries')
@@ -389,45 +413,6 @@ class SalaryTotals(models.Model):
     total_advance = models.DecimalField(max_digits=12, decimal_places=2)
     total_net_salary = models.DecimalField(max_digits=12, decimal_places=2)
 
-class PurchaseItem(models.Model):
-    CATEGORY_CHOICES = [
-        ('Stationary', 'Stationary'),
-        ('Furniture', 'Furniture'),
-        ('Pantry', 'Pantry'),
-        ('Miscellaneous', 'Miscellaneous'),
-    ]
-    organization_code = models.CharField(max_length=100)
-    organization_name = models.CharField(max_length=255)
-    gst_number = models.CharField(max_length=15)
-    bill_number = models.CharField(max_length=50)
-    purchased_item = models.CharField(max_length=255)
-    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='Miscellaneous')
-    hsn_code = models.CharField(max_length=10)
-    date_of_purchase = models.DateField()
-    per_unit_cost = models.DecimalField(max_digits=10, decimal_places=2)
-    units_bought = models.PositiveIntegerField()
-
-    gross_total = models.DecimalField(max_digits=12, decimal_places=2, editable=False)
-    cgst_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
-    sgst_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
-    igst_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
-
-    cgst_amount = models.DecimalField(max_digits=12, decimal_places=2, editable=False, default=0.00)
-    sgst_amount = models.DecimalField(max_digits=12, decimal_places=2, editable=False, default=0.00)
-    igst_amount = models.DecimalField(max_digits=12, decimal_places=2, editable=False, default=0.00)
-    net_price = models.DecimalField(max_digits=12, decimal_places=2, editable=False, default=0.00)
-
-    def save(self, *args, **kwargs):
-        self.gross_total = self.per_unit_cost * self.units_bought
-        self.cgst_amount = self.gross_total * (self.cgst_rate / 100)
-        self.sgst_amount = self.gross_total * (self.sgst_rate / 100)
-        self.igst_amount = self.gross_total * (self.igst_rate / 100)
-        self.net_price = self.gross_total + self.cgst_amount + self.sgst_amount + self.igst_amount
-        super(PurchaseItem, self).save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.purchased_item} ({self.category}) purchased from {self.organization_name}"
-
 
 class Task(models.Model):
     title = models.CharField(max_length=255)
@@ -451,9 +436,11 @@ class Payment(models.Model):
 
 class VendorInformation(models.Model):
     vendor_id = models.CharField(max_length=4)
-    firm_code = models.CharField(max_length=4)
     vendor_name = models.CharField(max_length=100)
-    vendor_address = models.TextField()
+    vendor_address = models.CharField(max_length=100)
+    district = models.CharField(max_length=100, default='none')
+    state = models.CharField(max_length=100, default='none')
+    pincode = models.CharField(max_length=6, validators=[RegexValidator(r'^\d{6}$', message="Pincode must be 6 digits.")], default='000000')
     vendor_gst_number = models.CharField(max_length=20)
     vendor_account_number = models.CharField(max_length=20)
     vendor_ifsc_code = models.CharField(max_length=11)
@@ -462,6 +449,48 @@ class VendorInformation(models.Model):
 
     def __str__(self):
         return self.vendor_name
+
+
+
+class PurchaseItem(models.Model):
+
+    CATEGORY_CHOICES = [
+        ('Stationary', 'Stationary'),
+        ('Furniture', 'Furniture'),
+        ('Pantry', 'Pantry'),
+        ('Miscellaneous', 'Miscellaneous'),
+    ]
+    organization_code = models.CharField(max_length=100)
+    organization_name = models.CharField(max_length=255)
+    organization_gst_number = models.CharField(max_length=15)
+    bill_number = models.CharField(max_length=50)
+    purchased_item = models.CharField(max_length=255)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='Miscellaneous')
+    hsn_code = models.CharField(max_length=10)
+    date_of_purchase = models.DateField()
+    per_unit_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    units_bought = models.PositiveIntegerField()
+
+    # Tax rates
+    cgst_rate = models.DecimalField(max_digits=5, decimal_places=2)
+    sgst_rate = models.DecimalField(max_digits=5, decimal_places=2)
+    igst_rate = models.DecimalField(max_digits=5, decimal_places=2)
+
+    # Totals
+    gross_total = models.DecimalField(max_digits=10, decimal_places=2, editable=False, default=0)
+    total_gst = models.DecimalField(max_digits=10, decimal_places=2, editable=False, default=0)
+    net_price = models.DecimalField(max_digits=10, decimal_places=2, editable=False, default=0)
+
+    def save(self, *args, **kwargs):
+        # Calculate gross total, GST, and net price
+        self.gross_total = self.per_unit_cost * self.units_bought
+        self.total_gst = self.gross_total * (self.cgst_rate + self.sgst_rate + self.igst_rate) / 100
+        self.net_price = self.gross_total + self.total_gst
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.purchased_item} ({self.category}) purchased from {self.organization_name}"
+
 
 # Staff salary
 class StaffSalary(models.Model):

@@ -12,43 +12,31 @@
         <!-- Buttons for navigation in grid layout -->
         <div class="row row-cols-1 row-cols-md-3 g-2 mb-4">
             <div class="col">
-                <a href="{% url 'employees:employee_list' %}" class="btn btn-outline-primary w-100 py-2">👤 View Employees</a>
-            </div>
-            <div class="col">
-                <a href="{% url 'employees:generate_salary' %}" class="btn btn-outline-primary w-100 py-2">💸 Generate Salary</a>
-            </div>
-            <div class="col">
-                <a href="{% url 'employees:salary_list' %}" class="btn btn-outline-primary w-100 py-2">📃 Salary List</a>
-            </div>
-            <div class="col">
                 <a href="{% url 'employees:add_employee_and_upload' %}" class="btn btn-outline-primary w-100 py-2">➕ Add Employee / Upload Excel</a>
             </div>
             <div class="col">
-                <a href="{% url 'employees:payment_input' %}" class="btn btn-outline-primary w-100 py-2">💰 Payment Input</a>
+                <a href="{% url 'employees:company_add' %}" class="btn btn-outline-primary w-100 py-2">🏢 Add Company</a>
             </div>
             <div class="col">
-                <a href="{% url 'employees:purchase_item_input' %}" class="btn btn-outline-primary w-100 py-2">🛒 Purchase Item</a>
+                <a href="{% url 'employees:e_invoice_create' %}" class="btn btn-outline-primary w-100 py-2">🧾 E Invoice</a>
             </div>
             <div class="col">
+                <a href="{% url 'employees:employee_list' %}" class="btn btn-outline-primary w-100 py-2">👤 View Employees</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'employees:company_list' %}" class="btn btn-outline-primary w-100 py-2">🏢 Company List</a>
+            </div>
+                        <div class="col">
                 <a href="{% url 'employees:vendor_information_input' %}" class="btn btn-outline-primary w-100 py-2">🏢 Vendor Information</a>
             </div>
             <div class="col">
                 <a href="{% url 'employees:employee_detail' %}" class="btn btn-outline-primary w-100 py-2">🔍 Employee Detail</a>
             </div>
             <div class="col">
-                <a href="{% url 'employees:company_add' %}" class="btn btn-outline-primary w-100 py-2">🏢 Add Company</a>
+                <a href="{% url 'employees:salary_list' %}" class="btn btn-outline-primary w-100 py-2">📃 Salary List</a>
             </div>
             <div class="col">
-                <a href="{% url 'employees:company_list' %}" class="btn btn-outline-primary w-100 py-2">🏢 Company List</a>
-            </div>
-            <div class="col">
-                <a href="{% url 'employees:admin_dashboard' %}" class="btn btn-outline-primary w-100 py-2">📊 Admin Dashboard</a>
-            </div>
-            <div class="col">
-                <a href="{% url 'employees:e_invoice_create' %}" class="btn btn-outline-primary w-100 py-2">🧾 E Invoice</a>
-            </div>
-            <div class="col">
-                <a href="{% url 'employees:e_invoice_list' %}" class="btn btn-outline-primary w-100 py-2">🗂️ E Invoice List</a>
+                <a href="{% url 'employees:purchase_item_input' %}" class="btn btn-outline-primary w-100 py-2">🛒 Purchase Item</a>
             </div>
             <div class="col">
                 <a href="{% url 'employees:employees_upload_details' %}" class="btn btn-outline-primary w-100 py-2">🗂️ Upload</a>
@@ -56,8 +44,22 @@
             <div class="col">
                 <a href="{% url 'employees:generate_report' %}" class="btn btn-outline-primary w-100 py-2">🗂️ Report</a>
             </div>
-        </div>
+            <div class="col">
+                <a href="{% url 'employees:payment_input' %}" class="btn btn-outline-primary w-100 py-2">💰 Payment Input</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'employees:generate_salary' %}" class="btn btn-outline-primary w-100 py-2">💸 Generate Salary</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'employees:e_invoice_list' %}" class="btn btn-outline-primary w-100 py-2">🗂️ E Invoice List</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'employees:admin_dashboard' %}" class="btn btn-outline-primary w-100 py-2">📊 Admin Dashboard</a>
+                <a href="{% url 'employees:purchase_item_input' %}" class="btn btn-outline-primary w-100 py-2">📊 Purchase item input</a>
+            </div>
 
+
+        </div>
         <div class="row">
             <div class="col-md-9">
                 <h2 class="h4 text-secondary">Hello, {{ request.user.first_name }}</h2>

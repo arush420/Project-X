@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Vendor{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center">Delete Vendor</h1>
+    <p>Are you sure you want to delete vendor <strong>{{ vendor.vendor_name }}</strong>?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Confirm Delete</button>
+        <a href="{% url 'employees:vendor_information_input' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

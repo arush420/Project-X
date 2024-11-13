@@ -1,10 +1,11 @@
 from decimal import Decimal
 from sqlite3 import IntegrityError
 from sys import prefix
-
+from django.views.generic.edit import UpdateView
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q, Sum
+from django.urls import reverse_lazy
 from django.utils import timezone
 from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
@@ -401,6 +402,15 @@ def employee_detail(request, id):
     employee = get_object_or_404(Employee, id=id)
     return render(request, 'employee_details.html', {'employee': employee})
 
+class EmployeeUpdateView(UpdateView):
+    model = Employee
+    form_class = EmployeeForm
+    template_name = 'employees/employee_edit.html'
+    context_object_name = 'employee'
+
+    def get_success_url(self):
+        return reverse_lazy('employees:employee_list')  # Redirect to employee list a
+
 class AddEmployeeAndUploadView(View):
     def get(self, request):
         return render(request, 'employees/add_employee.html', {
@@ -759,11 +769,6 @@ def delete_payment(request, payment_id):
     return redirect('employees:payment_input')
 
 
-# Purchase information
-def purchase_item_input(request):
-    purchases = PurchaseItem.objects.all()
-    return handle_form_submission(request, PurchaseItemForm, 'employees:purchase_item_input', 'employees/purchase_item_input.html', {'purchases': purchases})
-
 # Vendor information and profile
 def vendor_information_input(request):
     if request.method == 'POST':
@@ -777,6 +782,64 @@ def vendor_information_input(request):
     vendor_information = VendorInformation.objects.all()
 
     return render(request, 'employees/vendor_information_input.html', {'form': form, 'vendor_information': vendor_information})
+
+# Update View
+def vendor_information_update(request, pk):
+    vendor = get_object_or_404(VendorInformation, pk=pk)
+    if request.method == 'POST':
+        form = VendorInformationForm(request.POST, instance=vendor)
+        if form.is_valid():
+            form.save()
+            return redirect('employees:vendor_information_input')  # Redirect to view all vendors after update
+        else:
+            print("Form errors:", form.errors)  # Debug statement to print form errors
+    else:
+        form = VendorInformationForm(instance=vendor)
+    return render(request, 'employees/vendor_information_update.html', {'form': form, 'vendor': vendor})
+
+# Delete View
+def vendor_information_delete(request, pk):
+    vendor = get_object_or_404(VendorInformation, pk=pk)
+    if request.method == 'POST':
+        vendor.delete()
+        return redirect('employees:vendor_information_input')
+    return render(request, 'employees/vendor_information_delete.html', {'vendor': vendor})
+
+def purchase_item_input(request):
+    if request.method == "POST":
+        form = PurchaseItemForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('employees:purchase_item_input')  # Redirect to the same page to show updated list
+    else:
+        form = PurchaseItemForm()
+
+    # Get all purchase entries
+    purchases = PurchaseItem.objects.all()
+
+    # Calculate totals for display
+    total_quantity = sum(item.units_bought for item in purchases)
+    total_price_sum = sum(item.gross_total for item in purchases)
+    cgst_sum = sum(item.gross_total * item.cgst_rate / 100 for item in purchases)
+    sgst_sum = sum(item.gross_total * item.sgst_rate / 100 for item in purchases)
+    igst_sum = sum(item.gross_total * item.igst_rate / 100 for item in purchases)
+    total_gst_sum = cgst_sum + sgst_sum + igst_sum
+    total_value_sum = sum(item.net_price for item in purchases)
+
+    context = {
+        'form': form,
+        'purchases': purchases,
+        'total_quantity': total_quantity,
+        'total_price_sum': total_price_sum,
+        'cgst_sum': cgst_sum,
+        'sgst_sum': sgst_sum,
+        'igst_sum': igst_sum,
+        'total_gst_sum': total_gst_sum,
+        'total_value_sum': total_value_sum,
+    }
+
+    return render(request, 'employees/purchase_item_input.html', context)
+
 
 
 def company_list(request):

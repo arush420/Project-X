@@ -6,11 +6,45 @@
 <div class="container mt-5">
     <h1 class="mb-4">Employee List</h1>
 
-    <!-- Search form -->
+    <!-- Filter and Sort form -->
     <form method="get" class="form-inline mb-3">
-        <label for="search" class="mr-2">Search by Employee Code or Name:</label>
-        <input type="text" id="search" name="search" class="form-control mr-2" value="{{ search_query }}" placeholder="Enter employee code or name">
-        <button type="submit" class="btn btn-primary">Search</button>
+        <div class="form-group mr-3">
+            <label for="search" class="mr-2">Search:</label>
+            <input type="text" id="search" name="search" class="form-control" value="{{ search_query }}" placeholder="Employee code or name">
+        </div>
+
+        <div class="form-group mr-3">
+            <label for="department" class="mr-2">Department:</label>
+            <select id="department" name="department" class="form-control">
+                <option value="">All</option>
+                {% for dept in departments %}
+                    <option value="{{ dept.id }}" {% if dept.id == department %}selected{% endif %}>{{ dept.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group mr-3">
+            <label for="salary_range" class="mr-2">Salary Range:</label>
+            <select id="salary_range" name="salary_range" class="form-control">
+                <option value="">All</option>
+                <option value="1" {% if salary_range == '1' %}selected{% endif %}>Below 20,000</option>
+                <option value="2" {% if salary_range == '2' %}selected{% endif %}>20,000 - 50,000</option>
+                <option value="3" {% if salary_range == '3' %}selected{% endif %}>Above 50,000</option>
+            </select>
+        </div>
+
+        <div class="form-group mr-3">
+            <label for="sort" class="mr-2">Sort By:</label>
+            <select id="sort" name="sort" class="form-control">
+                <option value="">Default</option>
+                <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Name (A-Z)</option>
+                <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Name (Z-A)</option>
+                <option value="salary_asc" {% if sort == 'salary_asc' %}selected{% endif %}>Salary (Low to High)</option>
+                <option value="salary_desc" {% if sort == 'salary_desc' %}selected{% endif %}>Salary (High to Low)</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Apply Filters</button>
     </form>
 
     <!-- Employee table -->
@@ -21,17 +55,18 @@
                 <thead class="thead-dark">
                     <tr>
                         {% if user.is_superuser %}
-                            <th style="display: none;" id="select-header">Select</th> <!-- Hidden initially -->
+                            <th style="display: none;" id="select-header">Select</th>
                         {% endif %}
                         <th>Employee Code</th>
                         <th>Name</th>
                         <th>Father Name</th>
-                        <th>Basic</th>
-                        <th>Transport</th>
-                        <th>Canteen</th>
-                        <th>PF</th>
+                        <th>UAN</th>
                         <th>ESIC</th>
-                        <th>Advance</th>
+                        <th>Account Number</th>
+                        <th>IFSC</th>
+                        <th>Last Salary</th>
+                        <th>Last Net Pay</th>
+                        <th>Flag</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -40,28 +75,34 @@
                         {% for employee in employees %}
                         <tr>
                             {% if user.is_superuser %}
-                                <!-- Checkbox for multiple delete, hidden initially -->
-                                <td style="display: none;" class="checkbox-column">
+                                <td style="display: none;">
                                     <input form="delete-multiple-form" type="checkbox" name="employee_ids" value="{{ employee.id }}">
                                 </td>
                             {% endif %}
                             <td><a href="{% url 'employees:employee_details' employee.id %}">{{ employee.employee_code }}</a></td>
                             <td>{{ employee.name }}</td>
                             <td>{{ employee.father_name }}</td>
-                            <td>{{ employee.basic }}</td>
-                            <td>{{ employee.transport }}</td>
-                            <td>{{ employee.canteen }}</td>
+                            <td>{{ employee.uan }}</td>
+                            <td>{{ employee.esic_no }}</td>
+                            <td>{{ employee.employee_account }}</td>
+                            <td>{{ employee.ifsc }}</td>
                             <td>{{ employee.pf }}</td>
-                            <td>{{ employee.esic }}</td>
                             <td>{{ employee.advance }}</td>
                             <td>
-                                <a href="{% url 'employees:delete_employee' employee.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this employee?');">Delete</a>
+                                <span class="performance-box" style="background-color: {{ employee.get_performance_color_display|lower }};"></span>
+                            </td>
+                            <td>
+                                <span class="action-icon" onclick="toggleActionMenu('{{ employee.pk }}')">✏️</span>
+                                <div class="action-menu" id="action-menu-{{ employee.pk }}" style="display: none;">
+                                    <a href="{% url 'employees:edit_employee' employee.pk %}" class="dropdown-item">Edit</a>
+                                    <a href="{% url 'employees:delete_employee' employee.pk %}" class="dropdown-item" onclick="return confirm('Are you sure you want to delete this employee?');">Delete</a>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="10" class="text-center">No employees found matching your search.</td>
+                            <td colspan="12" class="text-center">No employees found matching your search criteria.</td>
                         </tr>
                     {% endif %}
                 </tbody>
@@ -69,84 +110,55 @@
         </form>
     </div>
 
-    {% if user.is_superuser %}
-        <!-- Button to toggle checkbox visibility -->
-        <button id="toggle-delete" class="btn btn-danger float-right mb-3">Delete Multiple Employees</button>
+    <!-- Pagination and other elements remain the same -->
 
-        <!-- Button to submit form for multiple employee deletion, hidden initially -->
-        <button id="delete-selected" class="btn btn-danger mt-3" style="display: none;" form="delete-multiple-form">Delete Selected Employees</button>
-    {% endif %}
-
-    <!-- Enhanced Pagination controls -->
-    <nav aria-label="Page navigation">
-        <ul class="pagination justify-content-center">
-            {% if employees.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?search={{ search_query }}&page=1" aria-label="First">
-                        <span aria-hidden="true">&laquo;&laquo;</span>
-                    </a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?search={{ search_query }}&page={{ employees.previous_page_number }}" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-            {% endif %}
-            <!-- Display page numbers -->
-            {% for num in employees.paginator.page_range %}
-                {% if employees.number == num %}
-                    <li class="page-item active">
-                        <span class="page-link">{{ num }}</span>
-                    </li>
-                {% elif num > employees.number|add:'-2' and num < employees.number|add:'2' %}
-                    <li class="page-item">
-                        <a class="page-link" href="?search={{ search_query }}&page={{ num }}">{{ num }}</a>
-                    </li>
-                {% endif %}
-            {% endfor %}
-            {% if employees.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?search={{ search_query }}&page={{ employees.next_page_number }}" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?search={{ search_query }}&page={{ employees.paginator.num_pages }}" aria-label="Last">
-                        <span aria-hidden="true">&raquo;&raquo;</span>
-                    </a>
-                </li>
-            {% endif %}
-        </ul>
-    </nav>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const toggleDeleteBtn = document.getElementById('toggle-delete');
-        const deleteSelectedBtn = document.getElementById('delete-selected');
-        const checkboxes = document.querySelectorAll('.checkbox-column');
-        const selectHeader = document.getElementById('select-header');
-        let isDeleteMode = false;
+    function toggleActionMenu(employeeId) {
+        const menu = document.getElementById(`action-menu-${employeeId}`);
+        menu.style.display = menu.style.display === "none" || !menu.style.display ? "block" : "none";
+    }
 
-        // Toggle visibility of checkboxes
-        toggleDeleteBtn.addEventListener('click', function () {
-            isDeleteMode = !isDeleteMode;  // Toggle delete mode
-            // Show or hide checkboxes and delete button based on delete mode
-            checkboxes.forEach(function (checkbox) {
-                checkbox.style.display = isDeleteMode ? '' : 'none';
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.action-icon')) {
+            document.querySelectorAll('.action-menu').forEach(menu => {
+                menu.style.display = 'none';
             });
-            selectHeader.style.display = isDeleteMode ? '' : 'none';
-            deleteSelectedBtn.style.display = isDeleteMode ? '' : 'none';
-        });
-
-        // Confirmation dialog for multiple employee deletion
-        deleteSelectedBtn.addEventListener('click', function (event) {
-            if (!confirm('Are you sure you want to delete the selected employees?')) {
-                event.preventDefault();  // Prevent form submission if user cancels
-            }
-        });
+        }
     });
 </script>
+
+<style>
+    .performance-box {
+        display: inline-block;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        vertical-align: middle;
+    }
+    .action-icon {
+        cursor: pointer;
+        font-size: 1.5em;
+    }
+    .action-menu {
+        position: absolute;
+        background-color: white;
+        border: 1px solid #ccc;
+        padding: 5px;
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+        border-radius: 4px;
+    }
+    .dropdown-item {
+        display: block;
+        padding: 5px 10px;
+        color: #333;
+        text-decoration: none;
+    }
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+
 {% endblock %}

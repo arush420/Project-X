@@ -109,17 +109,31 @@ class EmployeeForm(forms.ModelForm):
             'pay_mode', 'employer_account', 'employee_account', 'ifsc', 'kyc_status', 'handicap', 'remarks',
 
             # Salary Details
-            'basic', 'transport', 'canteen', 'pf_contribution', 'esic_contribution', 'advance'
+            'basic', 'sr_allowance', 'da', 'hra', 'travel_allowance', 'medical', 'conveyance',
+            'wash_allowance', 'efficiency', 'other_payable', 'employee_status', 'performance_color'
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Employee Name'}),
             'father_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Father\'s Name'}),
+            'mother_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Mother\'s Name'}),
             'mobile': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Mobile Number'}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Address'}),
             'remarks': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Remarks'}),
             'dob': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'doj': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'doe': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'employee_status': forms.Select(attrs={'class': 'form-control'}),
+            'performance_color': forms.Select(attrs={'class': 'form-control'}),
+            'basic': forms.NumberInput(attrs={'class': 'form-control'}),
+            'sr_allowance': forms.NumberInput(attrs={'class': 'form-control'}),
+            'da': forms.NumberInput(attrs={'class': 'form-control'}),
+            'hra': forms.NumberInput(attrs={'class': 'form-control'}),
+            'travel_allowance': forms.NumberInput(attrs={'class': 'form-control'}),
+            'medical': forms.NumberInput(attrs={'class': 'form-control'}),
+            'conveyance': forms.NumberInput(attrs={'class': 'form-control'}),
+            'wash_allowance': forms.NumberInput(attrs={'class': 'form-control'}),
+            'efficiency': forms.NumberInput(attrs={'class': 'form-control'}),
+            'other_payable': forms.NumberInput(attrs={'class': 'form-control'}),
             # Add more widgets as needed
         }
 
@@ -158,6 +172,17 @@ class PaymentForm(forms.ModelForm):
         }
 
 
+# Vendor Information form
+class VendorInformationForm(forms.ModelForm):
+    class Meta:
+        model = VendorInformation
+        fields = [
+            'vendor_id', 'vendor_name', 'vendor_address','district',
+            'state', 'pincode', 'vendor_gst_number', 'vendor_account_number',
+            'vendor_ifsc_code', 'vendor_contact_person_name', 'vendor_contact_person_number'
+        ]
+
+
 # Purchase Item form
 class PurchaseItemForm(forms.ModelForm):
     date_of_purchase = forms.DateField(widget=forms.SelectDateWidget)
@@ -165,31 +190,25 @@ class PurchaseItemForm(forms.ModelForm):
     class Meta:
         model = PurchaseItem
         fields = [
-            'organization_code', 'organization_name', 'gst_number', 'bill_number', 'purchased_item',
+            'organization_code', 'organization_name', 'organization_gst_number', 'bill_number', 'purchased_item',
             'category', 'hsn_code', 'date_of_purchase', 'per_unit_cost', 'units_bought', 'cgst_rate',
             'sgst_rate', 'igst_rate'
         ]
         widgets = {
+            'organization_code': forms.TextInput(attrs={'class': 'form-control'}),
             'organization_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'organisation_gst_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'bill_number': forms.TextInput(attrs={'class': 'form-control'}),
             'purchased_item': forms.TextInput(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-select'}),
+            'hsn_code': forms.TextInput(attrs={'class': 'form-control'}),
             'date_of_purchase': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'per_unit_cost': forms.NumberInput(attrs={'class': 'form-control'}),
+            'units_bought': forms.NumberInput(attrs={'class': 'form-control'}),
+            'cgst_rate': forms.NumberInput(attrs={'class': 'form-control'}),
+            'sgst_rate': forms.NumberInput(attrs={'class': 'form-control'}),
+            'igst_rate': forms.NumberInput(attrs={'class': 'form-control'}),
         }
-
-
-# Vendor Information form
-class VendorInformationForm(forms.ModelForm):
-    class Meta:
-        model = VendorInformation
-        fields = [
-            'vendor_id', 'firm_code', 'vendor_name', 'vendor_address', 'vendor_gst_number', 'vendor_account_number',
-            'vendor_ifsc_code', 'vendor_contact_person_name', 'vendor_contact_person_number'
-        ]
-        widgets = {
-            'vendor_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'vendor_contact_person_name': forms.TextInput(attrs={'class': 'form-control'}),
-        }
-
 
 # Company form
 class CompanyForm(forms.ModelForm):

@@ -3,7 +3,7 @@ from . import views
 from django.conf import settings
 from django.conf.urls.static import static
 
-from .views import ReportView
+from .views import ReportView, EmployeeUpdateView, employee_detail
 
 urlpatterns = [
     path('', views.login_view, name='login'),
@@ -27,9 +27,12 @@ urlpatterns = [
     # Download template to add bulk employees
     path('download-template/', views.download_template, name='download_template'),
     path('employee_list/', views.EmployeeListView.as_view(), name='employee_list'),
+    path('<int:pk>/edit/', EmployeeUpdateView.as_view(), name='edit_employee'),
+    path('<int:id>/', employee_detail, name='employee_detail'),
     path('employee_detail/', views.employee_detail, name='employee_detail'),
     path('employee/<int:id>/', views.employee_detail, name='employee_details'),
     path('generate_salary/', views.GenerateSalaryView.as_view(), name='generate_salary'),
+
     # salary List/ Report and CSV download
     path('salary_list/', views.salary_list, name='salary_list'),
     path('salary/download-csv/', views.download_salary_csv, name='download_salary_csv'),
@@ -39,7 +42,10 @@ urlpatterns = [
     path('payment/edit/<int:payment_id>/', views.edit_payment, name='edit_payment'),
     path('payment/delete/<int:payment_id>/', views.delete_payment, name='delete_payment'),
     path('purchase-item-input/', views.purchase_item_input, name='purchase_item_input'),
+    # Vendor inputs
     path('vendor-information-input/', views.vendor_information_input, name='vendor_information_input'),
+    path('vendor-information/update/<int:pk>/', views.vendor_information_update, name='vendor_information_update'),
+    path('vendor-information/delete/<int:pk>/', views.vendor_information_delete, name='vendor_information_delete'),
 
     path('companies/', views.company_list, name='company_list'),
     path('companies/add/', views.company_add, name='company_add'),

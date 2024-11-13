@@ -6,36 +6,40 @@
 <div class="container mt-5">
     <h1 class="mb-4 text-center">Salary Report</h1>
 
-    <!-- Filter Form -->
-    <form method="GET" class="form-inline mb-4 justify-content-center">
-        <div class="form-group mr-3">
-            <label for="month" class="mr-2">Month:</label>
-            <select name="month" id="month" class="form-control" required>
-                <option value="">All</option>
-                {% for month_num, month_name in month_choices %}
-                    <option value="{{ month_num }}" {% if month == month_num|stringformat:"s" %}selected{% endif %}>
-                        {{ month_name }}
-                    </option>
-                {% endfor %}
-            </select>
+    <!-- Filter Form and Buttons in a Row -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <form method="GET" class="form-inline mb-2">
+            <div class="form-group mr-2">
+                <label for="month" class="mr-1">Month:</label>
+                <select name="month" id="month" class="form-control" required>
+                    <option value="">All</option>
+                    {% for month_num, month_name in month_choices %}
+                        <option value="{{ month_num }}" {% if month == month_num|stringformat:"s" %}selected{% endif %}>
+                            {{ month_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group mr-2">
+                <label for="year" class="mr-1">Year:</label>
+                <input type="number" name="year" class="form-control" value="{{ year|default_if_none:'' }}" placeholder="Year" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">View Report</button>
+        </form>
+
+        {% if salaries %}
+        <!-- Print and Download Buttons -->
+        <div class="mb-2">
+            <button class="btn btn-secondary mr-2" onclick="window.print()">Print</button>
+            <a href="{% url 'employees:download_salary_csv' %}?month={{ month }}&year={{ year }}" target="_blank" class="btn btn-success">Download CSV</a>
         </div>
-
-        <div class="form-group mr-3">
-            <label for="year" class="mr-2">Year:</label>
-            <input type="number" name="year" class="form-control" value="{{ year|default_if_none:'' }}" placeholder="Year" required>
-        </div>
-
-        <button type="submit" class="btn btn-primary">View Report</button>
-    </form>
-
-    <!-- Print and Download Buttons -->
-    {% if salaries %}
-    <div class="d-flex justify-content-end mb-4">
-        <button class="btn btn-secondary mr-2" onclick="window.print()">Print</button>
-        <a href="{% url 'employees:download_salary_csv' %}?month={{ month }}&year={{ year }}" target="_blank" class="btn btn-success">Download CSV</a>
+        {% endif %}
     </div>
 
     <!-- Salary Table -->
+    {% if salaries %}
     <div class="table-responsive">
         <table class="table table-bordered table-hover">
             <thead class="thead-dark">
@@ -85,7 +89,6 @@
                     <td><strong>{{ totals.total_net_salary|floatformat:2 }}</strong></td>
                     <td></td>
                 </tr>
-
             </tbody>
         </table>
     </div>
