@@ -4,12 +4,15 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h1 class="mb-4">Enter Payment Details</h1>
+    <h1 class="mb-4 text-center">Enter Payment Details</h1>
 
     <!-- Payment Form -->
-    <div class="card shadow-sm mb-4">
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Payment Entry Form</h4>
+        </div>
         <div class="card-body">
-            <form method="post">
+            <form method="post" class="needs-validation" novalidate>
                 {% csrf_token %}
                 {{ form.as_p }}
                 <button type="submit" class="btn btn-primary w-100">Submit</button>
@@ -27,62 +30,93 @@
     {% endif %}
 
     <!-- Saved Payment Entries -->
-    <h2 class="mt-5">Saved Payment Entries</h2>
+    <h2 class="mt-5 text-center">Saved Payment Entries</h2>
 
-    <!-- Sorting Filter -->
-    <div class="mb-4">
-        <label for="sort-filter" class="form-label">Sort By:</label>
-        <select id="sort-filter" class="form-select" onchange="sortTable()">
-            <option value="id">ID</option>
-            <option value="company_name">Company Name</option>
-            <option value="bill_no">Bill No.</option>
-            <option value="amount">Amount</option>
-            <option value="date">Date</option>
-        </select>
+    <!-- Filters Section -->
+    <div class="card mb-4 p-3 shadow-sm">
+        <form method="get" class="row g-3">
+            <!-- Filter by Company Name -->
+            <div class="col-md-3">
+                <label for="company_name" class="form-label">Company Name</label>
+                <input type="text" id="company_name" name="company_name" class="form-control" placeholder="Enter company name">
+            </div>
+
+            <!-- Filter by Payment Status -->
+            <div class="col-md-3">
+                <label for="payment_status" class="form-label">Payment Status</label>
+                <select id="payment_status" name="payment_status" class="form-select">
+                    <option value="">All</option>
+                    <option value="full_payment_received">Full Payment Received</option>
+                    <option value="part_payment_received">Part Payment Received</option>
+                </select>
+            </div>
+
+            <!-- Filter by Date Range -->
+            <div class="col-md-2">
+                <label for="from_date" class="form-label">From Date</label>
+                <input type="date" id="from_date" name="from_date" class="form-control">
+            </div>
+            <div class="col-md-2">
+                <label for="to_date" class="form-label">To Date</label>
+                <input type="date" id="to_date" name="to_date" class="form-control">
+            </div>
+
+            <!-- Filter Button -->
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Filter</button>
+            </div>
+        </form>
     </div>
 
-    <table class="table table-striped" id="payment-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Company Name</th>
-                <th>Bill No.</th>
-                <th>Amount</th>
-                <th>Date</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for payment in payments %}
-            <tr>
-                <td>{{ payment.id }}</td>
-                <td>{{ payment.company_name }}</td>
-                <td>{{ payment.payment_against_bill }}</td>
-                <td>{{ payment.amount_received }}</td>
-                <td>{{ payment.payment_date }}</td>
-                <td>
-                    <a href="{% url 'employees:edit_payment' payment.id %}" class="btn btn-warning btn-sm">Edit</a>
-                    <form method="POST" action="{% url 'employees:delete_payment' payment.id %}" style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                    </form>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6">No payment entries available.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Payment Entries Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover" id="payment-table">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Company Name</th>
+                    <th>Bill No.</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Payment Status</th>
+                    <th>Remark</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                <tr>
+                    <td>{{ payment.id }}</td>
+                    <td>{{ payment.company_name }}</td>
+                    <td>{{ payment.payment_against_bill }}</td>
+                    <td>{{ payment.amount_received }}</td>
+                    <td>{{ payment.payment_date }}</td>
+                    <td>{{ payment.get_payment_status_display }}</td>
+                    <td>{{ payment.remark }}</td>
+                    <td>
+                        <a href="{% url 'employees:edit_payment' payment.id %}" class="btn btn-sm btn-outline-warning me-1">Edit</a>
+                        <form method="POST" action="{% url 'employees:delete_payment' payment.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center">No payment entries available.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script>
+    // Sort Table Script
     function sortTable() {
         var table, rows, switching, i, x, y, shouldSwitch;
         table = document.getElementById("payment-table");
         switching = true;
-
         var sortOption = document.getElementById("sort-filter").value;
         var columnIndex;
         switch (sortOption) {
@@ -104,7 +138,6 @@
             default:
                 columnIndex = 0;
         }
-
         while (switching) {
             switching = false;
             rows = table.rows;

@@ -750,9 +750,47 @@ def handle_form_submission(request, form_class, redirect_url, template_name, con
 
 # Handle payment input and listing payments
 def payment_input(request):
+    # Handle form submission
+    if request.method == 'POST':
+        form = PaymentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('employees:payment_input')
+    else:
+        form = PaymentForm()
+
+    # Initialize the queryset for filtering
     payments = Payment.objects.all()
-    context = {'payments': payments}
-    return handle_form_submission(request, PaymentForm, 'employees:payment_input', 'employees/payment_input.html', context)
+
+    # Apply filters based on GET parameters
+    company_name = request.GET.get('company_name', '').strip()
+    payment_status = request.GET.get('payment_status', '').strip()
+    from_date = request.GET.get('from_date')
+    to_date = request.GET.get('to_date')
+
+    # Debugging log to see what filters are applied
+    print("Filter parameters:", company_name, payment_status, from_date, to_date)
+
+    # Apply filters if the parameters are present
+    if company_name:
+        payments = payments.filter(company_name__icontains=company_name)
+    if payment_status:
+        payments = payments.filter(payment_status=payment_status)
+
+    # Filter by date range if dates are provided
+    if from_date and to_date:
+        try:
+            from_date_obj = datetime.strptime(from_date, "%Y-%m-%d").date()
+            to_date_obj = datetime.strptime(to_date, "%Y-%m-%d").date()
+            payments = payments.filter(payment_date__range=(from_date_obj, to_date_obj))
+        except ValueError:
+            print("Invalid date format")  # Handle date format issues gracefully
+
+    # Render the template with the form and filtered payments
+    return render(request, 'employees/payment_input.html', {
+        'form': form,
+        'payments': payments
+    })
 
 # Handle payment edit
 def edit_payment(request, payment_id):

@@ -166,9 +166,11 @@ class PaymentForm(forms.ModelForm):
 
     class Meta:
         model = Payment
-        fields = ['company_name', 'payment_against_bill', 'amount_received', 'payment_date']
+        fields = ['company_name', 'payment_against_bill', 'amount_received', 'payment_date', 'remark', 'payment_status']
         widgets = {
             'company_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'remark': forms.TextInput(attrs={'class': 'form-control'}),
+            'payment_status': forms.Select(attrs={'class': 'form-select'}),
         }
 
 

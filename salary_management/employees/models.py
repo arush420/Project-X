@@ -424,11 +424,17 @@ class Task(models.Model):
 
 
 class Payment(models.Model):
-    company_name = models.CharField(max_length=255)
+    company_name = models.CharField(max_length=100)
     amount_received = models.DecimalField(max_digits=10, decimal_places=2)
     payment_date = models.DateField()
-    account_of_own_company = models.CharField(max_length=255)
-    payment_against_bill = models.CharField(max_length=255)
+    account_of_own_company = models.CharField(max_length=5)
+    payment_against_bill = models.CharField(max_length=5, unique=True)
+    remark = models.CharField(max_length=100, blank=True)
+    PAYMENT_CHOICES = [
+        ('full_payment_received', 'Full Payment Received'),
+        ('part_payment_received', 'part Payment Received')
+    ]
+    payment_status = models.CharField(max_length=100, choices=PAYMENT_CHOICES, default='Full Payment Received')
 
     def __str__(self):
         return f"Payment from {self.company_name} on {self.payment_date}"
