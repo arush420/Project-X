@@ -1,0 +1,33 @@
+<div class="container mt-5">
+    <h1>Bill #{{ bill_number }} Details</h1>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Category</th>
+                <th>Units</th>
+                <th>Per Unit Cost</th>
+                <th>Gross Total</th>
+                <th>CGST</th>
+                <th>SGST</th>
+                <th>IGST</th>
+                <th>Net Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in purchases %}
+            <tr>
+                <td>{{ item.purchased_item }}</td>
+                <td>{{ item.category }}</td>
+                <td>{{ item.units_bought }}</td>
+                <td>{{ item.per_unit_cost }}</td>
+                <td>{{ item.gross_total }}</td>
+                <td>{{ item.cgst_rate }}%</td>
+                <td>{{ item.sgst_rate }}%</td>
+                <td>{{ item.igst_rate }}%</td>
+                <td>{{ item.net_price }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

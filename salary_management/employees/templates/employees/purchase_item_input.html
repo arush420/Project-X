@@ -1,113 +1,241 @@
 {% extends 'base.html' %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'employees/styles.css' %}">
 
-{% block title %}Purchase Bill Entry{% endblock %}
+
+{% block title %}Purchase Master{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h1 class="mb-4">Purchase Bill Entry</h1>
+<div class="container mt-5" style="max-width: 95%;">
+    <h1 class="mb-4 text-center">Purchase Master</h1>
 
-    <!-- Purchase Entry Form -->
-    <form method="post">
+    <!-- Combined Vendor and Purchase Form -->
+    <form method="post" id="purchaseForm">
         {% csrf_token %}
-        <div class="form-row">
-            <div class="col-md-6 mb-3">
-                {{ form.organization_code.label }} {{ form.organization_code }}
+        {{ formset.management_form }}
+
+        <!-- Vendor Details Section -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Vendor Details</h4>
             </div>
-            <div class="col-md-6 mb-3">
-                {{ form.bill_number.label }} {{ form.bill_number }}
+            <div class="card-body">
+                <table class="table table-hover" id="vendorDetailsTable">
+                    <thead>
+                        <tr>
+                            <th>PO Number</th>
+                            <th>Bill Number</th>
+                            <th>Vendor Name</th>
+                            <th>Ordered/Purchased By</th>
+                            <th>Order Date</th>
+                            <th>Ordered For</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for form in formset %}
+                        <tr>
+                            <td>{{ form.po_number }}</td>
+                            <td>{{ form.bill_number }}</td>
+                            <td>{{ form.organization_name }}</td>
+                            <td>{{ form.order_by }}</td>
+                            <td>{{ form.date_of_purchase }}</td>
+                            <td>{{ form.order_for }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <div class="form-row">
-            <div class="col-md-6 mb-3">
-                {{ form.organization_name.label }} {{ form.organization_name }}
+        <!-- Purchase Item Details Section -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Purchase Item Details</h4>
             </div>
-            <div class="col-md-6 mb-3">
-                {{ form.date_of_purchase.label }} {{ form.date_of_purchase }}
+            <div class="card-body">
+                <table class="table table-hover" id="itemDetailsTable">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Category</th>
+                            <th>HSN Code</th>
+                            <th>Units</th>
+                            <th>Per Unit Cost</th>
+                            <th>Gross Total</th>
+                            <th>CGST</th>
+                            <th>SGST</th>
+                            <th>IGST</th>
+                            <th>Total GST</th>
+                            <th>Net Total</th>
+                            <th>Bill File</th> <!-- New column for bill file -->
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for form in formset %}
+                        <tr>
+                            <td>{{ form.purchased_item }}</td>
+                            <td>{{ form.category }}</td>
+                            <td>{{ form.hsn_code }}</td>
+                            <td>{{ form.units_bought }}</td>
+                            <td>{{ form.per_unit_cost }}</td>
+                            <td class="gross-total"></td>
+                            <td>{{ form.cgst_rate }}</td>
+                            <td>{{ form.sgst_rate }}</td>
+                            <td>{{ form.igst_rate }}</td>
+                            <td class="total-gst"></td>
+                            <td class="net-total"></td>
+                            <td>{{ form.bill_file }}</td> <!-- New input for bill file -->
+                            <td>
+                                {% if form.instance.pk %}
+                                <input type="checkbox" name="{{ form.DELETE.name }}" id="{{ form.DELETE.id }}" class="form-check-input">
+                                <label for="{{ form.DELETE.id }}" class="form-check-label">Delete</label>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-secondary mt-3" id="addRowButton">Add Row</button>
             </div>
         </div>
 
-        <div class="form-row">
-            <div class="col-md-6 mb-3">
-                {{ form.purchased_item.label }} {{ form.purchased_item }}
+        <!-- Grand Total Section -->
+        <div class="mt-3 text-end">
+            <h4><strong>Grand Total: </strong><span id="grandTotal">0.00</span></h4>
+        </div>
+
+        <!-- Vendor Details Section -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Payment Details</h4>
             </div>
-            <div class="col-md-6 mb-3">
-                {{ form.category.label }} {{ form.category }}
+            <div class="card-body">
+                <table class="table table-hover" id="vendorPaymentDetailsTable">
+                    <thead>
+                        <tr>
+                            <th>Payment Status</th>
+                            <th>Payment by</th>
+                            <th>Payment Date</th>
+                            <th>Payment Mode</th>
+                            <th>Remark</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for form in formset %}
+                        <tr>
+                            <td>{{ form.payment_status }}</td>
+                            <td>{{ form.payment_by }}</td>
+                            <td>{{ form.payment_date }}</td>
+                            <td>{{ form.payment_mode }}</td>
+                            <td>{{ form.remark }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <div class="form-row">
-            <div class="col-md-4 mb-3">
-                {{ form.per_unit_cost.label }} {{ form.per_unit_cost }}
-            </div>
-            <div class="col-md-4 mb-3">
-                {{ form.units_bought.label }} {{ form.units_bought }}
-            </div>
-            <div class="col-md-4 mb-3">
-                {{ form.hsn_code.label }} {{ form.hsn_code }}
-            </div>
-        </div>
 
-        <h3 class="mt-4">Taxes</h3>
-        <div class="form-row">
-            <div class="col-md-4 mb-3">
-                {{ form.cgst_rate.label }} {{ form.cgst_rate }}
-            </div>
-            <div class="col-md-4 mb-3">
-                {{ form.sgst_rate.label }} {{ form.sgst_rate }}
-            </div>
-            <div class="col-md-4 mb-3">
-                {{ form.igst_rate.label }} {{ form.igst_rate }}
-            </div>
-        </div>
-
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary w-100 mt-4">Submit</button>
     </form>
 
-    <!-- Submitted Entries Table -->
-    <h2 class="mt-5">Submitted Purchase Entries</h2>
-
-    <table class="table table-striped mt-3">
-        <thead>
-            <tr>
-                <th>Item Name</th>
-                <th>Quantity</th>
-                <th>Price/Unit</th>
-                <th>Total Price</th>
-                <th>CGST</th>
-                <th>SGST</th>
-                <th>IGST</th>
-                <th>Total GST</th>
-                <th>Net Price</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in purchases %}
-            <tr>
-                <td>{{ item.purchased_item }}</td>
-                <td>{{ item.units_bought }}</td>
-                <td>{{ item.per_unit_cost }}</td>
-                <td>{{ item.gross_total }}</td>
-                <td>{{ item.cgst_rate }}%</td>
-                <td>{{ item.sgst_rate }}%</td>
-                <td>{{ item.igst_rate }}%</td>
-                <td>{{ item.total_gst }}</td>
-                <td>{{ item.net_price }}</td>
-            </tr>
-            {% endfor %}
-            <!-- Totals Row -->
-            <tr>
-                <th>Total</th>
-                <td>{{ total_quantity }}</td>
-                <td></td>
-                <td>{{ total_price_sum }}</td>
-                <td>{{ cgst_sum }}</td>
-                <td>{{ sgst_sum }}</td>
-                <td>{{ igst_sum }}</td>
-                <td>{{ total_gst_sum }}</td>
-                <td>{{ total_value_sum }}</td>
-            </tr>
-        </tbody>
-    </table>
+    <!-- Submitted Bills -->
+    <h2 class="mt-5">Submitted Bills</h2>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Bill Number</th>
+                    <th>Vendor Name</th>
+                    <th>Payment Status</th>
+                    <th>Payment by</th>
+                    <th>Payment Date</th>
+                    <th>Grand Total</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bill in purchases|dictsort:"bill_number"|slice:":5" %}
+                <tr>
+                    <td>
+                        <a href="{% url 'employees:purchase_bill_detail' bill.bill_number %}">
+                            Bill #{{ bill.bill_number }}
+                        </a>
+                    </td>
+                    <td>{{ bill.organization_name }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" class="text-center">No bills submitted yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
+
+<script>
+    // Add Row Functionality
+    document.getElementById('addRowButton').addEventListener('click', function () {
+        const tableBody = document.querySelector('#itemDetailsTable tbody');
+        const lastRow = tableBody.rows[tableBody.rows.length - 1];
+
+        // Check if all inputs in the last row are filled
+        const inputs = Array.from(lastRow.querySelectorAll('input, select'));
+        const allFilled = inputs.every(input => input.value.trim() !== "");
+
+        if (allFilled) {
+            const newRow = lastRow.cloneNode(true);
+
+            // Clear inputs in the cloned row
+            newRow.querySelectorAll('input').forEach(input => input.value = "");
+            newRow.querySelectorAll('.gross-total, .total-gst, .net-total').forEach(cell => cell.textContent = "");
+
+            tableBody.appendChild(newRow);
+        } else {
+            alert('Please fill all fields in the current row before adding a new one.');
+        }
+    });
+
+    // Calculate Totals and Grand Total
+    const updateGrandTotal = () => {
+        const netTotalCells = document.querySelectorAll('.net-total');
+        let grandTotal = 0;
+
+        netTotalCells.forEach(cell => {
+            const value = parseFloat(cell.textContent) || 0;
+            grandTotal += value;
+        });
+
+        document.getElementById('grandTotal').textContent = grandTotal.toFixed(2);
+    };
+
+    document.querySelector('#itemDetailsTable').addEventListener('input', function (event) {
+        if (event.target.closest('tr')) {
+            const row = event.target.closest('tr');
+            const units = parseFloat(row.querySelector('[name$="units_bought"]').value) || 0;
+            const cost = parseFloat(row.querySelector('[name$="per_unit_cost"]').value) || 0;
+            const cgst = parseFloat(row.querySelector('[name$="cgst_rate"]').value) || 0;
+            const sgst = parseFloat(row.querySelector('[name$="sgst_rate"]').value) || 0;
+            const igst = parseFloat(row.querySelector('[name$="igst_rate"]').value) || 0;
+
+            // Calculate Gross Total, GST, and Net Total
+            const grossTotal = units * cost;
+            const totalGST = grossTotal * (cgst + sgst + igst) / 100;
+            const netTotal = grossTotal + totalGST;
+
+            row.querySelector('.gross-total').textContent = grossTotal.toFixed(2);
+            row.querySelector('.total-gst').textContent = totalGST.toFixed(2);
+            row.querySelector('.net-total').textContent = netTotal.toFixed(2);
+
+            // Update Grand Total
+            updateGrandTotal();
+        }
+    });
+
+    // Initialize Grand Total on page load
+    document.addEventListener('DOMContentLoaded', updateGrandTotal);
+</script>
 {% endblock %}

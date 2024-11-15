@@ -1,6 +1,10 @@
 from decimal import Decimal
 from sqlite3 import IntegrityError
 from sys import prefix
+from django.core.paginator import Paginator
+
+
+from django.forms import modelformset_factory
 from django.views.generic.edit import UpdateView
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.shortcuts import render, redirect, get_object_or_404
@@ -843,42 +847,50 @@ def vendor_information_delete(request, pk):
         return redirect('employees:vendor_information_input')
     return render(request, 'employees/vendor_information_delete.html', {'vendor': vendor})
 
+
 def purchase_item_input(request):
+    # Define formset for PurchaseItem
+    PurchaseItemFormSet = modelformset_factory(PurchaseItem, fields=(
+        'organization_code', 'organization_name', 'organization_gst_number', 'bill_number', 'po_number',
+        'order_by', 'order_for', 'purchased_item', 'category', 'hsn_code', 'date_of_purchase',
+        'per_unit_cost', 'units_bought', 'cgst_rate', 'sgst_rate', 'igst_rate', 'payment_status',
+        'payment_by', 'payment_date', 'payment_mode', 'remark'
+    ), extra=1, can_delete=True)
+
     if request.method == "POST":
-        form = PurchaseItemForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('employees:purchase_item_input')  # Redirect to the same page to show updated list
+        formset = PurchaseItemFormSet(request.POST)
+        if formset.is_valid():
+            formset.save()
+            messages.success(request, "Purchase items saved successfully.")
+            return redirect('employees:purchase_item_input')
+        else:
+            messages.error(request, "There was an error saving your data. Please check the form.")
     else:
-        form = PurchaseItemForm()
+        formset = PurchaseItemFormSet(queryset=PurchaseItem.objects.none())
 
-    # Get all purchase entries
-    purchases = PurchaseItem.objects.all()
-
-    # Calculate totals for display
-    total_quantity = sum(item.units_bought for item in purchases)
-    total_price_sum = sum(item.gross_total for item in purchases)
-    cgst_sum = sum(item.gross_total * item.cgst_rate / 100 for item in purchases)
-    sgst_sum = sum(item.gross_total * item.sgst_rate / 100 for item in purchases)
-    igst_sum = sum(item.gross_total * item.igst_rate / 100 for item in purchases)
-    total_gst_sum = cgst_sum + sgst_sum + igst_sum
-    total_value_sum = sum(item.net_price for item in purchases)
+    # Paginate the purchases
+    purchases = PurchaseItem.objects.all().order_by('bill_number')
+    paginator = Paginator(purchases, 10)  # 10 items per page
+    page_number = request.GET.get('page')
+    purchases = paginator.get_page(page_number)
 
     context = {
-        'form': form,
+        'formset': formset,
         'purchases': purchases,
-        'total_quantity': total_quantity,
-        'total_price_sum': total_price_sum,
-        'cgst_sum': cgst_sum,
-        'sgst_sum': sgst_sum,
-        'igst_sum': igst_sum,
-        'total_gst_sum': total_gst_sum,
-        'total_value_sum': total_value_sum,
     }
-
     return render(request, 'employees/purchase_item_input.html', context)
 
 
+def purchase_bill_detail(request, bill_number):
+    purchases = PurchaseItem.objects.filter(bill_number=bill_number)
+    if not purchases.exists():
+        return redirect('employees:purchase_item_input')
+
+    context = {
+        'bill_number': bill_number,
+        'purchases': purchases,
+    }
+    return render(request, 'employees/purchase_bill_detail.html', context)
 
 def company_list(request):
     query = request.GET.get('q', '')

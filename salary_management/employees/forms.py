@@ -160,7 +160,7 @@ class TaskForm(forms.ModelForm):
         }
 
 
-# Payment form
+# Payment form for vendor companies
 class PaymentForm(forms.ModelForm):
     payment_date = forms.DateField(widget=forms.SelectDateWidget)
 
@@ -185,21 +185,21 @@ class VendorInformationForm(forms.ModelForm):
         ]
 
 
-# Purchase Item form
 class PurchaseItemForm(forms.ModelForm):
     date_of_purchase = forms.DateField(widget=forms.SelectDateWidget)
 
     class Meta:
         model = PurchaseItem
         fields = [
-            'organization_code', 'organization_name', 'organization_gst_number', 'bill_number', 'purchased_item',
-            'category', 'hsn_code', 'date_of_purchase', 'per_unit_cost', 'units_bought', 'cgst_rate',
-            'sgst_rate', 'igst_rate'
+            'organization_code', 'organization_name', 'organization_gst_number', 'bill_number', 'po_number',
+            'order_by', 'order_for', 'purchased_item', 'category', 'hsn_code', 'date_of_purchase',
+            'per_unit_cost', 'units_bought', 'cgst_rate', 'sgst_rate', 'igst_rate', 'payment_status',
+            'payment_by', 'payment_date', 'payment_mode', 'remark', 'bill_file'
         ]
         widgets = {
             'organization_code': forms.TextInput(attrs={'class': 'form-control'}),
             'organization_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'organisation_gst_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'organization_gst_number': forms.TextInput(attrs={'class': 'form-control'}),
             'bill_number': forms.TextInput(attrs={'class': 'form-control'}),
             'purchased_item': forms.TextInput(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-select'}),
@@ -210,7 +210,21 @@ class PurchaseItemForm(forms.ModelForm):
             'cgst_rate': forms.NumberInput(attrs={'class': 'form-control'}),
             'sgst_rate': forms.NumberInput(attrs={'class': 'form-control'}),
             'igst_rate': forms.NumberInput(attrs={'class': 'form-control'}),
+            'payment_status': forms.Select(attrs={'class': 'form-select'}),
+            'payment_by': forms.TextInput(attrs={'class': 'form-control'}),
+            'payment_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'payment_mode': forms.Select(attrs={'class': 'form-select'}),
+            'remark': forms.TextInput(attrs={'class': 'form-control'}),
+            'bill_file': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
+
+# Formset for handling multiple purchase items
+PurchaseItemFormSet = modelformset_factory(
+    PurchaseItem,
+    form=PurchaseItemForm,
+    extra=1,  # Number of additional blank forms to display
+    can_delete=True,  # Allow deletion of existing items
+)
 
 # Company form
 class CompanyForm(forms.ModelForm):

@@ -41,11 +41,13 @@ urlpatterns = [
     path('payment-input/', views.payment_input, name='payment_input'),
     path('payment/edit/<int:payment_id>/', views.edit_payment, name='edit_payment'),
     path('payment/delete/<int:payment_id>/', views.delete_payment, name='delete_payment'),
-    path('purchase-item-input/', views.purchase_item_input, name='purchase_item_input'),
-    # Vendor inputs
+
+    # Vendor inputs and Purchase details
     path('vendor-information-input/', views.vendor_information_input, name='vendor_information_input'),
     path('vendor-information/update/<int:pk>/', views.vendor_information_update, name='vendor_information_update'),
     path('vendor-information/delete/<int:pk>/', views.vendor_information_delete, name='vendor_information_delete'),
+    path('purchase-item-input/', views.purchase_item_input, name='purchase_item_input'),
+    path('purchase/<str:bill_number>/', views.purchase_bill_detail, name='purchase_bill_detail'),
 
     path('companies/', views.company_list, name='company_list'),
     path('companies/add/', views.company_add, name='company_add'),
