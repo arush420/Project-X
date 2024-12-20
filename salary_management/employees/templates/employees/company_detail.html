@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Company Details
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center">Company Details</h2>
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white">
+            <h4>{{ company.company_name }}</h4>
+        </div>
+        <div class="card-body">
+            <h5>General Information</h5>
+            <table class="table table-bordered">
+                <tr>
+                    <th>Code</th>
+                    <td>{{ company.company_code }}</td>
+                </tr>
+                <tr>
+                    <th>Address</th>
+                    <td>{{ company.company_address }}</td>
+                </tr>
+                <tr>
+                    <th>Contact Person</th>
+                    <td>{{ company.company_contact_person_name }}</td>
+                </tr>
+                <tr>
+                    <th>Contact Number</th>
+                    <td>{{ company.company_contact_person_number }}</td>
+                </tr>
+                <tr>
+                    <th>Email</th>
+                    <td>{{ company.company_contact_person_email }}</td>
+                </tr>
+                <tr>
+                    <th>GST Number</th>
+                    <td>{{ company.company_gst_number }}</td>
+                </tr>
+            </table>
+
+            <h5 class="mt-4">Salary Rules</h5>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Standard Head</th>
+                        <th>Rate Type</th>
+                        <th>Pay Type</th>
+                        <th>PF</th>
+                        <th>ESIC</th>
+                        <th>LWF</th>
+                        <th>OT</th>
+                        <th>TR</th>
+                        <th>Add</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rule in salary_rules %}
+                        <tr>
+                            <td>{{ rule.Basic_rate_type }}</td>
+                            <td>{{ rule.Basic_pay_type }}</td>
+                            <td>{{ rule.pf }}</td>
+                            <td>{{ rule.esic }}</td>
+                            <td>{{ rule.lwf }}</td>
+                            <td>{{ rule.ot }}</td>
+                            <td>{{ rule.tr }}</td>
+                            <td>{{ rule.add }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <h5 class="mt-4">Other Salary Fields</h5>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Allowance Type</th>
+                        <th>Rate Type</th>
+                        <th>Pay Type</th>
+                        <th>PF</th>
+                        <th>ESIC</th>
+                        <th>LWF</th>
+                        <th>OT</th>
+                        <th>TR</th>
+                        <th>Add</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for field in salary_other_fields %}
+                        <tr>
+                            <td>{{ field.Good_Work_Allowance_rate_type }}</td>
+                            <td>{{ field.Good_Work_Allowance_pay_type }}</td>
+                            <td>{{ field.pf }}</td>
+                            <td>{{ field.esic }}</td>
+                            <td>{{ field.lwf }}</td>
+                            <td>{{ field.ot }}</td>
+                            <td>{{ field.tr }}</td>
+                            <td>{{ field.add }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer text-center">
+            <a href="{% url 'employees:company_list' %}" class="btn btn-secondary">Back to List</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

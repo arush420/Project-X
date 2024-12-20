@@ -1,5 +1,9 @@
 {% extends 'base.html' %}
 
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
+
 {% block title %}
     {% if is_update %}
         Update Company

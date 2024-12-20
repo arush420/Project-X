@@ -128,6 +128,8 @@ class SalaryRule(models.Model):
     Over_Time_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
     Over_Time_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
 
+    add = models.BooleanField(default=False)  # Track if this rule was selected
+
     def __str__(self):
         return f"{self.company.company_name} - {self.standard_head}"
 
@@ -184,6 +186,8 @@ class SalaryOtherField(models.Model):
 
     Welding_Allowance_rate_type = models.CharField(max_length=20, choices=RATE_TYPE_CHOICES, default='Per Month')
     Welding_Allowance_pay_type = models.CharField(max_length=20, choices=PAY_TYPE_CHOICES, default='PayDay')
+
+    add = models.BooleanField(default=False)  # Track if this field was selected
 
     def __str__(self):
         return f"{self.company.company_name} - Salary Other Fields"
@@ -620,42 +624,7 @@ class AdvanceTransaction(models.Model):
         return f"Transaction on {self.date} for {self.staff_salary.name}"
 
 # E - Invoice
-class EInvoice(models.Model):
-    site = models.CharField(max_length=100)
-    department = models.BooleanField(default=False)
-    month = models.CharField(max_length=20)
-    invoice_no = models.CharField(max_length=50)
-    date = models.DateField()
-    type = models.CharField(max_length=50)
-    category = models.CharField(max_length=50)
-    service = models.CharField(max_length=100)
-    po_number = models.CharField(max_length=50, blank=True, null=True)
-    buyer = models.CharField(max_length=100, blank=True, null=True)
-    address = models.TextField(blank=True, null=True)
-    gstin = models.CharField(max_length=15, blank=True, null=True)
-    contact_person = models.CharField(max_length=100, blank=True, null=True)
-    mobile = models.CharField(max_length=15, blank=True, null=True)
-    state = models.CharField(max_length=50, blank=True, null=True)
-    city = models.CharField(max_length=50, blank=True, null=True)
-    pincode = models.CharField(max_length=10, blank=True, null=True)
-    taxable = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    igst = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    cgst = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    sgst = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    cess = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    st_cess = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    cess_non_adv = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    bill_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    deduction_narration_1 = models.CharField(max_length=255, blank=True, null=True)
-    deduction_amount_1 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    deduction_narration_2 = models.CharField(max_length=255, blank=True, null=True)
-    deduction_amount_2 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    cancelled = models.BooleanField(default=False)
-    print_proprietor_name = models.BooleanField(default=False)
 
-    def __str__(self):
-        return f"Invoice {self.invoice_no} - {self.buyer}"
 
 
 REPORT_TYPE_CHOICES = [

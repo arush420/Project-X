@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block title %}Create Purchase Order{% endblock %}
+
+{% block content %}
+<!-- Inline CSS -->
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f8f9fa;
+        margin: 0;
+        padding: 0;
+        color: #333;
+    }
+
+    .container {
+        max-width: 90%;
+        margin: 0 auto;
+    }
+
+    h1, h2 {
+        color: #343a40;
+    }
+
+    .card {
+        border-radius: 10px;
+        border: 1px solid #dee2e6;
+        background-color: #ffffff;
+    }
+
+    .card-header {
+        background-color: #007bff;
+        color: white;
+        padding: 10px;
+        text-align: center;
+        font-weight: bold;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border: none;
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-weight: bold;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .form-group {
+        flex: 1 1 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    @media (min-width: 768px) {
+        .form-group {
+            flex: 1 1 calc(33.333% - 15px);
+        }
+    }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .text-center {
+        margin-top: 20px;
+    }
+</style>
+
+<div class="container mt-5">
+    <h1 class="mb-4 text-center">Create Purchase Order</h1>
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Order Details -->
+        <h2 class="mb-3">Order Details</h2>
+        <div class="card p-3 mb-4">
+            {{ order_form.as_p }}
+        </div>
+
+        <!-- Purchase Items -->
+        <h2 class="mb-3">Purchase Items</h2>
+        {{ item_formset.management_form }}
+        {% for form in item_formset %}
+        <div class="card p-3 mb-3">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_{{ form.purchased_item.id_for_label }}">Purchased Item</label>
+                    {{ form.purchased_item }}
+                </div>
+                <div class="form-group">
+                    <label for="id_{{ form.category.id_for_label }}">Category</label>
+                    {{ form.category }}
+                </div>
+                <div class="form-group">
+                    <label for="id_{{ form.hsn_code.id_for_label }}">HSN Code</label>
+                    {{ form.hsn_code }}
+                </div>
+                <div class="form-group">
+                    <label for="id_{{ form.quantity.id_for_label }}">Quantity</label>
+                    {{ form.quantity }}
+                </div>
+                <div class="form-group">
+                    <label for="id_{{ form.per_unit_cost.id_for_label }}">Per Unit Cost</label>
+                    {{ form.per_unit_cost }}
+                </div>
+                <div class="form-group">
+                    <label for="id_{{ form.cgst_rate.id_for_label }}">CGST Rate</label>
+                    {{ form.cgst_rate }}
+                </div>
+                <div class="form-group">
+                    <label for="id_{{ form.sgst_rate.id_for_label }}">SGST Rate</label>
+                    {{ form.sgst_rate }}
+                </div>
+                <div class="form-group">
+                    <label for="id_{{ form.igst_rate.id_for_label }}">IGST Rate</label>
+                    {{ form.igst_rate }}
+                </div>
+                {% if form.instance.pk %}
+                <div class="form-check">
+                    <input type="checkbox" name="{{ form.DELETE.html_name }}" id="id_{{ form.DELETE.id_for_label }}" class="form-check-input">
+                    <label for="id_{{ form.DELETE.id_for_label }}" class="form-check-label">Delete</label>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Submit Button -->
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary btn-lg">Submit</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

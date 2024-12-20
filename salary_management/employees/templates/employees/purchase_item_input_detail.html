@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Purchase Master{% endblock %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 95%;">
+    <h1 class="mb-4 text-center">Purchase Master</h1>
+
+    <!-- Combined Vendor and Purchase Form -->
+    <form method="post" action="{% url 'employees:purchase_item_input' purchase_order.bill_number %}">
+        {% csrf_token %}
+        {{ formset.management_form }}
+
+        <!-- Vendor Details Section -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Vendor Details</h4>
+            </div>
+            <div class="card-body">
+                <table class="table table-hover table-responsive" id="vendorDetailsTable">
+                    <thead>
+                        <tr>
+                            <th>PO Number</th>
+                            <th>Bill Number</th>
+                            <th>Vendor Name</th>
+                            <th>Ordered By</th>
+                            <th>Date of Purchase</th>
+                            <th>Ordered For</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ purchase_order.po_number }}</td>
+                            <td>{{ purchase_order.bill_number }}</td>
+                            <td>{{ purchase_order.vendor.vendor_name }}</td>
+                            <td>{{ purchase_order.order_by }}</td>
+                            <td>{{ purchase_order.date }}</td>
+                            <td>{{ purchase_order.order_for }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Purchase Item Details Section -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Purchase Item Details</h4>
+            </div>
+            <div class="card-body">
+                <table class="table table-hover table-responsive" id="itemDetailsTable">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Category</th>
+                            <th>HSN Code</th>
+                            <th>Quantity</th>
+                            <th>Per Unit Cost</th>
+                            <th>Gross Total</th>
+                            <th>CGST</th>
+                            <th>SGST</th>
+                            <th>IGST</th>
+                            <th>Total GST</th>
+                            <th>Net Total</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for form in formset %}
+                        <tr>
+                            <td>{{ form.purchased_item }}</td>
+                            <td>{{ form.category }}</td>
+                            <td>{{ form.hsn_code }}</td>
+                            <td>{{ form.quantity }}</td>
+                            <td>{{ form.per_unit_cost }}</td>
+                            <td class="gross-total"></td>
+                            <td>{{ form.cgst_rate }}</td>
+                            <td>{{ form.sgst_rate }}</td>
+                            <td>{{ form.igst_rate }}</td>
+                            <td class="total-gst"></td>
+                            <td class="net-total"></td>
+                            <td>
+                                {% if form.instance.pk %}
+                                <input type="checkbox" name="{{ form.DELETE.name }}" id="{{ form.DELETE.id }}" class="form-check-input">
+                                <label for="{{ form.DELETE.id }}" class="form-check-label">Delete</label>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-secondary mt-3" id="addRowButton">Add Row</button>
+            </div>
+        </div>
+
+        <!-- Grand Total Section -->
+        <div class="mt-3 text-end">
+            <h4><strong>Grand Total: </strong><span id="grandTotal">0.00</span></h4>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary w-100 mt-4">Submit</button>
+    </form>
+
+    <!-- Submitted Bills Section -->
+    <h2 class="mt-5">Submitted Bills</h2>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Bill Number</th>
+                    <th>Vendor Name</th>
+                    <th>Payment Status</th>
+                    <th>Payment By</th>
+                    <th>Payment Date</th>
+                    <th>Grand Total</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bill in purchases %}
+                <tr>
+                    <td>
+                        <a href="{% url 'purchase_bill_detail' bill.bill_number %}">
+                            Bill #{{ bill.bill_number }}
+                        </a>
+                    </td>
+                    <td>{{ bill.vendor.vendor_name }}</td>
+                    <td>{{ bill.payment_status }}</td>
+                    <td>{{ bill.payment_by }}</td>
+                    <td>{{ bill.payment_date }}</td>
+                    <td>{{ bill.gross_total|floatformat:2 }}</td>
+                    <td>
+                        <a href="{% url 'purchase_bill_detail' bill.bill_number %}" class="btn btn-sm btn-info">View</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">No submitted bills found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Hidden Empty Form Row -->
+<table>
+    <tbody id="hiddenRowTemplate" class="d-none">
+        <tr>
+            {{ formset.empty_form }}
+        </tr>
+    </tbody>
+</table>
+
+<script>
+    document.getElementById('addRowButton').addEventListener('click', function () {
+        const tableBody = document.querySelector('#itemDetailsTable tbody');
+        const templateRow = document.querySelector('#hiddenRowTemplate tr').cloneNode(true);
+        const totalForms = document.querySelector('#id_form-TOTAL_FORMS');
+
+        templateRow.innerHTML = templateRow.innerHTML.replace(/__prefix__/g, totalForms.value);
+        tableBody.appendChild(templateRow);
+
+        totalForms.value = parseInt(totalForms.value) + 1;
+    });
+
+    document.addEventListener('input', function (e) {
+        if (e.target.closest('#itemDetailsTable')) {
+            const row = e.target.closest('tr');
+            const quantity = parseFloat(row.querySelector('[name$="quantity"]').value) || 0;
+            const cost = parseFloat(row.querySelector('[name$="per_unit_cost"]').value) || 0;
+            const cgst = parseFloat(row.querySelector('[name$="cgst_rate"]').value) || 0;
+            const sgst = parseFloat(row.querySelector('[name$="sgst_rate"]').value) || 0;
+            const igst = parseFloat(row.querySelector('[name$="igst_rate"]').value) || 0;
+
+            const gross = quantity * cost;
+            const gst = gross * (cgst + sgst + igst) / 100;
+            const net = gross + gst;
+
+            row.querySelector('.gross-total').textContent = gross.toFixed(2);
+            row.querySelector('.total-gst').textContent = gst.toFixed(2);
+            row.querySelector('.net-total').textContent = net.toFixed(2);
+
+            const totals = [...document.querySelectorAll('.net-total')].map(cell => parseFloat(cell.textContent) || 0);
+            document.getElementById('grandTotal').textContent = totals.reduce((a, b) => a + b, 0).toFixed(2);
+        }
+    });
+</script>
+{% endblock %}

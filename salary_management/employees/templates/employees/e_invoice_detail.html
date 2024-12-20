@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}E-Invoice Details{% endblock %}
+{% block content %}
+<h1>Invoice Details</h1>
+<p><strong>Document No:</strong> {{ invoice.document_no }}</p>
+<p><strong>Legal Name:</strong> {{ invoice.legal_name }}</p>
+<p><strong>GSTIN:</strong> {{ invoice.gstin }}</p>
+<!-- Add more fields as required -->
+<a href="{% url 'e_invoice_update' invoice.pk %}">Edit</a>
+<a href="{% url 'e_invoice_list' %}">Back to List</a>
+
+{% endblock %}

@@ -49,10 +49,13 @@ urlpatterns = [
     path('purchase-item-input/', views.purchase_item_input, name='purchase_item_input'),
     path('purchase/<str:bill_number>/', views.purchase_bill_detail, name='purchase_bill_detail'),
 
+    # Companies form
     path('companies/', views.company_list, name='company_list'),
     path('companies/add/', views.company_add, name='company_add'),
     path('companies/<int:company_id>/update/', views.company_update, name='company_update'),
     path('companies/<int:company_id>/delete/', views.delete_company, name='delete_company'),
+    path('companies/<int:company_id>/detail/', views.company_detail, name='company_detail'),
+
 
     # advance and attendance upload form
     path('upload/', views.employees_upload_details, name='employees_upload_details'),
@@ -67,9 +70,9 @@ urlpatterns = [
     path('save-theme-preference/', views.save_theme_preference, name='save_theme_preference'), #added this to save theme preference
 
     # E-invoice
-    path('e-invoices/', views.e_invoice_list, name='e_invoice_list'),  # List all e-invoices
-    path('e-invoices/create/', views.e_invoice_create, name='e_invoice_create'),  # Create a new e-invoice
-    path('e-invoices/<int:pk>/update/', views.e_invoice_update, name='e_invoice_update'),
+    # path('e-invoices/', views.e_invoice_list, name='e_invoice_list'),  # List all e-invoices
+    # path('e-invoices/create/', views.e_invoice_create, name='e_invoice_create'),  # Create a new e-invoice
+    # path('e-invoices/<int:pk>/update/', views.e_invoice_update, name='e_invoice_update'),
 
     # Report
     path('generate/', ReportView.as_view(), name='generate_report'),

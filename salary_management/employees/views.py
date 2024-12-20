@@ -31,11 +31,10 @@ from openpyxl.utils.datetime import days_to_time
 
 # Import your models and forms
 from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company,
-                     StaffSalary, AdvanceTransaction, SalaryRule, SalaryOtherField, EInvoice)
+                     StaffSalary, AdvanceTransaction, SalaryRule, SalaryOtherField)
 from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm,
                     CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm,
-                    AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, SalaryOtherFieldFormSet,
-                    EInvoiceForm, UploadForm, ReportForm)
+                    AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, SalaryOtherFieldFormSet, UploadForm, ReportForm)
 
 
 def get_user_role_flags(user):
@@ -904,24 +903,27 @@ def company_list(request):
 def company_add(request):
     if request.method == 'POST':
         company_form = CompanyForm(request.POST)
-        salary_rule_formset = SalaryRuleFormSet(request.POST, instance=company_form.instance)
+        salary_rule_formset = SalaryRuleFormSet(request.POST, queryset=SalaryRule.objects.none())
         salary_other_field_formset = SalaryOtherFieldFormSet(request.POST, queryset=SalaryOtherField.objects.none())
 
         if company_form.is_valid()  and salary_rule_formset.is_valid() and salary_other_field_formset.is_valid():
             company = company_form.save()
-            salary_rule_formset.instance = company
-            salary_rule_formset.save()
+            for form in salary_rule_formset:
+                salary_rule = form.save(commit=False)
+                salary_rule.company = company
+                salary_rule.save()
 
-            # Set the instance for each SalaryOtherField entry to the company
             for form in salary_other_field_formset:
                 salary_other_field = form.save(commit=False)
                 salary_other_field.company = company
                 salary_other_field.save()
+
             messages.success(request, "Company added successfully!")
             return redirect('employees:company_list')
+
     else:
         company_form = CompanyForm()
-        salary_rule_formset = SalaryRuleFormSet()
+        salary_rule_formset = SalaryRuleFormSet(queryset=SalaryRule.objects.none())
         salary_other_field_formset = SalaryOtherFieldFormSet(queryset=SalaryOtherField.objects.none())
 
     return render(request, 'employees/company_add_update.html', {
@@ -931,6 +933,17 @@ def company_add(request):
         'is_update': False,
     })
 
+def company_detail(request, company_id):
+    # Fetch company and related data
+    company = get_object_or_404(Company, id=company_id)
+    salary_rules = SalaryRule.objects.filter(company=company, add=True)  # Only rules with 'Add' checked
+    salary_other_fields = SalaryOtherField.objects.filter(company=company, add=True)  # Same for other fields
+
+    return render(request, 'employees/company_detail.html', {
+        'company': company,
+        'salary_rules': salary_rules,
+        'salary_other_fields': salary_other_fields,
+    })
 
 def company_update(request, company_id):
     company = get_object_or_404(Company, id=company_id)
@@ -942,17 +955,21 @@ def company_update(request, company_id):
 
         if company_form.is_valid() and salary_rule_formset.is_valid() and salary_other_field_formset.is_valid():
             company_form.save()
-            salary_rule_formset.save()
+            for form in salary_rule_formset:
+                salary_rule = form.save(commit=False)
+                salary_rule.company = company
+                salary_rule.save()
 
             for form in salary_other_field_formset:
                 salary_other_field = form.save(commit=False)
                 salary_other_field.company = company
                 salary_other_field.save()
+
             messages.success(request, "Company and salary rules updated successfully!")
             return redirect('employees:company_list')
     else:
         company_form = CompanyForm(instance=company)
-        salary_rule_formset = SalaryRuleFormSet(instance=company)
+        salary_rule_formset = SalaryRuleFormSet(queryset=company.salary_rules.all())
         salary_other_field_formset = SalaryOtherFieldFormSet(queryset=SalaryOtherField.objects.filter(company=company))
 
     return render(request, 'employees/company_add_update.html', {
@@ -1033,31 +1050,13 @@ def staff_salary_update(request, pk):
     return render(request, 'employees/staff_salary_form.html', {'form': form})
 
 # Creating, editing invoice
-def e_invoice_list(request):
-    invoices = EInvoice.objects.all()
-    return render(request, 'employees/e_invoice_list.html', {'invoices': invoices})
 
-def e_invoice_create(request):
-    if request.method == 'POST':
-        form = EInvoiceForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('e_invoice_list')
-    else:
-        form = EInvoiceForm()
-    return render(request, 'employees/e_invoice_form.html', {'form': form})
 
-# Update existing invoice
-def e_invoice_update(request, pk):
-    invoice = get_object_or_404(EInvoice, pk=pk)
-    if request.method == 'POST':
-        form = EInvoiceForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('employees:e_invoice_list')
-    else:
-        form = EInvoiceForm(instance=invoice)
-    return render(request, 'employees/e_invoice_form.html', {'form': form})
+
+
+
+
+
 
 # Report from all model
 class ReportView(View):

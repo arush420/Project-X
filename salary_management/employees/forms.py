@@ -1,6 +1,6 @@
 from django import forms
 from .models import (Employee, Task, Payment, PurchaseItem, VendorInformation,
-                     Company, SalaryRule, Profile, StaffSalary, AdvanceTransaction, SalaryOtherField, EInvoice, Report)
+                     Company, SalaryRule, Profile, StaffSalary, AdvanceTransaction, SalaryOtherField, Report)
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 import re
@@ -376,19 +376,19 @@ class AdvanceTransactionForm(forms.ModelForm):
         }
 
 # E invoice for company
-class EInvoiceForm(forms.ModelForm):
-    class Meta:
-        model = EInvoice
-        fields = [
-            'site', 'department', 'month', 'invoice_no', 'date', 'type', 'category', 'service',
-            'po_number', 'buyer', 'address', 'gstin', 'contact_person', 'mobile', 'state', 'city',
-            'pincode', 'taxable', 'igst', 'cgst', 'sgst', 'cess', 'st_cess', 'cess_non_adv', 'total',
-            'bill_amount', 'deduction_narration_1', 'deduction_amount_1', 'deduction_narration_2', 'deduction_amount_2',
-            'cancelled', 'print_proprietor_name'
-        ]
-        widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
-        }
+# class EInvoiceForm(forms.ModelForm):
+#     class Meta:
+#         model = EInvoice
+#         fields = [
+#             'site', 'department', 'month', 'invoice_no', 'date', 'type', 'category', 'service',
+#             'po_number', 'buyer', 'address', 'gstin', 'contact_person', 'mobile', 'state', 'city',
+#             'pincode', 'taxable', 'igst', 'cgst', 'sgst', 'cess', 'st_cess', 'cess_non_adv', 'total',
+#             'bill_amount', 'deduction_narration_1', 'deduction_amount_1', 'deduction_narration_2', 'deduction_amount_2',
+#             'cancelled', 'print_proprietor_name'
+#         ]
+#         widgets = {
+#             'date': forms.DateInput(attrs={'type': 'date'}),
+#         }
 
 
 class ReportForm(forms.ModelForm):
