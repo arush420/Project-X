@@ -15,7 +15,7 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, logger
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import Group, User
 from django.db import IntegrityError, transaction
@@ -31,7 +31,7 @@ from openpyxl.utils.datetime import days_to_time
 
 # Import your models and forms
 from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company,
-                     StaffSalary, AdvanceTransaction, SalaryRule, SalaryOtherField)
+                     StaffSalary, AdvanceTransaction, SalaryRule, SalaryOtherField, SalaryTotals)
 from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm,
                     CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm,
                     AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, SalaryOtherFieldFormSet, UploadForm, ReportForm)
@@ -509,27 +509,36 @@ class GenerateSalaryView(PermissionRequiredMixin, View):
             messages.error(request, 'Please provide all inputs.')
             return redirect('employees:generate_salary')
 
-        employees = Employee.objects.all().select_related()  # Efficiently fetch related data
-        salary_data, total_gross_salary, total_pf, total_esic, total_canteen, total_advance, total_net_salary = self.calculate_salaries(
-            request, employees, int(days_in_month), int(month), int(year)
+        employees = Employee.objects.all().prefetch_related('salaries')  # Efficiently fetch related data
+        salary_data, totals = self.calculate_salaries(request, employees, int(days_in_month), int(month), int(year))
+
+        totals = self.calculate_salaries(request, employees, int(days_in_month), int(month), int(year))
+
+        # Save totals to SalaryTotals
+        SalaryTotals.objects.update_or_create(
+            month=month, year=year,
+            defaults={
+                'total_gross_salary': totals['total_gross_salary'],
+                'total_pf': totals['total_pf'],
+                'total_esic': totals['total_esic'],
+                'total_canteen': totals['total_canteen'],
+                'total_advance': totals['total_advance'],
+                'total_net_salary': totals['total_net_salary'],
+            }
         )
 
         messages.success(request, 'Salary generated successfully!')
         return render(request, 'employees/salary_report.html', {
             'salary_data': salary_data,
-            'total_gross_salary': total_gross_salary,
-            'total_pf': total_pf,
-            'total_esic': total_esic,
-            'total_canteen': total_canteen,
-            'total_advance': total_advance,
-            'total_net_salary': total_net_salary,
+            'totals': totals,
             'month': month,
             'year': year
         })
 
+
     def get_salary_params(self, request):
         month = request.POST.get('month')
-        year = request.POST.get
+        year = request.POST.get('year')
         days_in_month =request.POST.get('days_in_month')
 
         if not month or not year or not days_in_month:
@@ -538,7 +547,14 @@ class GenerateSalaryView(PermissionRequiredMixin, View):
 
     def calculate_salaries(self, request, employees, days_in_month, month, year):
         salary_data = []
-        total_gross_salary = total_pf = total_esic = total_canteen = total_advance = total_net_salary = Decimal(0.00)
+        totals = {
+            'total_gross_salary': Decimal(0),
+            'total_pf': Decimal(0),
+            'total_esic': Decimal(0),
+            'total_canteen': Decimal(0),
+            'total_advance': Decimal(0),
+            'total_net_salary': Decimal(0)
+        }
 
         for employee in employees:
             try:
@@ -552,7 +568,14 @@ class GenerateSalaryView(PermissionRequiredMixin, View):
                 # Update or create salary record
                 Salary.objects.update_or_create(
                     employee=employee, month=month, year=year,
-                    defaults={'gross_salary': gross_salary, 'net_salary': net_salary, 'advance': advance}
+                    defaults={
+                        'gross_salary': gross_salary,
+                        'net_salary': net_salary,
+                        'advance': advance,
+                        'pf': pf,
+                        'esic': esic,
+                        'canteen': canteen
+                    }
                 )
 
                 # Append salary data for each employee
@@ -568,17 +591,56 @@ class GenerateSalaryView(PermissionRequiredMixin, View):
                 })
 
                 # Calculate totals for each column
-                total_gross_salary += gross_salary
-                total_pf += pf
-                total_esic += esic
-                total_canteen += canteen
-                total_advance += advance
-                total_net_salary += net_salary
+                totals['total_gross_salary'] += gross_salary
+                totals['total_pf'] += pf
+                totals['total_esic'] += esic
+                totals['total_canteen'] += canteen
+                totals['total_advance'] += advance
+                totals['total_net_salary'] += net_salary
+
             except Exception as e:
                 # Log the error for debugging
-                print(f"Error calculating salary for {employee.name}:e")
-                messages.error(request, f"Error calculating salary for {employee.name}.")
-        return salary_data, total_gross_salary, total_pf, total_esic, total_canteen, total_advance, total_net_salary
+                logger.error(f"Error calculating salary for {employee.name}:e")
+                messages.error(request, f"Error calculating salary for {employee.name}. Please check the input values.")
+
+        return salary_data, totals
+
+    def calculate_salary(self, employee, days_worked, days_in_month):
+        # Example calculation logic
+        basic_salary = employee.basic / days_in_month * days_worked
+        transport = employee.transport / days_in_month * days_worked
+        canteen = employee.canteen / days_in_month * days_worked
+        gross_salary = basic_salary + transport - canteen
+        pf = gross_salary * Decimal(0.12)
+        esic = gross_salary * Decimal(0.0075)
+        net_salary = gross_salary - (pf + esic + canteen)
+
+        return gross_salary, net_salary, pf, esic, canteen
+
+def download_salary_report(request, month, year):
+    salaries = Salary.objects.filter(month=month, year=year)
+    wb = Workbook()
+    ws = wb.active
+    ws.title = f"Salary Report {month}-{year}"
+
+    headers = ['Employee Code', 'Name', 'Gross Salary', 'Net Salary', 'PF', 'ESIC', 'Advance Deduction']
+    ws.append(headers)
+
+    for salary in salaries:
+        ws.append([
+            salary.employee.employee_code,
+            salary.employee.name,
+            salary.gross_salary,
+            salary.net_salary,
+            salary.pf,
+            salary.esic,
+            salary.advance
+        ])
+
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response['Content-Disposition'] = f'attachment; filename="salary_report_{month}_{year}.xlsx"'
+    wb.save(response)
+    return response
 
 
 def download_template(request):

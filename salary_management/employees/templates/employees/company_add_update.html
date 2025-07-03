@@ -1,16 +1,14 @@
 {% extends 'base.html' %}
-
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/styles.css' %}">
-
 
 {% block title %}
     {% if is_update %}
-        Update Company
+        Update Salary Company
     {% else %}
         Add Company
     {% endif %}
 {% endblock %}
+<!-- Title block dynamically updates based on whether this is an update or add operation -->
 
 {% block content %}
 <div class="container mt-5">
@@ -26,29 +24,38 @@
                         {% endif %}
                     </h4>
                 </div>
+                 <!-- Dynamic card header indicating the operation -->
 
                 <div class="card-body">
                     {% if messages %}
                         <div class="alert alert-info" role="alert">
-                            {% for message in messages %}
-                                <p class="mb-0">{{ message }}</p>
-                            {% endfor %}
+                            {% for message in messages %} <p class="mb-0">{{ message }}</p> {% endfor %}
                         </div>
+                    {% endif %}
+                     <!-- Displays messages like success or error if any -->
+
+                     <!-- Company Form Errors -->
+                    {% if company_form.errors %}
+                        <div class="alert alert-danger">{{ company_form.errors }}</div>
                     {% endif %}
 
                     <form method="POST" action="">
                         {% csrf_token %}
+                         <!-- CSRF token ensures security -->
+
 
                         <!-- Company Form Fields -->
                         <div class="form-row mb-4">
                             {{ company_form.as_p }}
                         </div>
 
+
                         <!-- Salary Rules Section -->
                         <h5 class="mt-4 text-center">Salary Rules</h5>
                         <hr>
                         <div class="form-group">
                             {{ salary_rule_formset.management_form }}
+                            <!-- Includes management form for handling formsets -->
 
                             <!-- Salary Rules Table -->
                             <div class="table-responsive">
@@ -79,6 +86,7 @@
                                                 <td><div class="form-check">{{ form.tr }}</div></td>
                                                 <td><div class="form-check">{{ form.add }}</div></td>
                                             </tr>
+                                           <!-- Each row corresponds to a salary rule -->
                                             <tr>
                                                 <td>Sr All</td>
                                                 <td>{{ form.Sr_All_rate_type }}</td>

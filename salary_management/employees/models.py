@@ -73,7 +73,6 @@ class Company(models.Model):
         return self.company_name
 
 
-
 class SalaryRule(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='salary_rules')
 

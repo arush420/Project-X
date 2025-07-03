@@ -1,6 +1,7 @@
 from django import forms
 from .models import (Employee, Task, Payment, PurchaseItem, VendorInformation,
-                     Company, SalaryRule, Profile, StaffSalary, AdvanceTransaction, SalaryOtherField, Report)
+                     Company, SalaryRule, Profile, StaffSalary, AdvanceTransaction, SalaryOtherField, Report,
+                     )
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 import re
@@ -239,6 +240,7 @@ class CompanyForm(forms.ModelForm):
             'company_esic_deduction_rule', 'company_welfare_deduction_rule',
              # add new fields here
         ]
+
 
 class SalaryRuleForm(forms.ModelForm):
     # Checkbox fields
