@@ -24,6 +24,7 @@ urlpatterns = [
     path('add_employee/', views.AddEmployeeAndUploadView.as_view(), name='add_employee_and_upload'),
     path('employees/delete_multiple/', views.delete_multiple_employees, name='delete_multiple_employees'), # Multi delete
     path('employee/<int:employee_id>/delete/', views.delete_employee, name='delete_employee'),  # Single delete
+
     # Download template to add bulk employees
     path('download-template/', views.download_template, name='download_template'),
     path('employee_list/', views.EmployeeListView.as_view(), name='employee_list'),
@@ -32,6 +33,9 @@ urlpatterns = [
     path('employee_detail/', views.employee_detail, name='employee_detail'),
     path('employee/<int:id>/', views.employee_detail, name='employee_details'),
 
+    # Aadhar and bank account verification
+    path('verify/', views.verify_employee, name='verify_employee'),
+    path('verify/<uuid:pk>/', views.verification_detail, name='verification_detail'),
 
     # salary List/ Report and CSV download
     path('generate_salary/', views.GenerateSalaryView.as_view(), name='generate_salary'),
@@ -71,9 +75,11 @@ urlpatterns = [
     path('save-theme-preference/', views.save_theme_preference, name='save_theme_preference'), #added this to save theme preference
 
     # E-invoice
-    # path('e-invoices/', views.e_invoice_list, name='e_invoice_list'),  # List all e-invoices
-    # path('e-invoices/create/', views.e_invoice_create, name='e_invoice_create'),  # Create a new e-invoice
-    # path('e-invoices/<int:pk>/update/', views.e_invoice_update, name='e_invoice_update'),
+    path('e-invoices/', views.e_invoice_list, name='e_invoice_list'),  # List all e-invoices
+    path('e-invoices/create/', views.e_invoice_create, name='e_invoice_create'),  # Create a new e-invoice
+    path('e-invoices/<int:pk>/update/', views.e_invoice_update, name='e_invoice_update'),  # Update e-invoice
+    path('e-invoices/<int:pk>/detail/', views.e_invoice_detail, name='e_invoice_detail'),  # View e-invoice details
+    path('e-invoices/<int:pk>/delete/', views.e_invoice_delete, name='e_invoice_delete'),  # Delete e-invoice
 
     # Report
     path('generate/', ReportView.as_view(), name='generate_report'),

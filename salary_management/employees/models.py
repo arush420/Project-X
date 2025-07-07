@@ -1,4 +1,5 @@
 import os
+import uuid
 from datetime import datetime
 from os import times
 from random import choices
@@ -243,7 +244,7 @@ class Profile(models.Model):
     account_number = models.CharField(max_length=20, blank=True, null=True)
     ifsc_code = models.CharField(max_length=11, blank=True, null=True)
     gst_number = models.CharField(max_length=15, blank=True, null=True)
-
+    theme_preference = models.CharField(max_length=10, default='light', choices=[('light', 'Light'), ('dark', 'Dark')])
     def __str__(self):
         return f"{self.user.username} - {self.user_type}"
 
@@ -376,6 +377,78 @@ class EmployeesAttendance(models.Model):
 
     def __str__(self):
         return f"{self.employee.name} - {self.company.company_name} ({self.month}/{self.year})"
+
+# Employee Aadhar and Bank account verification
+class VerificationRequest(models.Model):
+    VERIFICATION_TYPES = [
+        ('aadhaar', 'Aadhaar Verification'),
+        ('bank_account', 'Bank Account Verification'),
+    ]
+
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('in_progress', 'In Progress'),
+        ('verified', 'Verified'),
+        ('failed', 'Failed'),
+        ('expired', 'Expired'),
+    ]
+
+    # Request Details
+    request_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    verification_type = models.CharField(max_length=20, choices=VERIFICATION_TYPES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+
+    # Personal Information
+    full_name = models.CharField(max_length=200)
+    date_of_birth = models.DateField()
+    mobile_number = models.CharField(max_length=15)
+    email = models.EmailField()
+
+    # Aadhaar Details
+    aadhaar_number = models.CharField(
+        max_length=12,
+        validators=[RegexValidator(r'^\d{12}$', 'Aadhaar must be 12 digits')],
+        null=True,
+        blank=True
+    )
+
+    # Bank Details
+    bank_account_number = models.CharField(max_length=20, null=True, blank=True)
+    bank_ifsc_code = models.CharField(
+        max_length=11,
+        validators=[RegexValidator(r'^[A-Z]{4}0[A-Z0-9]{6}$', 'Invalid IFSC code format')],
+        null=True,
+        blank=True
+    )
+    bank_name = models.CharField(max_length=100, null=True, blank=True)
+    account_holder_name = models.CharField(max_length=100, null=True, blank=True)
+
+    # Verification Results
+    verification_response = models.JSONField(default=dict)
+    verification_score = models.IntegerField(null=True, blank=True)
+    verification_message = models.TextField(null=True, blank=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.full_name} - {self.verification_type} - {self.status}"
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class VerificationActivity(models.Model):
+    verification_request = models.ForeignKey(VerificationRequest, on_delete=models.CASCADE)
+    activity_type = models.CharField(max_length=50)
+    description = models.TextField()
+    metadata = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
 
 
 class Salary(models.Model):
@@ -674,4 +747,176 @@ class Report(models.Model):
             return Salary.objects.filter(employee__company=self.company, year__gte=self.from_date.year,
                                          year__lte=self.to_date.year).values('esic')
         return None
+
+# E-Invoice Model
+class EInvoice(models.Model):
+    INVOICE_TYPE_CHOICES = [
+        ('B2B', 'B2B - Business to Business'),
+        ('B2C', 'B2C - Business to Consumer'),
+        ('SEZWP', 'SEZ with Payment'),
+        ('SEZWOP', 'SEZ without Payment'),
+        ('EXPWP', 'Export with Payment'),
+        ('EXPWOP', 'Export without Payment'),
+        ('DEXPW', 'Deemed Export'),
+    ]
+    
+    DOCUMENT_TYPE_CHOICES = [
+        ('INV', 'Tax Invoice'),
+        ('CRN', 'Credit Note'),
+        ('DBN', 'Debit Note'),
+    ]
+    
+    STATE_CODE_CHOICES = [
+        ('01', '01 - Jammu and Kashmir'),
+        ('02', '02 - Himachal Pradesh'),
+        ('03', '03 - Punjab'),
+        ('04', '04 - Chandigarh'),
+        ('05', '05 - Uttarakhand'),
+        ('06', '06 - Haryana'),
+        ('07', '07 - Delhi'),
+        ('08', '08 - Rajasthan'),
+        ('09', '09 - Uttar Pradesh'),
+        ('10', '10 - Bihar'),
+        ('11', '11 - Sikkim'),
+        ('12', '12 - Arunachal Pradesh'),
+        ('13', '13 - Nagaland'),
+        ('14', '14 - Manipur'),
+        ('15', '15 - Mizoram'),
+        ('16', '16 - Tripura'),
+        ('17', '17 - Meghalaya'),
+        ('18', '18 - Assam'),
+        ('19', '19 - West Bengal'),
+        ('20', '20 - Jharkhand'),
+        ('21', '21 - Odisha'),
+        ('22', '22 - Chhattisgarh'),
+        ('23', '23 - Madhya Pradesh'),
+        ('24', '24 - Gujarat'),
+        ('25', '25 - Daman and Diu'),
+        ('26', '26 - Dadra and Nagar Haveli'),
+        ('27', '27 - Maharashtra'),
+        ('28', '28 - Andhra Pradesh'),
+        ('29', '29 - Karnataka'),
+        ('30', '30 - Goa'),
+        ('31', '31 - Lakshadweep'),
+        ('32', '32 - Kerala'),
+        ('33', '33 - Tamil Nadu'),
+        ('34', '34 - Puducherry'),
+        ('35', '35 - Andaman and Nicobar Islands'),
+        ('36', '36 - Telangana'),
+        ('37', '37 - Andhra Pradesh (New)'),
+        ('38', '38 - Ladakh'),
+    ]
+    
+    # Invoice Basic Information
+    invoice_number = models.CharField(max_length=50, unique=True)
+    invoice_date = models.DateField()
+    invoice_type = models.CharField(max_length=10, choices=INVOICE_TYPE_CHOICES, default='B2B')
+    document_type = models.CharField(max_length=3, choices=DOCUMENT_TYPE_CHOICES, default='INV')
+    reverse_charge = models.BooleanField(default=False)
+    irn = models.CharField(max_length=64, blank=True, null=True)  # Generated automatically
+    
+    # Supplier (Seller) Information
+    supplier_gstin = models.CharField(max_length=15, validators=[RegexValidator(r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{1}[Z]{1}[A-Z0-9]{1}$', 'Invalid GSTIN format')])
+    supplier_legal_name = models.CharField(max_length=200)
+    supplier_address = models.TextField()
+    supplier_place_of_supply = models.CharField(max_length=100)
+    supplier_state_code = models.CharField(max_length=2, choices=STATE_CODE_CHOICES)
+    
+    # Recipient (Buyer) Information
+    buyer_gstin = models.CharField(max_length=15, blank=True, null=True, validators=[RegexValidator(r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{1}[Z]{1}[A-Z0-9]{1}$', 'Invalid GSTIN format')])
+    buyer_legal_name = models.CharField(max_length=200)
+    buyer_address = models.TextField()
+    buyer_state_code = models.CharField(max_length=2, choices=STATE_CODE_CHOICES)
+    
+    # Additional Addresses (if applicable)
+    dispatch_from_address = models.TextField(blank=True, null=True)
+    shipping_address = models.TextField(blank=True, null=True)
+    
+    # Payment and Reference Information
+    payment_terms = models.CharField(max_length=200, blank=True, null=True)
+    due_date = models.DateField(blank=True, null=True)
+    reference_document = models.CharField(max_length=100, blank=True, null=True, help_text="e.g., PO Number")
+    
+    # Transporter Details (for e-Way Bill linkage)
+    transporter_name = models.CharField(max_length=200, blank=True, null=True)
+    transporter_id = models.CharField(max_length=15, blank=True, null=True)
+    vehicle_number = models.CharField(max_length=20, blank=True, null=True)
+    
+    # Calculated Totals (will be calculated from line items)
+    total_taxable_value = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_cgst = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_sgst = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_igst = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_tax_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_invoice_value = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def save(self, *args, **kwargs):
+        # Calculate totals from line items
+        if self.pk:
+            line_items = self.line_items.all()
+            self.total_taxable_value = sum(item.total_value for item in line_items)
+            self.total_cgst = sum(item.cgst_amount for item in line_items)
+            self.total_sgst = sum(item.sgst_amount for item in line_items)
+            self.total_igst = sum(item.igst_amount for item in line_items)
+            self.total_tax_amount = self.total_cgst + self.total_sgst + self.total_igst
+            self.total_invoice_value = self.total_taxable_value + self.total_tax_amount
+        super().save(*args, **kwargs)
+    
+    def generate_irn(self):
+        """Generate IRN - In real implementation, this would call GST API"""
+        import hashlib
+        import uuid
+        data = f"{self.supplier_gstin}{self.invoice_number}{self.invoice_date}"
+        return hashlib.sha256(data.encode()).hexdigest()[:64]
+    
+    def __str__(self):
+        return f"{self.invoice_number} - {self.buyer_legal_name}"
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "E-Invoice"
+        verbose_name_plural = "E-Invoices"
+
+
+# E-Invoice Line Item Model
+class EInvoiceLineItem(models.Model):
+    invoice = models.ForeignKey(EInvoice, on_delete=models.CASCADE, related_name='line_items')
+    
+    # Item Details
+    product_service_name = models.CharField(max_length=200)
+    hsn_sac_code = models.CharField(max_length=10)
+    quantity = models.DecimalField(max_digits=10, decimal_places=3)
+    unit_price = models.DecimalField(max_digits=12, decimal_places=2)
+    total_value = models.DecimalField(max_digits=12, decimal_places=2)
+    
+    # Tax Details
+    cgst_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    sgst_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    igst_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    
+    # Calculated Tax Amounts
+    cgst_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    sgst_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    igst_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    item_total_with_tax = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    def save(self, *args, **kwargs):
+        # Calculate totals
+        self.total_value = self.quantity * self.unit_price
+        self.cgst_amount = (self.total_value * self.cgst_rate) / 100
+        self.sgst_amount = (self.total_value * self.sgst_rate) / 100
+        self.igst_amount = (self.total_value * self.igst_rate) / 100
+        self.item_total_with_tax = self.total_value + self.cgst_amount + self.sgst_amount + self.igst_amount
+        super().save(*args, **kwargs)
+        
+        # Update parent invoice totals
+        if self.invoice_id:
+            self.invoice.save()
+    
+    def __str__(self):
+        return f"{self.product_service_name} - {self.invoice.invoice_number}"
 

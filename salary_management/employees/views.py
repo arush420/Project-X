@@ -1,6 +1,8 @@
 from decimal import Decimal
 from sqlite3 import IntegrityError
 from sys import prefix
+
+from django.contrib.sites import requests
 from django.core.paginator import Paginator
 
 
@@ -26,15 +28,16 @@ from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
 import json
 import csv
-
+from django.utils.timezone import now
 from openpyxl.utils.datetime import days_to_time
 
 # Import your models and forms
 from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company,
-                     StaffSalary, AdvanceTransaction, SalaryRule, SalaryOtherField, SalaryTotals)
+                     StaffSalary, AdvanceTransaction, SalaryRule, SalaryOtherField, SalaryTotals, VerificationRequest, EInvoice, EInvoiceLineItem)
 from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm,
                     CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm,
-                    AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, SalaryOtherFieldFormSet, UploadForm, ReportForm)
+                    AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, SalaryOtherFieldFormSet,
+                    UploadForm, ReportForm, VerificationRequestForm, EInvoiceForm, EInvoiceLineItemFormSet)
 
 
 def get_user_role_flags(user):
@@ -144,7 +147,6 @@ def save_theme_preference(request):
 def settings_view(request):
     return render(request, 'employees/settings.html')
 
-# views.py
 @login_required
 def staff_salary_detail(request, pk):
     salary = get_object_or_404(StaffSalary, pk=pk)
@@ -300,6 +302,15 @@ def user_profile_detail(request):
     }
     return render(request, 'employees/user_profile_detail.html', context)
 
+# Theme prefecrence of user
+def update_theme_preference(request):
+    if request.method == 'POST':
+        theme = request.POST.get('theme', 'light')
+        if hasattr(request.user, 'userprofile'):
+            request.user.userprofile.theme_preference = theme
+            request.user.userprofile.save()
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'})
 
 
 # Admin Dashboard
@@ -680,6 +691,71 @@ def employee_detail(request):
         'not_found': not_found # pass the flag to the template
     }
     return render(request, 'employees/employee_detail.html', context)
+
+
+# Aadhar verification and bank account verification
+API_KEY = "Enter your API KEY here"
+
+def verify_employee(request):
+    if request.method == 'POST':
+        form = VerificationRequestForm(request.POST)
+        if form.is_valid():
+            verification = form.save(commit=False)
+            api_response = {}
+            status = 'pending'
+            score = None
+            message = ''
+
+            headers = {
+                'Authorization': f'Bearer {API_KEY}',
+                'Content-Type': 'application/json'
+            }
+
+            if verification.verification_type == 'aadhaar':
+                response = requests.post(
+                    'https://api.surepass.io/v1/aadhaar/okyc',
+                    json={
+                        'aadhaar_number': verification.aadhaar_number,
+                        'name': verification.full_name,
+                        'dob': verification.date_of_birth.strftime('%d-%m-%Y'),
+                        'mobile': verification.mobile_number
+                    },
+                    headers=headers
+                )
+            elif verification.verification_type == 'bank_account':
+                response = requests.post(
+                    'https://api.surepass.io/v1/bank-verification',
+                    json={
+                        'bank_account_number': verification.bank_account_number,
+                        'ifsc': verification.bank_ifsc_code
+                    },
+                    headers=headers
+                )
+
+            if response.status_code == 200:
+                api_response = response.json()
+                status = 'verified' if api_response.get('verified') else 'failed'
+                score = api_response.get('score')
+                message = api_response.get('message', 'Verification completed')
+            else:
+                status = 'failed'
+                message = f"API Error: {response.status_code}"
+
+            verification.status = status
+            verification.verification_response = api_response
+            verification.verification_score = score
+            verification.verification_message = message
+            if status == 'verified':
+                verification.verified_at = now()
+            verification.save()
+            return redirect('verification_detail', pk=verification.pk)
+    else:
+        form = VerificationRequestForm()
+    return render(request, 'employees/verify_employee.html', {'form': form})
+
+def verification_detail(request, pk):
+    verification = get_object_or_404(VerificationRequest, pk=pk)
+    return render(request, 'verification_detail.html', {'verification': verification})
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -1152,3 +1228,99 @@ class ReportView(View):
 
             return render(request, self.template_name, {'form': form, 'report_data': report_data})
         return render(request, self.template_name, {'form': form})
+
+# E-Invoice Views
+@login_required
+def e_invoice_list(request):
+    """List all e-invoices"""
+    invoices = EInvoice.objects.all().order_by('-created_at')
+    return render(request, 'employees/e_invoice_list.html', {'invoices': invoices})
+
+@login_required
+def e_invoice_create(request):
+    """Create a new e-invoice with line items"""
+    if request.method == 'POST':
+        form = EInvoiceForm(request.POST)
+        formset = EInvoiceLineItemFormSet(request.POST)
+        
+        if form.is_valid() and formset.is_valid():
+            # Save the invoice first
+            invoice = form.save()
+            
+            # Generate IRN
+            invoice.irn = invoice.generate_irn()
+            invoice.save()
+            
+            # Save line items
+            for line_form in formset:
+                if line_form.cleaned_data and not line_form.cleaned_data.get('DELETE', False):
+                    line_item = line_form.save(commit=False)
+                    line_item.invoice = invoice
+                    line_item.save()
+            
+            messages.success(request, 'E-Invoice created successfully!')
+            return redirect('employees:e_invoice_detail', pk=invoice.pk)
+    else:
+        form = EInvoiceForm()
+        formset = EInvoiceLineItemFormSet(queryset=EInvoiceLineItem.objects.none())
+    
+    return render(request, 'employees/e_invoice_form.html', {
+        'form': form,
+        'formset': formset
+    })
+
+@login_required
+def e_invoice_update(request, pk):
+    """Update an existing e-invoice"""
+    invoice = get_object_or_404(EInvoice, pk=pk)
+    
+    if request.method == 'POST':
+        form = EInvoiceForm(request.POST, instance=invoice)
+        formset = EInvoiceLineItemFormSet(request.POST, queryset=invoice.line_items.all())
+        
+        if form.is_valid() and formset.is_valid():
+            # Save the invoice
+            invoice = form.save()
+            
+            # Save line items
+            for line_form in formset:
+                if line_form.cleaned_data:
+                    if line_form.cleaned_data.get('DELETE', False):
+                        if line_form.instance.pk:
+                            line_form.instance.delete()
+                    else:
+                        line_item = line_form.save(commit=False)
+                        line_item.invoice = invoice
+                        line_item.save()
+            
+            messages.success(request, 'E-Invoice updated successfully!')
+            return redirect('employees:e_invoice_detail', pk=invoice.pk)
+    else:
+        form = EInvoiceForm(instance=invoice)
+        formset = EInvoiceLineItemFormSet(queryset=invoice.line_items.all())
+    
+    return render(request, 'employees/e_invoice_form.html', {
+        'form': form,
+        'formset': formset,
+        'invoice': invoice
+    })
+
+@login_required
+def e_invoice_detail(request, pk):
+    """View e-invoice details"""
+    invoice = get_object_or_404(EInvoice, pk=pk)
+    line_items = invoice.line_items.all()
+    return render(request, 'employees/e_invoice_detail.html', {
+        'invoice': invoice,
+        'line_items': line_items
+    })
+
+@login_required
+def e_invoice_delete(request, pk):
+    """Delete an e-invoice"""
+    invoice = get_object_or_404(EInvoice, pk=pk)
+    if request.method == 'POST':
+        invoice.delete()
+        messages.success(request, 'E-Invoice deleted successfully!')
+        return redirect('employees:e_invoice_list')
+    return render(request, 'employees/e_invoice_confirm_delete.html', {'invoice': invoice})

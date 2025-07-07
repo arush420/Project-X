@@ -3,138 +3,552 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project X</title>
+    <title>{% block title %}Project X{% endblock %}</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
-        .navbar-superuser {
-            background-color: black;
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --navbar-height: 70px;
         }
-        .navbar-read-write {
-            background: linear-gradient(to right, #add8e6, #87ceeb);
+
+        /* Navigation Bar Styles */
+        .navbar-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: var(--navbar-height);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1050;
+            transition: all 0.3s ease;
         }
-        .navbar-read-only {
-            background: linear-gradient(to right, #7E51B7, #9A6FD6);
-        }
+
         .navbar-brand {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             font-weight: bold;
+            color: white !important;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
-        .nav-link {
+
+        .navbar-nav .nav-link {
+            color: white !important;
+            font-weight: 500;
+            margin: 0 10px;
+            padding: 8px 15px !important;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .navbar-nav .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .navbar-nav .nav-link.active {
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .dropdown-menu {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: none;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .dropdown-item {
+            padding: 10px 20px;
+            color: #333;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-item:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .dropdown-item i {
+            margin-right: 10px;
+            width: 16px;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-top: var(--navbar-height);
+            min-height: calc(100vh - var(--navbar-height));
+            padding-top: 20px;
+        }
+
+        /* Messages */
+        .messages {
+            position: fixed;
+            top: var(--navbar-height);
+            right: 20px;
+            z-index: 1040;
+            width: 300px;
+        }
+
+        .messages .alert {
+            margin-bottom: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* Search Bar */
+        .search-form {
+            position: relative;
+        }
+
+        .search-form .form-control {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 25px;
+            padding-left: 40px;
+            width: 200px;
+            transition: all 0.3s ease;
+        }
+
+        .search-form .form-control:focus {
+            width: 250px;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+        }
+
+        .search-form .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            z-index: 5;
+        }
+
+        .search-form .btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 25px;
+            margin-left: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .search-form .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin-left: 15px;
+        }
+
+        .theme-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .theme-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.3);
+            transition: 0.4s;
+            border-radius: 34px;
+        }
+
+        .theme-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .theme-slider {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        input:checked + .theme-slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Dark Theme */
+        .dark-theme {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .dark-theme .navbar-custom {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+        }
+
+        .dark-theme .dropdown-menu {
+            background: rgba(0, 0, 0, 0.9);
             color: white;
         }
-        .nav-link:hover {
-            color: #000;
-            background-color: rgba(255, 255, 255, 0.8);
-            border-radius: 5px;
+
+        .dark-theme .dropdown-item {
+            color: white;
+        }
+
+        .dark-theme .dropdown-item:hover {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 1.3rem;
+            }
+
+            .search-form .form-control {
+                width: 150px;
+            }
+
+            .search-form .form-control:focus {
+                width: 180px;
+            }
+
+            .theme-toggle {
+                margin-left: 10px;
+                width: 50px;
+                height: 28px;
+            }
+
+            .theme-slider:before {
+                height: 20px;
+                width: 20px;
+                left: 4px;
+                bottom: 4px;
+            }
+
+            input:checked + .theme-slider:before {
+                transform: translateX(22px);
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg
-        {% if is_superuser %}
-            navbar-superuser
-        {% elif is_read_write %}
-            navbar-read-write
-        {% elif is_read_only %}
-            navbar-read-only
-        {% endif %}">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="{% if is_superuser %}{% url 'employees:home' %}
-                                      {% elif is_read_write %}{% url 'employees:read_write_dashboard' %}
-                                      {% elif is_read_only %}{% url 'employees:read_only_dashboard' %}
-                                      {% endif %}">
-            Project X
-        </a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="{% if is_superuser %}{% url 'employees:home' %}
-                                                                       {% elif is_read_write %}{% url 'employees:read_write_dashboard' %}
-                                                                       {% elif is_read_only %}{% url 'employees:read_only_dashboard' %}
-                                                                       {% endif %}">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Link</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-expanded="false">
-                        My Account
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="{% url 'employees:user_profile_detail' %}">My Profile</a></li>
-                        <li><a class="dropdown-item" href="{% url 'employees:settings' %}">Settings</a></li>
-                        <li><a class="dropdown-item" href="#">Help</a></li>
-                        {% if is_superuser %}
-                        <li><a class="dropdown-item" href="{% url 'employees:manage_user_permissions' %}">Manage Permission</a></li>
-                        {% endif %}
-                        <li><a class="dropdown-item" href="{% url 'employees:logout' %}">Sign Out</a></li>
-                    </ul>
-                </li>
-            </ul>
-            <form class="d-flex" role="search">
-                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-success" type="submit">Search</button>
-            </form>
-        </div>
+    <!-- Loading Spinner -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
     </div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'employees:home' %}">
+                <i class="fas fa-project-diagram"></i> Project X
+            </a>
+
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent"
+                    aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon">
+                    <i class="fas fa-bars" style="color: white;"></i>
+                </span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'employees:home' %}">
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="siteDropdown" role="button"
+                           data-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-building"></i> Site
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="siteDropdown">
+                            <a class="dropdown-item" href="{% url 'employees:company_add' %}">
+                                <i class="fas fa-plus"></i> Add Company
+                            </a>
+                            <a class="dropdown-item" href="{% url 'employees:company_list' %}">
+                                <i class="fas fa-list"></i> Company List
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{% url 'employees:generate_salary' %}">
+                                <i class="fas fa-calculator"></i> Generate Salary
+                            </a>
+                            <a class="dropdown-item" href="{% url 'employees:salary_list' %}">
+                                <i class="fas fa-money-bill-wave"></i> Salary List
+                            </a>
+                        </div>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="employeesDropdown" role="button"
+                           data-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-users"></i> Employees
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="employeesDropdown">
+                            <a class="dropdown-item" href="{% url 'employees:add_employee_and_upload' %}">
+                                <i class="fas fa-user-plus"></i> Add Employee / Upload Excel
+                            </a>
+                            <a class="dropdown-item" href="{% url 'employees:employee_list' %}">
+                                <i class="fas fa-eye"></i> View Employees
+                            </a>
+                            <a class="dropdown-item" href="{% url 'employees:employee_detail' %}">
+                                <i class="fas fa-info-circle"></i> Employee Details
+                            </a>
+                            <a class="dropdown-item" href="{% url 'employees:employees_upload_details' %}">
+                                <i class="fas fa-upload"></i> Upload Details
+                            </a>
+                            <a class="dropdown-item" href="{% url 'employees:verify_employee' %}">
+                                <i class="fas fa-check-circle"></i> Verify Employee
+                            </a>
+                        </div>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="purchaseDropdown" role="button"
+                           data-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-shopping-cart"></i> Purchase
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="purchaseDropdown">
+                            <a class="dropdown-item" href="{% url 'employees:user_profile_detail' %}">
+                                <i class="fas fa-truck"></i> Vendor Information
+                            </a>
+                            <a class="dropdown-item" href="{% url 'employees:purchase_item_input' %}">
+                                <i class="fas fa-shopping-bag"></i> Purchase Item
+                            </a>
+                        </div>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="billDropdown" role="button"
+                           data-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-file-invoice"></i> Bill
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="billDropdown">
+                            <a class="dropdown-item" href="{% url 'employees:e_invoice_create' %}">
+                                <i class="fas fa-file-invoice-dollar"></i> E Invoice
+                            </a>
+                            <a class="dropdown-item" href="{% url 'employees:e_invoice_list' %}">
+                                <i class="fas fa-list-alt"></i> E Invoice List
+                            </a>
+                            <a class="dropdown-item" href="{% url 'employees:generate_report' %}">
+                                <i class="fas fa-chart-bar"></i> Report
+                            </a>
+                            <a class="dropdown-item" href="{% url 'employees:payment_input' %}">
+                                <i class="fas fa-credit-card"></i> Payment Input
+                            </a>
+                        </div>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="reportDropdown" role="button"
+                           data-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-chart-line"></i> Reports
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="reportDropdown">
+                            <a class="dropdown-item" href="{% url 'employees:generate_report' %}">
+                                <i class="fas fa-file-pdf"></i> Generate Report
+                            </a>
+                            <a class="dropdown-item" href="#">
+                                <i class="fas fa-download"></i> Download Reports
+                            </a>
+                        </div>
+                    </li>
+                </ul>
+
+                <!-- Right Side Menu -->
+                <ul class="navbar-nav ml-auto">
+                    <!-- Search Form -->
+                    <li class="nav-item">
+                        <form class="search-form d-flex" role="search">
+                            <div class="position-relative">
+                                <i class="fas fa-search search-icon"></i>
+                                <input class="form-control" type="search" placeholder="Search..." aria-label="Search">
+                            </div>
+                            <button class="btn btn-outline-light" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </li>
+
+
+
+                    <!-- User Account -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button"
+                           data-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle"></i> My Account
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="accountDropdown">
+                            <a class="dropdown-item" href="{% url 'employees:user_profile_detail' %}">
+                                <i class="fas fa-user"></i> My Profile
+                            </a>
+                            {% if is_superuser %}
+                            <a class="dropdown-item" href="{% url 'employees:admin_dashboard' %}">
+                                <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+                            </a>
+                            <a class="dropdown-item" href="{% url 'employees:manage_user_permissions' %}">
+                                <i class="fas fa-users-cog"></i> Manage Permissions
+                            </a>
+                            {% endif %}
+                            <a class="dropdown-item" href="{% url 'employees:settings' %}">
+                                <i class="fas fa-cog"></i> Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#">
+                                <i class="fas fa-question-circle"></i> Help
+                            </a>
+                            <a class="dropdown-item" href="{% url 'employees:logout' %}">
+                                <i class="fas fa-sign-out-alt"></i> Sign Out
+                            </a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </nav>
+
+    <!-- Messages -->
     {% if messages %}
         <div class="messages">
             {% for message in messages %}
-                <div class="alert {{ message.tags }}">{{ message }}</div>
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
             {% endfor %}
         </div>
     {% endif %}
 
-    <main>
+    <!-- Main Content -->
+    <main class="main-content">
         {% block content %}
         {% endblock %}
     </main>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
-  <!-- Theme Script -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const themeSwitch = document.getElementById('theme-switch');
+        $(document).ready(function() {
+            // Theme Toggle Functionality
+            const themeSwitch = $('#theme-switch');
             let currentTheme = 'light';
 
-            // Fetch user theme preference from database if logged in
-            {% if request.user.is_authenticated %}
-                currentTheme = '{{ request.user.userprofile.theme_preference }}';
-            {% else %}
-                // If not logged in, use local storage
-                currentTheme = localStorage.getItem('theme') || 'light';
-            {% endif %}
+            // Initialize theme from localStorage only
+            currentTheme = localStorage.getItem('theme') || 'light';
 
             if (currentTheme === 'dark') {
-                document.body.classList.add('dark-theme');
-                themeSwitch.checked = true;
-            } else {
-                document.body.classList.add('light-theme');
+                $('body').addClass('dark-theme');
+                themeSwitch.prop('checked', true);
             }
 
-            // Continue with the same logic for the toggle switch
-            themeSwitch.addEventListener('change', function() {
+            // Theme toggle event
+            themeSwitch.on('change', function() {
                 if (this.checked) {
-                    document.body.classList.remove('light-theme');
-                    document.body.classList.add('dark-theme');
+                    $('body').removeClass('light-theme').addClass('dark-theme');
                     localStorage.setItem('theme', 'dark');
                 } else {
-                    document.body.classList.remove('dark-theme');
-                    document.body.classList.add('light-theme');
+                    $('body').removeClass('dark-theme').addClass('light-theme');
                     localStorage.setItem('theme', 'light');
+                }
+            });
+
+            // Active navigation highlighting
+            const currentPath = window.location.pathname;
+            $('.navbar-nav .nav-link').each(function() {
+                if ($(this).attr('href') === currentPath) {
+                    $(this).addClass('active');
+                }
+            });
+
+            // Smooth scrolling for internal links
+            $('a[href^="#"]').on('click', function(event) {
+                var target = $(this.getAttribute('href'));
+                if (target.length) {
+                    event.preventDefault();
+                    $('html, body').stop().animate({
+                        scrollTop: target.offset().top - 80
+                    }, 1000);
+                }
+            });
+
+            // Auto-hide messages after 5 seconds
+            setTimeout(function() {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+
+            // Loading indicator for form submissions
+            $('form').on('submit', function() {
+                $('#loading').show();
+            });
+
+            // Search functionality
+            $('.search-form').on('submit', function(e) {
+                e.preventDefault();
+                const searchQuery = $(this).find('input[type="search"]').val();
+                if (searchQuery.trim()) {
+                    // Implement your search logic here
+                    console.log('Searching for:', searchQuery);
+                    // You can redirect to a search results page or implement AJAX search
                 }
             });
         });
     </script>
 
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

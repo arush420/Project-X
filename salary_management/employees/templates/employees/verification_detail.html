@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Verification Result</h2>
+<p><strong>Name:</strong> {{ verification.full_name }}</p>
+<p><strong>Type:</strong> {{ verification.verification_type }}</p>
+<p><strong>Status:</strong> {{ verification.status }}</p>
+<p><strong>Message:</strong> {{ verification.verification_message }}</p>
+<p><strong>Verified At:</strong> {{ verification.verified_at }}</p>
+<h3>Verification Response:</h3>
+<pre>{{ verification.verification_response|safe }}</pre>
+
+{% endblock %}

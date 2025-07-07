@@ -1,7 +1,7 @@
 from django import forms
 from .models import (Employee, Task, Payment, PurchaseItem, VendorInformation,
                      Company, SalaryRule, Profile, StaffSalary, AdvanceTransaction, SalaryOtherField, Report,
-                     )
+                     VerificationRequest, EInvoice, EInvoiceLineItem)
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 import re
@@ -149,6 +149,18 @@ class ExcelUploadForm(forms.Form):
 class EmployeeSearchForm(forms.Form):
     employee_code_or_name = forms.CharField(label='Employee Code or Name', max_length=100, widget=forms.TextInput(
         attrs={'class': 'form-control', 'placeholder': 'Search by Code or Name'}))
+
+# Employee Aadhar and Bank Account form
+class VerificationRequestForm(forms.ModelForm):
+    class Meta:
+        model = VerificationRequest
+        fields = [
+            'verification_type', 'full_name', 'date_of_birth', 'mobile_number', 'email',
+            'aadhaar_number', 'bank_account_number', 'bank_ifsc_code'
+        ]
+        widgets = {
+            'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
+        }
 
 
 # Task form
@@ -304,7 +316,7 @@ class SalaryOtherFieldForm(forms.ModelForm):
 SalaryOtherFieldFormSet = modelformset_factory(SalaryOtherField, form=SalaryOtherFieldForm, extra=1)
 
 
-# Adding Company form
+# Adding a Company form
 class AddCompanyForm(forms.Form):
     company_code = forms.CharField(max_length=4)
     company_name = forms.CharField(max_length=100)
@@ -377,21 +389,84 @@ class AdvanceTransactionForm(forms.ModelForm):
             'date': forms.SelectDateWidget(),
         }
 
-# E invoice for company
-# class EInvoiceForm(forms.ModelForm):
-#     class Meta:
-#         model = EInvoice
-#         fields = [
-#             'site', 'department', 'month', 'invoice_no', 'date', 'type', 'category', 'service',
-#             'po_number', 'buyer', 'address', 'gstin', 'contact_person', 'mobile', 'state', 'city',
-#             'pincode', 'taxable', 'igst', 'cgst', 'sgst', 'cess', 'st_cess', 'cess_non_adv', 'total',
-#             'bill_amount', 'deduction_narration_1', 'deduction_amount_1', 'deduction_narration_2', 'deduction_amount_2',
-#             'cancelled', 'print_proprietor_name'
-#         ]
-#         widgets = {
-#             'date': forms.DateInput(attrs={'type': 'date'}),
-#         }
+# E invoice forms
+class EInvoiceForm(forms.ModelForm):
+    class Meta:
+        model = EInvoice
+        fields = [
+            # Invoice Basic Information
+            'invoice_number', 'invoice_date', 'invoice_type', 'document_type', 'reverse_charge',
+            
+            # Supplier Information
+            'supplier_gstin', 'supplier_legal_name', 'supplier_address', 'supplier_place_of_supply', 'supplier_state_code',
+            
+            # Buyer Information
+            'buyer_gstin', 'buyer_legal_name', 'buyer_address', 'buyer_state_code',
+            
+            # Additional Information
+            'dispatch_from_address', 'shipping_address', 'payment_terms', 'due_date', 'reference_document',
+            
+            # Transporter Details
+            'transporter_name', 'transporter_id', 'vehicle_number'
+        ]
+        widgets = {
+            'invoice_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'due_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'invoice_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter invoice number'}),
+            'invoice_type': forms.Select(attrs={'class': 'form-select'}),
+            'document_type': forms.Select(attrs={'class': 'form-select'}),
+            'reverse_charge': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            
+            # Supplier fields
+            'supplier_gstin': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '22AAAAA0000A1Z5', 'maxlength': '15'}),
+            'supplier_legal_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter supplier legal name'}),
+            'supplier_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Enter supplier address'}),
+            'supplier_place_of_supply': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter place of supply'}),
+            'supplier_state_code': forms.Select(attrs={'class': 'form-select'}),
+            
+            # Buyer fields
+            'buyer_gstin': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '22AAAAA0000A1Z5', 'maxlength': '15'}),
+            'buyer_legal_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter buyer legal name'}),
+            'buyer_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Enter buyer address'}),
+            'buyer_state_code': forms.Select(attrs={'class': 'form-select'}),
+            
+            # Additional fields
+            'dispatch_from_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Enter dispatch address'}),
+            'shipping_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Enter shipping address'}),
+            'payment_terms': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Net 30 days'}),
+            'reference_document': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., PO Number'}),
+            
+            # Transporter fields
+            'transporter_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter transporter name'}),
+            'transporter_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter transporter ID'}),
+            'vehicle_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter vehicle number'}),
+        }
 
+
+class EInvoiceLineItemForm(forms.ModelForm):
+    class Meta:
+        model = EInvoiceLineItem
+        fields = [
+            'product_service_name', 'hsn_sac_code', 'quantity', 'unit_price',
+            'cgst_rate', 'sgst_rate', 'igst_rate'
+        ]
+        widgets = {
+            'product_service_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter product/service name'}),
+            'hsn_sac_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter HSN/SAC code'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'placeholder': '1.000'}),
+            'unit_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
+            'cgst_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'max': '100', 'placeholder': '0.00'}),
+            'sgst_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'max': '100', 'placeholder': '0.00'}),
+            'igst_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'max': '100', 'placeholder': '0.00'}),
+        }
+
+# Formset for handling multiple line items
+EInvoiceLineItemFormSet = modelformset_factory(
+    EInvoiceLineItem,
+    form=EInvoiceLineItemForm,
+    extra=1,  # Number of additional blank forms to display
+    can_delete=True,  # Allow deletion of existing items
+)
 
 class ReportForm(forms.ModelForm):
     class Meta:

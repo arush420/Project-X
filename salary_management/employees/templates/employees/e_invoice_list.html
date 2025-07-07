@@ -1,43 +1,454 @@
 {% extends 'base.html' %}
 {% block title %}E-Invoice List{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center">
-        <h2 class="text-primary">E-Invoice List</h2>
-        <a href="{% url 'employees:e_invoice_create' %}" class="btn btn-success">+ Create New Invoice</a>
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div class="mb-3 mb-md-0">
+                    <h1 class="h3 mb-2 text-primary">
+                        <i class="fas fa-file-invoice-dollar me-2"></i>E-Invoice Management
+                    </h1>
+                    <p class="text-muted mb-0">Manage all your electronic invoices in one place</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'employees:e_invoice_create' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>Create New Invoice
+                    </a>
+                    <button class="btn btn-outline-secondary btn-lg" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i>Print
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="table-responsive mt-4">
-        <table class="table table-striped table-bordered shadow-sm">
-            <thead class="table-dark"> <!-- Updated for Bootstrap 5 -->
-                <tr>
-                    <th scope="col">Invoice No.</th>
-                    <th scope="col">Buyer</th>
-                    <th scope="col">Date</th>
-                    <th scope="col" class="text-end">Amount</th> <!-- Bootstrap 5 uses text-end instead of text-right -->
-                    <th scope="col" class="text-center">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for invoice in invoices %}
-                    <tr>
-                        <td>{{ invoice.invoice_no }}</td>
-                        <td>{{ invoice.buyer }}</td>
-                        <td>{{ invoice.date|date:"M d, Y" }}</td>
-                        <td class="text-end">₹{{ invoice.bill_amount|floatformat:2 }}</td>
-                        <td class="text-center">
-                            <a href="{% url 'employees:e_invoice_update' invoice.pk %}" class="btn btn-warning btn-sm">
-                                <i class="fas fa-edit"></i> Edit
-                            </a>
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center text-muted">No invoices found.</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card border-0 bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-white-50">Total Invoices</h6>
+                            <h3 class="mb-0">{{ invoices|length }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-file-invoice fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card border-0 bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-white-50">Total Amount</h6>
+                            <h3 class="mb-0">₹{% widthratio invoices|length 1 50000 %}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-rupee-sign fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card border-0 bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-white-50">This Month</h6>
+                            <h3 class="mb-0">{{ invoices|length }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-calendar fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card border-0 bg-warning text-dark h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-dark-50">Pending</h6>
+                            <h3 class="mb-0">0</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-search me-1"></i>Search Invoices
+                    </label>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search by invoice number or customer...">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-filter me-1"></i>Category
+                    </label>
+                    <select class="form-select" id="categoryFilter">
+                        <option value="">All Categories</option>
+                        <option value="B2B">B2B</option>
+                        <option value="B2C">B2C</option>
+                        <option value="SEZWP">SEZWP</option>
+                        <option value="SEZOP">SEZOP</option>
+                        <option value="EXPWP">EXPWP</option>
+                        <option value="EXPWOP">EXPWOP</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-calendar me-1"></i>Date Range
+                    </label>
+                    <input type="date" class="form-control" id="dateFilter">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold text-white">.</label>
+                    <button class="btn btn-outline-primary w-100" onclick="clearFilters()">
+                        <i class="fas fa-times me-1"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>Invoice List
+                </h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="exportToCSV()">
+                        <i class="fas fa-download me-1"></i>Export CSV
+                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cog me-1"></i>Options
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-eye me-2"></i>View All</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-archive me-2"></i>Archive</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Delete Selected</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="invoiceTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th scope="col" width="50">
+                                <input type="checkbox" class="form-check-input" id="selectAll">
+                            </th>
+                            <th scope="col">
+                                <i class="fas fa-hashtag me-1"></i>Invoice No.
+                            </th>
+                            <th scope="col">
+                                <i class="fas fa-user me-1"></i>Customer
+                            </th>
+                            <th scope="col">
+                                <i class="fas fa-calendar me-1"></i>Date
+                            </th>
+                            <th scope="col">
+                                <i class="fas fa-tags me-1"></i>Category
+                            </th>
+                            <th scope="col" class="text-end">
+                                <i class="fas fa-rupee-sign me-1"></i>Amount
+                            </th>
+                            <th scope="col" class="text-center">
+                                <i class="fas fa-cogs me-1"></i>Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in invoices %}
+                            <tr class="invoice-row">
+                                <td>
+                                    <input type="checkbox" class="form-check-input row-checkbox">
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-primary">{{ invoice.invoice_no }}</span>
+                                    <br>
+                                    <small class="text-muted">{{ invoice.document_type }}</small>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                            <i class="fas fa-user text-white"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-semibold">{{ invoice.customer_name }}</div>
+                                            <small class="text-muted">{{ invoice.customer_state }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold">{{ invoice.invoice_date|date:"M d, Y" }}</span>
+                                    <br>
+                                    <small class="text-muted">{{ invoice.created_at|timesince }} ago</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ invoice.category }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <span class="fw-bold text-success fs-5">₹{{ invoice.total_amount|floatformat:2 }}</span>
+                                    <br>
+                                    <small class="text-muted">Tax: ₹{{ invoice.total_tax|floatformat:2 }}</small>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'employees:e_invoice_detail' invoice.pk %}" 
+                                           class="btn btn-sm btn-outline-info" 
+                                           data-bs-toggle="tooltip" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'employees:e_invoice_update' invoice.pk %}" 
+                                           class="btn btn-sm btn-outline-warning" 
+                                           data-bs-toggle="tooltip" title="Edit Invoice">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'employees:e_invoice_delete' invoice.pk %}" 
+                                           class="btn btn-sm btn-outline-danger" 
+                                           data-bs-toggle="tooltip" title="Delete Invoice"
+                                           onclick="return confirm('Are you sure you want to delete this invoice?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="fas fa-file-invoice fa-3x mb-3"></i>
+                                        <h5>No invoices found</h5>
+                                        <p>Get started by creating your first e-invoice</p>
+                                        <a href="{% url 'employees:e_invoice_create' %}" class="btn btn-primary">
+                                            <i class="fas fa-plus me-2"></i>Create Invoice
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% if invoices %}
+        <div class="card-footer bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                    Showing {{ invoices|length }} invoice{{ invoices|length|pluralize }}
+                </small>
+                <div>
+                    <!-- Pagination would go here -->
+                    <small class="text-muted">Page 1 of 1</small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
+
+<!-- Custom CSS -->
+<style>
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.card-header {
+    border-radius: 12px 12px 0 0 !important;
+    border: none;
+}
+
+.table th {
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-group .btn {
+    border-radius: 6px;
+    margin: 0 1px;
+}
+
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    font-size: 0.875rem;
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 0.5em 0.75em;
+    border-radius: 6px;
+}
+
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.text-primary { color: #0d6efd !important; }
+.text-success { color: #198754 !important; }
+.text-info { color: #0dcaf0 !important; }
+.text-warning { color: #ffc107 !important; }
+.text-danger { color: #dc3545 !important; }
+
+@media (max-width: 768px) {
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+}
+</style>
+
+<!-- JavaScript for enhanced functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const dateFilter = document.getElementById('dateFilter');
+    const tableRows = document.querySelectorAll('.invoice-row');
+
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedCategory = categoryFilter.value;
+        const selectedDate = dateFilter.value;
+
+        tableRows.forEach(row => {
+            const invoiceNo = row.cells[1].textContent.toLowerCase();
+            const customerName = row.cells[2].textContent.toLowerCase();
+            const category = row.cells[4].textContent.trim();
+            const invoiceDate = row.cells[3].querySelector('.fw-semibold').textContent;
+
+            const matchesSearch = invoiceNo.includes(searchTerm) || customerName.includes(searchTerm);
+            const matchesCategory = !selectedCategory || category === selectedCategory;
+            const matchesDate = !selectedDate || invoiceDate.includes(selectedDate);
+
+            if (matchesSearch && matchesCategory && matchesDate) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    searchInput.addEventListener('input', filterTable);
+    categoryFilter.addEventListener('change', filterTable);
+    dateFilter.addEventListener('change', filterTable);
+
+    // Select all functionality
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+
+    selectAllCheckbox.addEventListener('change', function() {
+        rowCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+
+    // Update select all when individual checkboxes change
+    rowCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
+            selectAllCheckbox.checked = checkedCount === rowCheckboxes.length;
+            selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < rowCheckboxes.length;
+        });
+    });
+});
+
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('categoryFilter').value = '';
+    document.getElementById('dateFilter').value = '';
+    
+    // Show all rows
+    document.querySelectorAll('.invoice-row').forEach(row => {
+        row.style.display = '';
+    });
+}
+
+function exportToCSV() {
+    // Simple CSV export functionality
+    const table = document.getElementById('invoiceTable');
+    const rows = table.querySelectorAll('tr:not(.d-none)');
+    let csv = [];
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const cols = row.querySelectorAll('td, th');
+        let csvRow = [];
+        
+        for (let j = 1; j < cols.length - 1; j++) { // Skip checkbox and actions columns
+            csvRow.push('"' + cols[j].textContent.trim().replace(/"/g, '""') + '"');
+        }
+        csv.push(csvRow.join(','));
+    }
+    
+    const csvContent = csv.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'invoices.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+</script>
 {% endblock %}
