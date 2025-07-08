@@ -289,6 +289,7 @@
                                 
                                 <!-- Partial Payment Amount Field (shown only when part payment is selected) -->
                                 <div class="row" id="partial-payment-row" style="display: none;">
+                                    <!-- Column 1 -->
                                     <div class="col-md-4">
                                         <div class="form-group mb-3">
                                             <label class="form-label font-weight-bold">Amount Paid (₹)</label>
@@ -297,17 +298,54 @@
                                                 <div class="text-danger small">{{ purchase_form.amount_paid.errors }}</div>
                                             {% endif %}
                                         </div>
-                                    </div>
-                                    <div class="col-md-4">
                                         <div class="form-group mb-3">
                                             <label class="form-label font-weight-bold">Total Amount (₹)</label>
                                             <div class="form-control bg-light" id="total-amount-display">0.00</div>
                                         </div>
-                                    </div>
-                                    <div class="col-md-4">
                                         <div class="form-group mb-3">
                                             <label class="form-label font-weight-bold">Balance Amount (₹)</label>
                                             <div class="form-control bg-light text-danger" id="balance-amount-display">0.00</div>
+                                        </div>
+                                    </div>
+                                    <!-- Column 2 -->
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label font-weight-bold">Payment Mode</label>
+                                            {{ purchase_form.payment_mode }}
+                                            {% if purchase_form.payment_mode.errors %}
+                                                <div class="text-danger small">{{ purchase_form.payment_mode.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label class="form-label font-weight-bold">Payment By</label>
+                                            {{ purchase_form.payment_by }}
+                                            {% if purchase_form.payment_by.errors %}
+                                                <div class="text-danger small">{{ purchase_form.payment_by.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label class="form-label font-weight-bold">Payment Date</label>
+                                            {{ purchase_form.payment_date }}
+                                            {% if purchase_form.payment_date.errors %}
+                                                <div class="text-danger small">{{ purchase_form.payment_date.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <!-- Column 3 -->
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label font-weight-bold">Account Detail</label>
+                                            {{ purchase_form.account_detail }}
+                                            {% if purchase_form.account_detail.errors %}
+                                                <div class="text-danger small">{{ purchase_form.account_detail.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label class="form-label font-weight-bold">Transaction ID (if any)</label>
+                                            {{ purchase_form.transaction_id }}
+                                            {% if purchase_form.transaction_id.errors %}
+                                                <div class="text-danger small">{{ purchase_form.transaction_id.errors }}</div>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>

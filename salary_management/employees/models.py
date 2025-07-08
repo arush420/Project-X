@@ -715,11 +715,13 @@ class Purchase(models.Model):
         ('unpaid_vendor', 'Payment Pending'),
     ]
     payment_status = models.CharField(max_length=50, choices=Vendor_PAYMENT_CHOICES, default='full_payment_vendor')
-    payment_by = models.CharField(max_length=50, blank=True, default='NA')
+    payment_by = models.CharField(max_length=50, blank=True, default='')
     payment_date = models.DateField(blank=True, null=True)
     
     # Partial Payment Tracking
     amount_paid = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Amount paid so far")
+    account_detail = models.CharField(max_length=100, blank=True, default='', help_text="Account detail for payment")
+    transaction_id = models.CharField(max_length=100, blank=True, default='', help_text="Transaction ID if any")
     
     PAYMENT_CHOICES = [
         ('bank_transfer', 'Bank Transfer'),

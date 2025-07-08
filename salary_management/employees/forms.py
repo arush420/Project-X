@@ -246,7 +246,7 @@ class PurchaseForm(forms.ModelForm):
             'organization_code', 'organization_name', 'organization_gst_number', 
             'bill_number', 'po_number', 'order_by', 'order_for', 'date_of_purchase',
             'cgst_rate', 'sgst_rate', 'igst_rate', 'payment_status', 'payment_by', 
-            'payment_date', 'payment_mode', 'amount_paid', 'remark', 'bill_file'
+            'payment_date', 'payment_mode', 'amount_paid', 'account_detail', 'transaction_id', 'remark', 'bill_file'
         ]
         widgets = {
             'organization_code': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
@@ -261,10 +261,12 @@ class PurchaseForm(forms.ModelForm):
             'sgst_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.0'}),
             'igst_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.0'}),
             'payment_status': forms.Select(attrs={'class': 'form-select'}),
-            'payment_by': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'NA'}),
+            'payment_by': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ''}),
             'payment_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'payment_mode': forms.Select(attrs={'class': 'form-select'}),
             'amount_paid': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
+            'account_detail': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Account detail'}),
+            'transaction_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Transaction ID (if any)'}),
             'remark': forms.TextInput(attrs={'class': 'form-control'}),
             'bill_file': forms.FileInput(attrs={'class': 'form-control'}),
         }

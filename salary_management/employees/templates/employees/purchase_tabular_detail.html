@@ -129,6 +129,11 @@
                                                 <td colspan="12" class="text-center text-muted">No items found</td>
                                             </tr>
                                         {% endfor %}
+                                        <!-- Totals Row -->
+                                        <tr class="table-dark">
+                                            <td colspan="11" class="text-end"><strong>Grand Total:</strong></td>
+                                            <td><strong>₹{{ purchase.total_net_amount|floatformat:2 }}</strong></td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -165,6 +170,22 @@
                                                             </div>
                                                         </div>
                                                     </td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Payment By:</th>
+                                                    <td>{{ purchase.payment_by|default:"N/A" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Payment Date:</th>
+                                                    <td>{{ purchase.payment_date|date:"d M Y"|default:"N/A" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Account Detail:</th>
+                                                    <td>{{ purchase.account_detail|default:"N/A" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Transaction ID:</th>
+                                                    <td>{{ purchase.transaction_id|default:"N/A" }}</td>
                                                 </tr>
                                             {% endif %}
                                             <tr>
@@ -203,41 +224,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                        <div class="col-md-4">
-                            <div class="card">
-                                <div class="card-header bg-light">
-                                    <h6 class="mb-0">Amount Summary</h6>
-                                </div>
-                                <div class="card-body">
-                                    <table class="table table-sm">
-                                        <tr>
-                                            <th>Subtotal:</th>
-                                            <td class="text-end">₹{{ purchase.total_gross_amount|floatformat:2 }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Total CGST:</th>
-                                            <td class="text-end">₹{{ line_items|total_cgst_amount|floatformat:2 }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Total SGST:</th>
-                                            <td class="text-end">₹{{ line_items|total_sgst_amount|floatformat:2 }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Total IGST:</th>
-                                            <td class="text-end">₹{{ line_items|total_igst_amount|floatformat:2 }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Total GST:</th>
-                                            <td class="text-end">₹{{ purchase.total_gst_amount|floatformat:2 }}</td>
-                                        </tr>
-                                        <tr class="table-dark">
-                                            <th><strong>Grand Total:</strong></th>
-                                            <td class="text-end"><strong>₹{{ purchase.total_net_amount|floatformat:2 }}</strong></td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- Removed Amount Summary col-md-4 -->
                     </div>
 
                     <!-- Additional Information -->
