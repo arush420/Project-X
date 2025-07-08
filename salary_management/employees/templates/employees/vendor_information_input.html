@@ -4,103 +4,94 @@
 {% block title %}Vendor Details Input{% endblock %}
 
 {% block content %}
-<div class="container mt-5" style="max-width: 90%;">
-    <h1 class="mb-4 text-center">Vendor Details</h1>
+<div class="container mt-5" style="max-width: 95%;">
+    <h1 class="mb-4 text-center text-primary">Vendor Details</h1>
+
 
     <!-- Vendor Form -->
-    <div class="card shadow-sm mb-4">
+    <div class="card shadow-sm mb-5">
         <div class="card-header bg-primary text-white">
             <h4 class="mb-0">Enter Vendor Details</h4>
         </div>
         <div class="card-body">
             <form method="post">
                 {% csrf_token %}
-
-                <!-- Row 1: Vendor ID and Vendor Name -->
-                <div class="row">
-                    <div class="col-md-6 mb-3">
+                <div class="row g-3">
+                    <div class="col-md-6">
                         <label for="vendor_id" class="form-label">Vendor ID</label>
                         {{ form.vendor_id|add_class:"form-control" }}
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6">
                         <label for="vendor_name" class="form-label">Vendor Name</label>
                         {{ form.vendor_name|add_class:"form-control" }}
                     </div>
-                </div>
 
-                <!-- Row 2: Vendor Address -->
-                <div class="col-md-12 mb-3">
-                    <label for="vendor_address" class="form-label">Vendor Address</label>
-                    {{ form.vendor_address|add_class:"form-control" }}
-                </div>
+                    <div class="col-md-12">
+                        <label for="vendor_address" class="form-label">Vendor Address</label>
+                        {{ form.vendor_address|add_class:"form-control" }}
+                    </div>
 
-                <!-- Row 3: District, State, and Pincode -->
-                <div class="row">
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-4">
                         <label for="district" class="form-label">District</label>
                         {{ form.district|add_class:"form-control" }}
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-4">
                         <label for="state" class="form-label">State</label>
                         {{ form.state|add_class:"form-control" }}
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-4">
                         <label for="pincode" class="form-label">Pincode</label>
                         {{ form.pincode|add_class:"form-control" }}
                     </div>
-                </div>
 
-                <!-- Row 4: GST Number and Account Number -->
-                <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6">
                         <label for="vendor_gst_number" class="form-label">GST Number</label>
                         {{ form.vendor_gst_number|add_class:"form-control" }}
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6">
                         <label for="vendor_account_number" class="form-label">Account Number</label>
                         {{ form.vendor_account_number|add_class:"form-control" }}
                     </div>
-                </div>
 
-                <!-- Row 5: IFSC Code and Contact Details -->
-                <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6">
                         <label for="vendor_ifsc_code" class="form-label">IFSC Code</label>
                         {{ form.vendor_ifsc_code|add_class:"form-control" }}
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6">
                         <label for="vendor_contact_person_name" class="form-label">Contact Person</label>
                         {{ form.vendor_contact_person_name|add_class:"form-control" }}
                     </div>
-                    <div class="col-md-6 mb-3">
+
+                    <div class="col-md-6">
                         <label for="vendor_contact_person_number" class="form-label">Contact Person's Number</label>
                         {{ form.vendor_contact_person_number|add_class:"form-control" }}
                     </div>
-                </div>
 
-                <!-- Submit Button -->
-                <button type="submit" class="btn btn-primary w-100 mt-3">Submit</button>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary w-100 mt-2">Submit</button>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
 
-    <!-- Saved Vendors -->
-    <h2 class="mt-5">Saved Vendors</h2>
+    <!-- Saved Vendors Table -->
+    <h2 class="text-center text-secondary mb-3">Saved Vendors</h2>
     <div class="table-responsive">
-        <table class="table table-bordered table-striped table-hover">
-            <thead class="thead-dark">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-dark text-center">
                 <tr>
                     <th>Vendor ID</th>
-                    <th>Vendor Name</th>
+                    <th>Name</th>
                     <th>Address</th>
                     <th>District</th>
                     <th>State</th>
                     <th>Pincode</th>
-                    <th>GST Number</th>
-                    <th>Account Number</th>
-                    <th>IFSC Code</th>
+                    <th>GST</th>
+                    <th>Account</th>
+                    <th>IFSC</th>
                     <th>Contact Person</th>
-                    <th>Contact Person's Number</th>
+                    <th>Phone</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -118,14 +109,14 @@
                     <td>{{ vendor.vendor_ifsc_code }}</td>
                     <td>{{ vendor.vendor_contact_person_name }}</td>
                     <td>{{ vendor.vendor_contact_person_number }}</td>
-                    <td>
-                        <a href="{% url 'employees:vendor_information_update' vendor.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                    <td class="text-center">
+                        <a href="{% url 'employees:vendor_information_update' vendor.pk %}" class="btn btn-sm btn-warning me-1">Edit</a>
                         <a href="{% url 'employees:vendor_information_delete' vendor.pk %}" class="btn btn-sm btn-danger">Delete</a>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="12" class="text-center">No vendor entries available.</td>
+                    <td colspan="12" class="text-center text-muted">No vendor entries found.</td>
                 </tr>
                 {% endfor %}
             </tbody>

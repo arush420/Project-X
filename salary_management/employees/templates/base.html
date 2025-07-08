@@ -87,6 +87,21 @@
             width: 16px;
         }
 
+        .dropdown-header {
+            color: #667eea !important;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 8px 20px 4px 20px;
+            margin-top: 5px;
+        }
+
+        .dropdown-header i {
+            margin-right: 8px;
+            font-size: 0.8rem;
+        }
+
         /* Main Content */
         .main-content {
             margin-top: var(--navbar-height);
@@ -359,11 +374,21 @@
                             <i class="fas fa-shopping-cart"></i> Purchase
                         </a>
                         <div class="dropdown-menu" aria-labelledby="purchaseDropdown">
-                            <a class="dropdown-item" href="{% url 'employees:user_profile_detail' %}">
+                            <a class="dropdown-item" href="{% url 'employees:vendor_information_input' %}">
                                 <i class="fas fa-truck"></i> Vendor Information
                             </a>
+                            <div class="dropdown-divider"></div>
+                            <h6 class="dropdown-header"><i class="fas fa-shopping-cart"></i> Purchase Orders</h6>
+                            <a class="dropdown-item" href="{% url 'employees:purchase_tabular_create' %}">
+                                <i class="fas fa-plus"></i> Create Purchase Order
+                            </a>
+                            <a class="dropdown-item" href="{% url 'employees:purchase_tabular_list' %}">
+                                <i class="fas fa-list"></i> Purchase Orders List
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <h6 class="dropdown-header"><i class="fas fa-file-alt"></i> Legacy Purchase</h6>
                             <a class="dropdown-item" href="{% url 'employees:purchase_item_input' %}">
-                                <i class="fas fa-shopping-bag"></i> Purchase Item
+                                <i class="fas fa-shopping-bag"></i> Single Item Purchase
                             </a>
                         </div>
                     </li>
@@ -374,12 +399,40 @@
                             <i class="fas fa-file-invoice"></i> Bill
                         </a>
                         <div class="dropdown-menu" aria-labelledby="billDropdown">
+                            <!-- Service Bills Section -->
+                            <h6 class="dropdown-header"><i class="fas fa-tools"></i> Manpower Service Bills</h6>
+                            <a class="dropdown-item" href="{% url 'employees:quick_bill_create' %}">
+                                <i class="fas fa-bolt"></i> Quick Bill
+                            </a>
+                            <a class="dropdown-item" href="{% url 'employees:service_bill_create' %}">
+                                <i class="fas fa-plus"></i> Create Bill
+                            </a>
+                            <a class="dropdown-item" href="{% url 'employees:service_bill_list' %}">
+                                <i class="fas fa-list"></i> Service Bills
+                            </a>
+                            <div class="dropdown-divider"></div>
+
+                            <!-- Bill Templates Section -->
+                            <h6 class="dropdown-header"><i class="fas fa-template"></i> Bill Templates</h6>
+                            <a class="dropdown-item" href="{% url 'employees:bill_template_create' %}">
+                                <i class="fas fa-plus-circle"></i> Create Template
+                            </a>
+                            <a class="dropdown-item" href="{% url 'employees:bill_template_list' %}">
+                                <i class="fas fa-cog"></i> Manage Templates
+                            </a>
+                            <div class="dropdown-divider"></div>
+
+                            <!-- E-Invoice Section -->
+                            <h6 class="dropdown-header"><i class="fas fa-file-invoice-dollar"></i> E-Invoice</h6>
                             <a class="dropdown-item" href="{% url 'employees:e_invoice_create' %}">
-                                <i class="fas fa-file-invoice-dollar"></i> E Invoice
+                                <i class="fas fa-plus"></i> Create E-Invoice
                             </a>
                             <a class="dropdown-item" href="{% url 'employees:e_invoice_list' %}">
-                                <i class="fas fa-list-alt"></i> E Invoice List
+                                <i class="fas fa-list-alt"></i> E-Invoice List
                             </a>
+                            <div class="dropdown-divider"></div>
+
+                            <!-- Other Bill Functions -->
                             <a class="dropdown-item" href="{% url 'employees:generate_report' %}">
                                 <i class="fas fa-chart-bar"></i> Report
                             </a>

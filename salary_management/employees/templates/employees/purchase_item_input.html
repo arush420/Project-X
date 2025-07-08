@@ -1,241 +1,574 @@
-{% extends 'base.html' %}
-{% load static %}
-<link rel="stylesheet" href="{% static 'employees/styles.css' %}">
-
-
-{% block title %}Purchase Master{% endblock %}
-
-{% block content %}
-<div class="container mt-5" style="max-width: 95%;">
-    <h1 class="mb-4 text-center">Purchase Master</h1>
-
-    <!-- Combined Vendor and Purchase Form -->
-    <form method="post" id="purchaseForm">
-        {% csrf_token %}
-        {{ formset.management_form }}
-
-        <!-- Vendor Details Section -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">Vendor Details</h4>
-            </div>
-            <div class="card-body">
-                <table class="table table-hover" id="vendorDetailsTable">
-                    <thead>
-                        <tr>
-                            <th>PO Number</th>
-                            <th>Bill Number</th>
-                            <th>Vendor Name</th>
-                            <th>Ordered/Purchased By</th>
-                            <th>Order Date</th>
-                            <th>Ordered For</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for form in formset %}
-                        <tr>
-                            <td>{{ form.po_number }}</td>
-                            <td>{{ form.bill_number }}</td>
-                            <td>{{ form.organization_name }}</td>
-                            <td>{{ form.order_by }}</td>
-                            <td>{{ form.date_of_purchase }}</td>
-                            <td>{{ form.order_for }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Management System</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/2.3.2/css/dataTables.dataTables.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: none;
+            border-radius: 12px;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 20px;
+        }
+        
+        .payment-field {
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            padding: 10px 15px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .btn {
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 10px 20px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border: none;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            border: none;
+        }
+        
+        .table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .table thead th {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+        
+        .form-row {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: white;
+        }
+        
+        .section-title {
+            color: #495057;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="mb-0">
+                            <i class="fas fa-shopping-cart me-2"></i>
+                            Purchase Management System
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        
+                        <!-- Purchase Form Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h4 class="section-title">
+                                    <i class="fas fa-plus-circle me-2"></i>
+                                    Add New Purchase
+                                </h4>
+                                
+                                <!-- Sample form for demonstration -->
+                                <form id="purchaseForm">
+                                    <div class="form-row">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Vendor</label>
+                                                <select name="form-0-order_for" class="form-select" required>
+                                                    <option value="">Select Vendor</option>
+                                                    <option value="1">ABC Electronics Ltd.</option>
+                                                    <option value="2">XYZ Supplies Co.</option>
+                                                    <option value="3">Tech Solutions Inc.</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Organization Code</label>
+                                                <input type="text" name="form-0-organization_code" class="form-control" readonly>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Organization Name</label>
+                                                <input type="text" name="form-0-organization_name" class="form-control" readonly>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mt-3">
+                                            <div class="col-md-4">
+                                                <label class="form-label">GST Number</label>
+                                                <input type="text" name="form-0-organization_gst_number" class="form-control" readonly>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Amount</label>
+                                                <input type="number" name="form-0-amount" class="form-control" step="0.01" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Purchase Date</label>
+                                                <input type="date" name="form-0-purchase_date" class="form-control" required>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mt-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Payment Status</label>
+                                                <select name="form-0-payment_status" class="form-select" required>
+                                                    <option value="">Select Status</option>
+                                                    <option value="unpaid_vendor">Payment Pending</option>
+                                                    <option value="paid_vendor">Paid</option>
+                                                    <option value="partially_paid">Partially Paid</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Description</label>
+                                                <input type="text" name="form-0-description" class="form-control" placeholder="Purchase description">
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Payment Fields (conditionally shown) -->
+                                        <div class="row mt-3">
+                                            <div class="col-md-4 payment-field" data-field="payment_by">
+                                                <label class="form-label">Payment By</label>
+                                                <input type="text" name="form-0-payment_by" class="form-control" placeholder="Payment made by">
+                                            </div>
+                                            <div class="col-md-4 payment-field" data-field="payment_date">
+                                                <label class="form-label">Payment Date</label>
+                                                <input type="date" name="form-0-payment_date" class="form-control">
+                                            </div>
+                                            <div class="col-md-4 payment-field" data-field="payment_mode">
+                                                <label class="form-label">Payment Mode</label>
+                                                <select name="form-0-payment_mode" class="form-select">
+                                                    <option value="">Select Mode</option>
+                                                    <option value="cash">Cash</option>
+                                                    <option value="bank_transfer">Bank Transfer</option>
+                                                    <option value="cheque">Cheque</option>
+                                                    <option value="credit_card">Credit Card</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mt-3">
+                                            <div class="col-12">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-save me-2"></i>
+                                                    Add Purchase
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- Purchases Table Section -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h4 class="section-title">
+                                    <i class="fas fa-list me-2"></i>
+                                    Purchase Records
+                                </h4>
+                                
+                                <div class="table-responsive">
+                                    <table id="purchasesTable" class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Vendor</th>
+                                                <th>Organization</th>
+                                                <th>Description</th>
+                                                <th>Date</th>
+                                                <th>Amount</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>PUR-001</td>
+                                                <td>ABC Electronics Ltd.</td>
+                                                <td>ABC-001</td>
+                                                <td>Office Supplies</td>
+                                                <td>2025-07-05</td>
+                                                <td>$2,500.00</td>
+                                                <td><span class="badge bg-success">Paid</span></td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-warning me-1">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>PUR-002</td>
+                                                <td>XYZ Supplies Co.</td>
+                                                <td>XYZ-002</td>
+                                                <td>Computer Equipment</td>
+                                                <td>2025-07-03</td>
+                                                <td>$15,000.00</td>
+                                                <td><span class="badge bg-warning">Pending</span></td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-warning me-1">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>PUR-003</td>
+                                                <td>Tech Solutions Inc.</td>
+                                                <td>TECH-003</td>
+                                                <td>Software Licenses</td>
+                                                <td>2025-07-01</td>
+                                                <td>$8,750.00</td>
+                                                <td><span class="badge bg-info">Partially Paid</span></td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-warning me-1">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <!-- Purchase Item Details Section -->
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">Purchase Item Details</h4>
-            </div>
-            <div class="card-body">
-                <table class="table table-hover" id="itemDetailsTable">
-                    <thead>
-                        <tr>
-                            <th>Item</th>
-                            <th>Category</th>
-                            <th>HSN Code</th>
-                            <th>Units</th>
-                            <th>Per Unit Cost</th>
-                            <th>Gross Total</th>
-                            <th>CGST</th>
-                            <th>SGST</th>
-                            <th>IGST</th>
-                            <th>Total GST</th>
-                            <th>Net Total</th>
-                            <th>Bill File</th> <!-- New column for bill file -->
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for form in formset %}
-                        <tr>
-                            <td>{{ form.purchased_item }}</td>
-                            <td>{{ form.category }}</td>
-                            <td>{{ form.hsn_code }}</td>
-                            <td>{{ form.units_bought }}</td>
-                            <td>{{ form.per_unit_cost }}</td>
-                            <td class="gross-total"></td>
-                            <td>{{ form.cgst_rate }}</td>
-                            <td>{{ form.sgst_rate }}</td>
-                            <td>{{ form.igst_rate }}</td>
-                            <td class="total-gst"></td>
-                            <td class="net-total"></td>
-                            <td>{{ form.bill_file }}</td> <!-- New input for bill file -->
-                            <td>
-                                {% if form.instance.pk %}
-                                <input type="checkbox" name="{{ form.DELETE.name }}" id="{{ form.DELETE.id }}" class="form-check-input">
-                                <label for="{{ form.DELETE.id }}" class="form-check-label">Delete</label>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                <button type="button" class="btn btn-secondary mt-3" id="addRowButton">Add Row</button>
-            </div>
-        </div>
-
-        <!-- Grand Total Section -->
-        <div class="mt-3 text-end">
-            <h4><strong>Grand Total: </strong><span id="grandTotal">0.00</span></h4>
-        </div>
-
-        <!-- Vendor Details Section -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">Payment Details</h4>
-            </div>
-            <div class="card-body">
-                <table class="table table-hover" id="vendorPaymentDetailsTable">
-                    <thead>
-                        <tr>
-                            <th>Payment Status</th>
-                            <th>Payment by</th>
-                            <th>Payment Date</th>
-                            <th>Payment Mode</th>
-                            <th>Remark</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for form in formset %}
-                        <tr>
-                            <td>{{ form.payment_status }}</td>
-                            <td>{{ form.payment_by }}</td>
-                            <td>{{ form.payment_date }}</td>
-                            <td>{{ form.payment_mode }}</td>
-                            <td>{{ form.remark }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-
-        <!-- Submit Button -->
-        <button type="submit" class="btn btn-primary w-100 mt-4">Submit</button>
-    </form>
-
-    <!-- Submitted Bills -->
-    <h2 class="mt-5">Submitted Bills</h2>
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped">
-            <thead class="thead-dark">
-                <tr>
-                    <th>Bill Number</th>
-                    <th>Vendor Name</th>
-                    <th>Payment Status</th>
-                    <th>Payment by</th>
-                    <th>Payment Date</th>
-                    <th>Grand Total</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for bill in purchases|dictsort:"bill_number"|slice:":5" %}
-                <tr>
-                    <td>
-                        <a href="{% url 'employees:purchase_bill_detail' bill.bill_number %}">
-                            Bill #{{ bill.bill_number }}
-                        </a>
-                    </td>
-                    <td>{{ bill.organization_name }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="2" class="text-center">No bills submitted yet.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
     </div>
-</div>
 
-<script>
-    // Add Row Functionality
-    document.getElementById('addRowButton').addEventListener('click', function () {
-        const tableBody = document.querySelector('#itemDetailsTable tbody');
-        const lastRow = tableBody.rows[tableBody.rows.length - 1];
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- DataTables JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js"></script>
 
-        // Check if all inputs in the last row are filled
-        const inputs = Array.from(lastRow.querySelectorAll('input, select'));
-        const allFilled = inputs.every(input => input.value.trim() !== "");
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize DataTables
+            $('#purchasesTable').DataTable({
+                "pageLength": 10,
+                "lengthMenu": [5, 10, 25, 50, 100],
+                "ordering": true,
+                "searching": true,
+                "responsive": true,
+                "language": {
+                    "search": "Search purchases:",
+                    "lengthMenu": "Show _MENU_ purchases per page",
+                    "info": "Showing _START_ to _END_ of _TOTAL_ purchases",
+                    "infoEmpty": "No purchases available",
+                    "infoFiltered": "(filtered from _MAX_ total purchases)",
+                    "paginate": {
+                        "first": "First",
+                        "last": "Last",
+                        "next": "Next",
+                        "previous": "Previous"
+                    }
+                },
+                "columnDefs": [
+                    { "orderable": false, "targets": 7 }, // Actions column
+                    { "type": "date", "targets": 4 }, // Date column
+                    { "type": "num", "targets": 5 } // Amount column
+                ],
+                "order": [[ 4, "desc" ]] // Sort by date descending by default
+            });
 
-        if (allFilled) {
-            const newRow = lastRow.cloneNode(true);
-
-            // Clear inputs in the cloned row
-            newRow.querySelectorAll('input').forEach(input => input.value = "");
-            newRow.querySelectorAll('.gross-total, .total-gst, .net-total').forEach(cell => cell.textContent = "");
-
-            tableBody.appendChild(newRow);
-        } else {
-            alert('Please fill all fields in the current row before adding a new one.');
-        }
-    });
-
-    // Calculate Totals and Grand Total
-    const updateGrandTotal = () => {
-        const netTotalCells = document.querySelectorAll('.net-total');
-        let grandTotal = 0;
-
-        netTotalCells.forEach(cell => {
-            const value = parseFloat(cell.textContent) || 0;
-            grandTotal += value;
+            // Get all vendor select elements (for each form in the formset)
+            const vendorSelects = document.querySelectorAll('select[name*="order_for"]');
+            
+            // Get all payment status select elements (for each form in the formset)
+            const paymentStatusSelects = document.querySelectorAll('select[name*="payment_status"]');
+            
+            // Function to toggle payment fields based on payment status
+            function togglePaymentFields(paymentStatusSelect) {
+                const formIndex = paymentStatusSelect.name.match(/form-(\d+)-/)[1];
+                const paymentFields = document.querySelectorAll(`[data-field="payment_by"], [data-field="payment_date"], [data-field="payment_mode"]`);
+                
+                // Get the specific payment fields for this form
+                const paymentByField = document.querySelector(`[data-field="payment_by"] input[name="form-${formIndex}-payment_by"], [data-field="payment_by"] select[name="form-${formIndex}-payment_by"]`);
+                const paymentDateField = document.querySelector(`[data-field="payment_date"] input[name="form-${formIndex}-payment_date"]`);
+                const paymentModeField = document.querySelector(`[data-field="payment_mode"] select[name="form-${formIndex}-payment_mode"]`);
+                
+                // Get the parent containers
+                const paymentByContainer = paymentByField ? paymentByField.closest('.payment-field') : null;
+                const paymentDateContainer = paymentDateField ? paymentDateField.closest('.payment-field') : null;
+                const paymentModeContainer = paymentModeField ? paymentModeField.closest('.payment-field') : null;
+                
+                const selectedValue = paymentStatusSelect.value;
+                
+                // Hide/show fields based on payment status
+                if (selectedValue === 'unpaid_vendor') {
+                    // Hide payment fields when status is "Payment Pending"
+                    if (paymentByContainer) {
+                        paymentByContainer.style.display = 'none';
+                        if (paymentByField) paymentByField.value = '';
+                    }
+                    if (paymentDateContainer) {
+                        paymentDateContainer.style.display = 'none';
+                        if (paymentDateField) paymentDateField.value = '';
+                    }
+                    if (paymentModeContainer) {
+                        paymentModeContainer.style.display = 'none';
+                        if (paymentModeField) paymentModeField.value = '';
+                    }
+                } else {
+                    // Show payment fields for other statuses
+                    if (paymentByContainer) paymentByContainer.style.display = 'block';
+                    if (paymentDateContainer) paymentDateContainer.style.display = 'block';
+                    if (paymentModeContainer) paymentModeContainer.style.display = 'block';
+                }
+            }
+            
+            // Add event listeners to payment status selects
+            paymentStatusSelects.forEach(function(paymentStatusSelect) {
+                // Initialize on page load
+                togglePaymentFields(paymentStatusSelect);
+                
+                // Add change event listener
+                paymentStatusSelect.addEventListener('change', function() {
+                    togglePaymentFields(this);
+                });
+            });
+            
+            // Mock vendor data for demonstration
+            const vendorData = {
+                '1': {
+                    vendor_id: 'ABC-001',
+                    vendor_name: 'ABC Electronics Ltd.',
+                    vendor_gst_number: 'GST123456789'
+                },
+                '2': {
+                    vendor_id: 'XYZ-002',
+                    vendor_name: 'XYZ Supplies Co.',
+                    vendor_gst_number: 'GST987654321'
+                },
+                '3': {
+                    vendor_id: 'TECH-003',
+                    vendor_name: 'Tech Solutions Inc.',
+                    vendor_gst_number: 'GST456789123'
+                }
+            };
+            
+            vendorSelects.forEach(function(vendorSelect) {
+                vendorSelect.addEventListener('change', function() {
+                    const vendorId = this.value;
+                    if (vendorId) {
+                        // Get the form index from the select name
+                        const formIndex = this.name.match(/form-(\d+)-/)[1];
+                        
+                        // Simulate API call with mock data
+                        setTimeout(() => {
+                            const data = vendorData[vendorId];
+                            if (data) {
+                                // Fill the form fields with vendor data
+                                const organizationCodeField = document.querySelector(`input[name="form-${formIndex}-organization_code"]`);
+                                const organizationNameField = document.querySelector(`input[name="form-${formIndex}-organization_name"]`);
+                                const organizationGstField = document.querySelector(`input[name="form-${formIndex}-organization_gst_number"]`);
+                                
+                                if (organizationCodeField) {
+                                    organizationCodeField.value = data.vendor_id;
+                                }
+                                if (organizationNameField) {
+                                    organizationNameField.value = data.vendor_name;
+                                }
+                                if (organizationGstField) {
+                                    organizationGstField.value = data.vendor_gst_number;
+                                }
+                                
+                                // Show success message
+                                const successMessage = document.createElement('div');
+                                successMessage.className = 'alert alert-success alert-dismissible fade show mt-2';
+                                successMessage.innerHTML = `
+                                    <i class="fas fa-check-circle"></i> Vendor details loaded successfully!
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                `;
+                                
+                                // Remove any existing success messages
+                                const existingMessages = this.parentNode.querySelectorAll('.alert-success');
+                                existingMessages.forEach(msg => msg.remove());
+                                
+                                // Insert the message after the vendor select field
+                                this.parentNode.appendChild(successMessage);
+                                
+                                // Auto-remove the message after 3 seconds
+                                setTimeout(() => {
+                                    if (successMessage.parentNode) {
+                                        successMessage.remove();
+                                    }
+                                }, 3000);
+                            }
+                        }, 500); // Simulate network delay
+                        
+                        // In a real application, you would use:
+                        /*
+                        fetch(`/employees/api/vendor/${vendorId}/`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.error) {
+                                    console.error('Error fetching vendor details:', data.error);
+                                    return;
+                                }
+                                
+                                // Fill the form fields with vendor data
+                                const organizationCodeField = document.querySelector(`input[name="form-${formIndex}-organization_code"]`);
+                                const organizationNameField = document.querySelector(`input[name="form-${formIndex}-organization_name"]`);
+                                const organizationGstField = document.querySelector(`input[name="form-${formIndex}-organization_gst_number"]`);
+                                
+                                if (organizationCodeField) {
+                                    organizationCodeField.value = data.vendor_id;
+                                }
+                                if (organizationNameField) {
+                                    organizationNameField.value = data.vendor_name;
+                                }
+                                if (organizationGstField) {
+                                    organizationGstField.value = data.vendor_gst_number;
+                                }
+                                
+                                // Show success message
+                                const successMessage = document.createElement('div');
+                                successMessage.className = 'alert alert-success alert-dismissible fade show mt-2';
+                                successMessage.innerHTML = `
+                                    <i class="fas fa-check-circle"></i> Vendor details loaded successfully!
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                `;
+                                
+                                // Insert the message after the vendor select field
+                                this.parentNode.appendChild(successMessage);
+                                
+                                // Auto-remove the message after 3 seconds
+                                setTimeout(() => {
+                                    if (successMessage.parentNode) {
+                                        successMessage.remove();
+                                    }
+                                }, 3000);
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                // Show error message
+                                const errorMessage = document.createElement('div');
+                                errorMessage.className = 'alert alert-danger alert-dismissible fade show mt-2';
+                                errorMessage.innerHTML = `
+                                    <i class="fas fa-exclamation-circle"></i> Error loading vendor details!
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                `;
+                                this.parentNode.appendChild(errorMessage);
+                            });
+                        */
+                    }
+                });
+            });
+            
+            // Form submission handler
+            document.getElementById('purchaseForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Show success message
+                const successMessage = document.createElement('div');
+                successMessage.className = 'alert alert-success alert-dismissible fade show';
+                successMessage.innerHTML = `
+                    <i class="fas fa-check-circle"></i> Purchase record added successfully!
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                
+                this.insertBefore(successMessage, this.firstChild);
+                
+                // Reset form
+                this.reset();
+                
+                // Reset payment fields visibility
+                const paymentStatusSelect = this.querySelector('select[name*="payment_status"]');
+                if (paymentStatusSelect) {
+                    togglePaymentFields(paymentStatusSelect);
+                }
+                
+                // Auto-remove success message
+                setTimeout(() => {
+                    if (successMessage.parentNode) {
+                        successMessage.remove();
+                    }
+                }, 3000);
+            });
         });
-
-        document.getElementById('grandTotal').textContent = grandTotal.toFixed(2);
-    };
-
-    document.querySelector('#itemDetailsTable').addEventListener('input', function (event) {
-        if (event.target.closest('tr')) {
-            const row = event.target.closest('tr');
-            const units = parseFloat(row.querySelector('[name$="units_bought"]').value) || 0;
-            const cost = parseFloat(row.querySelector('[name$="per_unit_cost"]').value) || 0;
-            const cgst = parseFloat(row.querySelector('[name$="cgst_rate"]').value) || 0;
-            const sgst = parseFloat(row.querySelector('[name$="sgst_rate"]').value) || 0;
-            const igst = parseFloat(row.querySelector('[name$="igst_rate"]').value) || 0;
-
-            // Calculate Gross Total, GST, and Net Total
-            const grossTotal = units * cost;
-            const totalGST = grossTotal * (cgst + sgst + igst) / 100;
-            const netTotal = grossTotal + totalGST;
-
-            row.querySelector('.gross-total').textContent = grossTotal.toFixed(2);
-            row.querySelector('.total-gst').textContent = totalGST.toFixed(2);
-            row.querySelector('.net-total').textContent = netTotal.toFixed(2);
-
-            // Update Grand Total
-            updateGrandTotal();
-        }
-    });
-
-    // Initialize Grand Total on page load
-    document.addEventListener('DOMContentLoaded', updateGrandTotal);
-</script>
-{% endblock %}
+    </script>
+</body>

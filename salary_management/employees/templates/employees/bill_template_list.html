@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Bill Templates{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-cog text-primary"></i> Bill Templates
+                </h2>
+                <a href="{% url 'employees:bill_template_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create New Template
+                </a>
+            </div>
+
+            {% if templates %}
+                <div class="row">
+                    {% for template in templates %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">{{ template.template_name }}</h5>
+                                <div>
+                                    {% if template.is_default %}
+                                        <span class="badge badge-success">Default</span>
+                                    {% endif %}
+                                    {% if not template.is_active %}
+                                        <span class="badge badge-secondary">Inactive</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small">{{ template.description|truncatewords:15 }}</p>
+                                
+                                <div class="row small">
+                                    <div class="col-6">
+                                        <strong>ESI Rate:</strong> {{ template.esi_rate }}%<br>
+                                        <strong>Service Charge:</strong> {{ template.service_charge_rate }}%
+                                    </div>
+                                    <div class="col-6">
+                                        {% if template.apply_cgst_sgst %}
+                                            <strong>CGST:</strong> {{ template.cgst_rate }}%<br>
+                                            <strong>SGST:</strong> {{ template.sgst_rate }}%
+                                        {% elif template.apply_igst %}
+                                            <strong>IGST:</strong> {{ template.igst_rate }}%
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i> Created: {{ template.created_at|date:"M d, Y" }}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <div class="btn-group w-100" role="group">
+                                    <a href="{% url 'employees:bill_template_detail' template.pk %}" 
+                                       class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    <a href="{% url 'employees:bill_template_update' template.pk %}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="{% url 'employees:service_bill_create' %}?template={{ template.pk }}" 
+                                       class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-plus"></i> Use
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-cog text-muted" style="font-size: 4rem;"></i>
+                    </div>
+                    <h4 class="text-muted">No Bill Templates Found</h4>
+                    <p class="text-muted mb-4">Create your first bill template to get started with automatic bill generation.</p>
+                    <a href="{% url 'employees:bill_template_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Your First Template
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

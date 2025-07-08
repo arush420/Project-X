@@ -1,11 +1,12 @@
 from django import forms
 from .models import (Employee, Task, Payment, PurchaseItem, VendorInformation,
                      Company, SalaryRule, Profile, StaffSalary, AdvanceTransaction, SalaryOtherField, Report,
-                     VerificationRequest, EInvoice, EInvoiceLineItem)
+                     VerificationRequest, EInvoice, EInvoiceLineItem, BillTemplate, ServiceBill, ServiceBillItem,
+                     Purchase, PurchaseLineItem)
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 import re
-from django.forms import modelformset_factory
+from django.forms import modelformset_factory, inlineformset_factory
 from django.core.exceptions import ValidationError
 
 
@@ -199,13 +200,11 @@ class VendorInformationForm(forms.ModelForm):
 
 
 class PurchaseItemForm(forms.ModelForm):
-    date_of_purchase = forms.DateField(widget=forms.SelectDateWidget)
-
     class Meta:
         model = PurchaseItem
         fields = [
             'organization_code', 'organization_name', 'organization_gst_number', 'bill_number', 'po_number',
-            'order_by', 'order_for', 'purchased_item', 'category', 'hsn_code', 'date_of_purchase',
+            'order_by', 'order_for', 'purchased_item', 'hsn_code', 'date_of_purchase',
             'per_unit_cost', 'units_bought', 'cgst_rate', 'sgst_rate', 'igst_rate', 'payment_status',
             'payment_by', 'payment_date', 'payment_mode', 'remark', 'bill_file'
         ]
@@ -215,20 +214,20 @@ class PurchaseItemForm(forms.ModelForm):
             'organization_gst_number': forms.TextInput(attrs={'class': 'form-control'}),
             'bill_number': forms.TextInput(attrs={'class': 'form-control'}),
             'purchased_item': forms.TextInput(attrs={'class': 'form-control'}),
-            'category': forms.Select(attrs={'class': 'form-select'}),
             'hsn_code': forms.TextInput(attrs={'class': 'form-control'}),
             'date_of_purchase': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'per_unit_cost': forms.NumberInput(attrs={'class': 'form-control'}),
             'units_bought': forms.NumberInput(attrs={'class': 'form-control'}),
-            'cgst_rate': forms.NumberInput(attrs={'class': 'form-control'}),
-            'sgst_rate': forms.NumberInput(attrs={'class': 'form-control'}),
-            'igst_rate': forms.NumberInput(attrs={'class': 'form-control'}),
+            'cgst_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.0'}),
+            'sgst_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.0'}),
+            'igst_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.0'}),
             'payment_status': forms.Select(attrs={'class': 'form-select'}),
             'payment_by': forms.TextInput(attrs={'class': 'form-control'}),
             'payment_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'payment_mode': forms.Select(attrs={'class': 'form-select'}),
             'remark': forms.TextInput(attrs={'class': 'form-control'}),
             'bill_file': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'order_for': forms.Select(attrs={'class': 'form-select'}),
         }
 
 # Formset for handling multiple purchase items
@@ -237,6 +236,97 @@ PurchaseItemFormSet = modelformset_factory(
     form=PurchaseItemForm,
     extra=1,  # Number of additional blank forms to display
     can_delete=True,  # Allow deletion of existing items
+)
+
+# New Tabular Purchase Forms
+class PurchaseForm(forms.ModelForm):
+    class Meta:
+        model = Purchase
+        fields = [
+            'organization_code', 'organization_name', 'organization_gst_number', 
+            'bill_number', 'po_number', 'order_by', 'order_for', 'date_of_purchase',
+            'cgst_rate', 'sgst_rate', 'igst_rate', 'payment_status', 'payment_by', 
+            'payment_date', 'payment_mode', 'remark', 'bill_file'
+        ]
+        widgets = {
+            'organization_code': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
+            'organization_name': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
+            'organization_gst_number': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
+            'bill_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '0000'}),
+            'po_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '0000'}),
+            'order_by': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'NA'}),
+            'order_for': forms.Select(attrs={'class': 'form-select'}),
+            'date_of_purchase': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'cgst_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.0'}),
+            'sgst_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.0'}),
+            'igst_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.0'}),
+            'payment_status': forms.Select(attrs={'class': 'form-select'}),
+            'payment_by': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'NA'}),
+            'payment_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'payment_mode': forms.Select(attrs={'class': 'form-select'}),
+            'remark': forms.TextInput(attrs={'class': 'form-control'}),
+            'bill_file': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Set the queryset for order_for to use VendorInformation
+        self.fields['order_for'].queryset = VendorInformation.objects.all()
+        self.fields['order_for'].empty_label = "Select Vendor"
+        
+        # Make tax rate fields optional
+        self.fields['cgst_rate'].required = False
+        self.fields['sgst_rate'].required = False
+        self.fields['igst_rate'].required = False
+        
+        # Set default values for tax rate fields if no instance is provided
+        if not self.instance.pk:
+            self.fields['cgst_rate'].initial = 0.0
+            self.fields['sgst_rate'].initial = 0.0
+            self.fields['igst_rate'].initial = 0.0
+
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Set empty tax rates to 0
+        if not cleaned_data.get('cgst_rate'):
+            cleaned_data['cgst_rate'] = 0.0
+        if not cleaned_data.get('sgst_rate'):
+            cleaned_data['sgst_rate'] = 0.0
+        if not cleaned_data.get('igst_rate'):
+            cleaned_data['igst_rate'] = 0.0
+            
+        return cleaned_data
+
+class PurchaseLineItemForm(forms.ModelForm):
+    class Meta:
+        model = PurchaseLineItem
+        fields = ['purchased_item', 'hsn_code', 'per_unit_cost', 'units_bought']
+        widgets = {
+            'purchased_item': forms.TextInput(attrs={'class': 'form-control'}),
+            'hsn_code': forms.TextInput(attrs={'class': 'form-control'}),
+            'per_unit_cost': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'units_bought': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make all fields optional for empty forms
+        if not kwargs.get('instance'):
+            for field in self.fields.values():
+                field.required = False
+
+# Formset for handling multiple purchase line items
+PurchaseLineItemFormSet = inlineformset_factory(
+    Purchase,
+    PurchaseLineItem,
+    form=PurchaseLineItemForm,
+    extra=1,  # Start with one extra form
+    can_delete=True,  # Allow deletion of existing items
+    min_num=1,  # Require at least one item
+    validate_min=True,  # Validate minimum number
+    max_num=20,  # Maximum number of items
+    validate_max=True,  # Validate maximum number
 )
 
 # Company form
@@ -484,3 +574,204 @@ class ReportForm(forms.ModelForm):
 
         if from_date and to_date and from_date > to_date:
             raise ValidationError("From Date cannot be later than To Date.")
+
+
+# Bill Template Forms
+class BillTemplateForm(forms.ModelForm):
+    class Meta:
+        model = BillTemplate
+        fields = [
+            'template_name', 'description', 'default_hsn_code',
+            'esi_rate', 'service_charge_rate', 'cgst_rate', 'sgst_rate', 'igst_rate',
+            'apply_esi', 'apply_service_charge', 'apply_cgst_sgst', 'apply_igst',
+            'round_to_nearest', 'is_default', 'is_active'
+        ]
+        widgets = {
+            'template_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Monthly Manpower Service'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Description of when to use this template'}),
+            'default_hsn_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '998519'}),
+            
+            # Tax rates
+            'esi_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'max': '100', 'placeholder': '3.25'}),
+            'service_charge_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'max': '100', 'placeholder': '6.00'}),
+            'cgst_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'max': '100', 'placeholder': '0.0'}),
+            'sgst_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'max': '100', 'placeholder': '0.0'}),
+            'igst_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'max': '100', 'placeholder': '0.0'}),
+            
+            # Checkboxes
+            'apply_esi': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'apply_service_charge': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'apply_cgst_sgst': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'apply_igst': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_default': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            
+            # Rounding
+            'round_to_nearest': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0.01', 'placeholder': '0.01'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        apply_cgst_sgst = cleaned_data.get('apply_cgst_sgst')
+        apply_igst = cleaned_data.get('apply_igst')
+        
+        # Ensure only one tax type is selected
+        if apply_cgst_sgst and apply_igst:
+            raise ValidationError("Cannot apply both CGST/SGST and IGST. Please select only one.")
+        
+        return cleaned_data
+
+
+class ServiceBillForm(forms.ModelForm):
+    class Meta:
+        model = ServiceBill
+        fields = [
+            'bill_number', 'bill_date', 'template', 'client_name', 'client_address',
+            'client_gst_number', 'client_contact_person', 'client_phone',
+            'service_period_from', 'service_period_to', 'reference_document',
+            'payment_terms', 'due_date', 'notes', 'status'
+        ]
+        widgets = {
+            'bill_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Auto-generated if blank'}),
+            'bill_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'template': forms.Select(attrs={'class': 'form-select'}),
+            'client_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter client name'}),
+            'client_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Enter client address'}),
+            'client_gst_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '22AAAAA0000A1Z5', 'maxlength': '15'}),
+            'client_contact_person': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter contact person name'}),
+            'client_phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter phone number'}),
+            'service_period_from': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'service_period_to': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'reference_document': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., PO Number'}),
+            'payment_terms': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Net 30 days'}),
+            'due_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Additional notes'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        company = kwargs.pop('company', None)
+        super().__init__(*args, **kwargs)
+        
+        # Filter templates by company if provided
+        if company:
+            self.fields['template'].queryset = BillTemplate.objects.filter(company=company, is_active=True)
+        else:
+            self.fields['template'].queryset = BillTemplate.objects.filter(is_active=True)
+        
+        self.fields['template'].empty_label = "Select Template"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        service_period_from = cleaned_data.get('service_period_from')
+        service_period_to = cleaned_data.get('service_period_to')
+        
+        if service_period_from and service_period_to and service_period_from > service_period_to:
+            raise ValidationError("Service period 'from' date cannot be later than 'to' date.")
+        
+        return cleaned_data
+
+
+class ServiceBillItemForm(forms.ModelForm):
+    class Meta:
+        model = ServiceBillItem
+        fields = [
+            'description', 'hsn_code', 'quantity', 'unit_rate', 'notes', 'order'
+        ]
+        widgets = {
+            'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Production Incentive'}),
+            'hsn_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '998519'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0.01', 'placeholder': '1.00'}),
+            'unit_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0.01', 'placeholder': '0.00'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Additional notes for this item'}),
+            'order': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'placeholder': '0'}),
+        }
+
+
+# Formset for handling multiple service bill items
+ServiceBillItemFormSet = modelformset_factory(
+    ServiceBillItem,
+    form=ServiceBillItemForm,
+    extra=1,  # Number of additional blank forms to display
+    can_delete=True,  # Allow deletion of existing items
+)
+
+
+# Quick Bill Generation Form (for creating bills with basic info)
+class QuickBillForm(forms.Form):
+    # Company and template selection
+    company = forms.ModelChoiceField(
+        queryset=Company.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    template = forms.ModelChoiceField(
+        queryset=BillTemplate.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    
+    # Basic bill information
+    bill_date = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        initial=forms.DateField().initial or None
+    )
+    
+    # Client information
+    client_name = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter client name'})
+    )
+    client_address = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Enter client address'})
+    )
+    
+    # Service period
+    service_period_from = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+    )
+    service_period_to = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+    )
+    
+    # Single item for quick creation
+    item_description = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Production Incentive'}),
+        label="Description"
+    )
+    item_amount = forms.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
+        label="Amount"
+    )
+
+    def __init__(self, *args, **kwargs):
+        company = kwargs.pop('company', None)
+        super().__init__(*args, **kwargs)
+        
+        # Filter templates by company if provided
+        if company:
+            self.fields['template'].queryset = BillTemplate.objects.filter(company=company, is_active=True)
+            self.fields['company'].initial = company
+        
+        # Set today's date as default
+        from datetime import date
+        today = date.today()
+        self.fields['bill_date'].initial = today
+        
+        # Set default service period to current month
+        from calendar import monthrange
+        first_day = today.replace(day=1)
+        last_day = today.replace(day=monthrange(today.year, today.month)[1])
+        self.fields['service_period_from'].initial = first_day
+        self.fields['service_period_to'].initial = last_day
+
+    def clean(self):
+        cleaned_data = super().clean()
+        service_period_from = cleaned_data.get('service_period_from')
+        service_period_to = cleaned_data.get('service_period_to')
+        
+        if service_period_from and service_period_to and service_period_from > service_period_to:
+            raise ValidationError("Service period 'from' date cannot be later than 'to' date.")
+        
+        return cleaned_data

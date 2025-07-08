@@ -131,7 +131,7 @@ class SalaryRule(models.Model):
     add = models.BooleanField(default=False)  # Track if this rule was selected
 
     def __str__(self):
-        return f"{self.company.company_name} - {self.standard_head}"
+        return f"{self.company.company_name} - Salary Rule"
 
 
 class SalaryOtherField(models.Model):
@@ -499,108 +499,6 @@ class Task(models.Model):
     def __str__(self):
         return self.title
 
-# company Payment to Us
-class Payment(models.Model):
-    company_name = models.CharField(max_length=100)
-    amount_received = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_date = models.DateField()
-    account_of_own_company = models.CharField(max_length=5)
-    payment_against_bill = models.CharField(max_length=5, unique=True)
-    remark = models.CharField(max_length=100, blank=True)
-    PAYMENT_CHOICES = [
-        ('full_payment_received', 'Full Payment Received'),
-        ('part_payment_received', 'part Payment Received')
-    ]
-    payment_status = models.CharField(max_length=100, choices=PAYMENT_CHOICES, default='Full Payment Received')
-
-    def __str__(self):
-        return f"Payment from {self.company_name} on {self.payment_date}"
-
-
-class VendorInformation(models.Model):
-    vendor_id = models.CharField(max_length=4)
-    vendor_name = models.CharField(max_length=100)
-    vendor_address = models.CharField(max_length=100)
-    district = models.CharField(max_length=100, default='none')
-    state = models.CharField(max_length=100, default='none')
-    pincode = models.CharField(max_length=6, validators=[RegexValidator(r'^\d{6}$', message="Pincode must be 6 digits.")], default='000000')
-    vendor_gst_number = models.CharField(max_length=20)
-    vendor_account_number = models.CharField(max_length=20)
-    vendor_ifsc_code = models.CharField(max_length=11)
-    vendor_contact_person_name = models.CharField(max_length=100)
-    vendor_contact_person_number = models.CharField(validators=[phone_regex], max_length=10)
-
-    def __str__(self):
-        return self.vendor_name
-
-
-# Upload purchase bills
-def bill_upload_path(instance, filename):
-    return os.path.join("purchase_bills", filename)
-
-# Purchases from vendor
-class PurchaseItem(models.Model):
-    CATEGORY_CHOICES = [
-        ('Stationary', 'Stationary'),
-        ('Furniture', 'Furniture'),
-        ('Pantry', 'Pantry'),
-        ('Miscellaneous', 'Miscellaneous'),
-    ]
-    organization_code = models.CharField(max_length=5)
-    organization_name = models.CharField(max_length=255)
-    organization_gst_number = models.CharField(max_length=15)
-    bill_number = models.CharField(max_length=5)
-    po_number = models.CharField(max_length=5, blank=True, default="0000")  # Fixed default and renamed field
-    order_by = models.CharField(max_length=50, blank=True, default="")  # Optional and blank default
-    order_for = models.CharField(max_length=50, blank=True, default="")  # Optional and blank default
-    purchased_item = models.CharField(max_length=50)
-    category = models.CharField(max_length=25, choices=CATEGORY_CHOICES, default='Miscellaneous')
-    hsn_code = models.CharField(max_length=10)
-    date_of_purchase = models.DateField()
-    per_unit_cost = models.DecimalField(max_digits=10, decimal_places=2)
-    units_bought = models.PositiveIntegerField()
-
-    # Tax rates
-    cgst_rate = models.DecimalField(max_digits=4, decimal_places=2)  # Adjusted max_digits for tax rates
-    sgst_rate = models.DecimalField(max_digits=4, decimal_places=2)
-    igst_rate = models.DecimalField(max_digits=4, decimal_places=2)
-
-    # Totals
-    gross_total = models.DecimalField(max_digits=12, decimal_places=2, editable=False, default=0)  # Updated precision
-    total_gst = models.DecimalField(max_digits=12, decimal_places=2, editable=False, default=0)
-    net_price = models.DecimalField(max_digits=12, decimal_places=2, editable=False, default=0)
-
-    # Payment Details
-    Vendor_PAYMENT_CHOICES = [
-        ('full_payment_vendor', 'Full Payment Done'),
-        ('part_payment_vendor', 'Part Payment Done'),
-        ('unpaid_vendor', 'Payment Pending'),
-    ]
-    payment_status = models.CharField(max_length=50, choices=Vendor_PAYMENT_CHOICES, default='full_payment_vendor')  # Fixed defaut
-    payment_by = models.CharField(max_length=50, blank=True, default="")  # Optional payment_by
-    payment_date = models.DateField(blank=True, null=True)  # Changed to DateField
-    PAYMENT_CHOICES = [
-        ('bank_transfer', 'Bank Transfer'),
-        ('cash', 'Cash'),
-        ('upi', 'UPI'),
-    ]
-    payment_mode = models.CharField(max_length=20, choices=PAYMENT_CHOICES, blank=True, default="")  # Added payment_mode
-    remark = models.CharField(max_length=255, blank=True)  # Extended length for detailed remarks
-
-    # Bill upload
-    bill_file = models.FileField(upload_to=bill_upload_path, blank=True, null=True)
-
-    def save(self, *args, **kwargs):
-        # Calculate gross total, GST, and net price
-        self.gross_total = self.per_unit_cost * self.units_bought
-        self.total_gst = self.gross_total * (self.cgst_rate + self.sgst_rate + self.igst_rate) / 100
-        self.net_price = self.gross_total + self.total_gst
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.purchased_item} ({self.category}) purchased from {self.organization_name}"
-
-
 
 # Staff salary
 class StaffSalary(models.Model):
@@ -748,6 +646,206 @@ class Report(models.Model):
                                          year__lte=self.to_date.year).values('esic')
         return None
 
+
+
+# company Payment to Us
+class Payment(models.Model):
+    company_name = models.CharField(max_length=100)
+    amount_received = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_date = models.DateField()
+    account_of_own_company = models.CharField(max_length=5)
+    payment_against_bill = models.CharField(max_length=5, unique=True)
+    remark = models.CharField(max_length=100, blank=True)
+    PAYMENT_CHOICES = [
+        ('full_payment_received', 'Full Payment Received'),
+        ('part_payment_received', 'part Payment Received')
+    ]
+    payment_status = models.CharField(max_length=100, choices=PAYMENT_CHOICES, default='Full Payment Received')
+
+    def __str__(self):
+        return f"Payment from {self.company_name} on {self.payment_date}"
+
+
+class VendorInformation(models.Model):
+    vendor_id = models.CharField(max_length=4)
+    vendor_name = models.CharField(max_length=100)
+    vendor_address = models.CharField(max_length=100)
+    district = models.CharField(max_length=100, default='none')
+    state = models.CharField(max_length=100, default='none')
+    pincode = models.CharField(max_length=6, validators=[RegexValidator(r'^\d{6}$', message="Pincode must be 6 digits.")], default='000000')
+    vendor_gst_number = models.CharField(max_length=20)
+    vendor_account_number = models.CharField(max_length=20)
+    vendor_ifsc_code = models.CharField(max_length=11)
+    vendor_contact_person_name = models.CharField(max_length=100)
+    vendor_contact_person_number = models.CharField(validators=[phone_regex], max_length=10)
+
+    def __str__(self):
+        return self.vendor_name
+
+
+# Upload purchase bills
+def bill_upload_path(instance, filename):
+    return os.path.join("purchase_bills", filename)
+
+# Main Purchase Record (Header)
+class Purchase(models.Model):
+    # Organization Details
+    organization_code = models.CharField(max_length=5)
+    organization_name = models.CharField(max_length=255)
+    organization_gst_number = models.CharField(max_length=15)
+    
+    # Bill & Order Details
+    bill_number = models.CharField(max_length=5, unique=True, default='0000')
+    po_number = models.CharField(max_length=5, blank=True, default='0000')
+    order_by = models.CharField(max_length=50, blank=True)
+    order_for = models.ForeignKey(VendorInformation, on_delete=models.SET_NULL, null=True, blank=True, help_text="Vendor for this purchase")
+    
+    # Purchase Date
+    date_of_purchase = models.DateField()
+    
+    # Tax Rates (Common for all items in this purchase)
+    cgst_rate = models.DecimalField(max_digits=4, decimal_places=2, default=0.0)
+    sgst_rate = models.DecimalField(max_digits=4, decimal_places=2, default=0.0)
+    igst_rate = models.DecimalField(max_digits=4, decimal_places=2, default=0.0)
+    
+    # Payment Details
+    Vendor_PAYMENT_CHOICES = [
+        ('full_payment_vendor', 'Full Payment Done'),
+        ('part_payment_vendor', 'Part Payment Done'),
+        ('unpaid_vendor', 'Payment Pending'),
+    ]
+    payment_status = models.CharField(max_length=50, choices=Vendor_PAYMENT_CHOICES, default='full_payment_vendor')
+    payment_by = models.CharField(max_length=50, blank=True, default='NA')
+    payment_date = models.DateField(blank=True, null=True)
+    
+    PAYMENT_CHOICES = [
+        ('bank_transfer', 'Bank Transfer'),
+        ('cash', 'Cash'),
+        ('upi', 'UPI'),
+    ]
+    payment_mode = models.CharField(max_length=20, choices=PAYMENT_CHOICES, blank=True, default='bank_transfer')
+    remark = models.CharField(max_length=255, blank=True)
+    
+    # Bill upload
+    bill_file = models.FileField(upload_to=bill_upload_path, blank=True, null=True)
+    
+    # Calculated Totals
+    total_gross_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, editable=False)
+    total_gst_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, editable=False)
+    total_net_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, editable=False)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def calculate_totals(self):
+        """Calculate totals from all line items"""
+        line_items = self.line_items.all()
+        self.total_gross_amount = sum(item.total_amount for item in line_items)
+        self.total_gst_amount = self.total_gross_amount * (self.cgst_rate + self.sgst_rate + self.igst_rate) / 100
+        self.total_net_amount = self.total_gross_amount + self.total_gst_amount
+        self.save()
+    
+    def __str__(self):
+        return f"Purchase {self.bill_number} - {self.organization_name}"
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Purchase"
+        verbose_name_plural = "Purchases"
+
+# Purchase Line Items (Individual Items)
+class PurchaseLineItem(models.Model):
+
+    purchase = models.ForeignKey(Purchase, on_delete=models.CASCADE, related_name='line_items')
+    
+    # Item Details
+    purchased_item = models.CharField(max_length=50)
+    hsn_code = models.CharField(max_length=10)
+    
+    # Pricing Details
+    per_unit_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    units_bought = models.PositiveIntegerField()
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2, editable=False)
+    
+    # Ordering
+    order = models.PositiveIntegerField(default=0)
+    
+    def save(self, *args, **kwargs):
+        # Calculate total amount for this line item
+        self.total_amount = self.per_unit_cost * self.units_bought
+        super().save(*args, **kwargs)
+        
+        # Recalculate purchase totals
+        if self.purchase_id:
+            self.purchase.calculate_totals()
+    
+    def __str__(self):
+        return f"{self.purchased_item} - {self.purchase.bill_number}"
+    
+    class Meta:
+        ordering = ['order', 'id']
+        verbose_name = "Purchase Line Item"
+        verbose_name_plural = "Purchase Line Items"
+
+# Purchases from vendor
+class PurchaseItem(models.Model):
+
+    organization_code = models.CharField(max_length=5)
+    organization_name = models.CharField(max_length=255)
+    organization_gst_number = models.CharField(max_length=15)
+    bill_number = models.CharField(max_length=5)
+    po_number = models.CharField(max_length=5, blank=True, default="0000")
+    order_by = models.CharField(max_length=50, blank=True, default="")
+    order_for = models.ForeignKey(VendorInformation, on_delete=models.SET_NULL, null=True, blank=True, help_text="Vendor for this purchase")
+    purchased_item = models.CharField(max_length=50)
+    hsn_code = models.CharField(max_length=10)
+    date_of_purchase = models.DateField()
+    per_unit_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    units_bought = models.PositiveIntegerField()
+
+    # Tax rates
+    cgst_rate = models.DecimalField(max_digits=4, decimal_places=2)  # Adjusted max_digits for tax rates
+    sgst_rate = models.DecimalField(max_digits=4, decimal_places=2)
+    igst_rate = models.DecimalField(max_digits=4, decimal_places=2)
+
+    # Totals
+    gross_total = models.DecimalField(max_digits=12, decimal_places=2, editable=False, default=0)  # Updated precision
+    total_gst = models.DecimalField(max_digits=12, decimal_places=2, editable=False, default=0)
+    net_price = models.DecimalField(max_digits=12, decimal_places=2, editable=False, default=0)
+
+    # Payment Details
+    Vendor_PAYMENT_CHOICES = [
+        ('full_payment_vendor', 'Full Payment Done'),
+        ('part_payment_vendor', 'Part Payment Done'),
+        ('unpaid_vendor', 'Payment Pending'),
+    ]
+    payment_status = models.CharField(max_length=50, choices=Vendor_PAYMENT_CHOICES, default='full_payment_vendor')  # Fixed defaut
+    payment_by = models.CharField(max_length=50, blank=True, default="")  # Optional payment_by
+    payment_date = models.DateField(blank=True, null=True)  # Changed to DateField
+    PAYMENT_CHOICES = [
+        ('bank_transfer', 'Bank Transfer'),
+        ('cash', 'Cash'),
+        ('upi', 'UPI'),
+    ]
+    payment_mode = models.CharField(max_length=20, choices=PAYMENT_CHOICES, blank=True, default="")  # Added payment_mode
+    remark = models.CharField(max_length=255, blank=True)  # Extended length for detailed remarks
+
+    # Bill upload
+    bill_file = models.FileField(upload_to=bill_upload_path, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        # Calculate gross total, GST, and net price
+        self.gross_total = self.per_unit_cost * self.units_bought
+        self.total_gst = self.gross_total * (self.cgst_rate + self.sgst_rate + self.igst_rate) / 100
+        self.net_price = self.gross_total + self.total_gst
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.purchased_item} ({self.category}) purchased from {self.organization_name}"
+
+
+
 # E-Invoice Model
 class EInvoice(models.Model):
     INVOICE_TYPE_CHOICES = [
@@ -853,6 +951,14 @@ class EInvoice(models.Model):
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('sent', 'Sent'),
+        ('paid', 'Paid'),
+        ('cancelled', 'Cancelled'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     
     def save(self, *args, **kwargs):
         # Calculate totals from line items
@@ -903,20 +1009,258 @@ class EInvoiceLineItem(models.Model):
     sgst_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     igst_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     item_total_with_tax = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    
+
     def save(self, *args, **kwargs):
         # Calculate totals
         self.total_value = self.quantity * self.unit_price
         self.cgst_amount = (self.total_value * self.cgst_rate) / 100
         self.sgst_amount = (self.total_value * self.sgst_rate) / 100
         self.igst_amount = (self.total_value * self.igst_rate) / 100
+        
+        # Calculate item total with tax
         self.item_total_with_tax = self.total_value + self.cgst_amount + self.sgst_amount + self.igst_amount
+        
         super().save(*args, **kwargs)
         
-        # Update parent invoice totals
-        if self.invoice_id:
-            self.invoice.save()
-    
+        # Update invoice totals
+        self.invoice.save()
+
     def __str__(self):
         return f"{self.product_service_name} - {self.invoice.invoice_number}"
+
+
+# Bill Template Models for Manpower Service Bills
+class BillTemplate(models.Model):
+    """
+    Template for reusable bill calculation rules and configurations
+    """
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='bill_templates')
+    template_name = models.CharField(max_length=100, help_text="Name for this template (e.g., 'Monthly Manpower Service')")
+    description = models.TextField(blank=True, help_text="Description of when to use this template")
+    
+    # Default service parameters
+    default_hsn_code = models.CharField(max_length=10, default="998519", help_text="Default HSN code for manpower services")
+    
+    # Tax Configuration
+    esi_rate = models.DecimalField(max_digits=5, decimal_places=2, default=3.25, help_text="ESI rate as percentage")
+    service_charge_rate = models.DecimalField(max_digits=5, decimal_places=2, default=6.0, help_text="Service charge rate as percentage")
+    cgst_rate = models.DecimalField(max_digits=5, decimal_places=2, default=9.0, help_text="CGST rate as percentage")
+    sgst_rate = models.DecimalField(max_digits=5, decimal_places=2, default=9.0, help_text="SGST rate as percentage")
+    igst_rate = models.DecimalField(max_digits=5, decimal_places=2, default=18.0, help_text="IGST rate as percentage")
+    
+    # Calculation Rules
+    apply_esi = models.BooleanField(default=True, help_text="Apply ESI contribution")
+    apply_service_charge = models.BooleanField(default=True, help_text="Apply service charge")
+    apply_cgst_sgst = models.BooleanField(default=True, help_text="Apply CGST/SGST (for same state)")
+    apply_igst = models.BooleanField(default=False, help_text="Apply IGST (for different state)")
+    
+    # Rounding Rules
+    round_to_nearest = models.DecimalField(max_digits=5, decimal_places=2, default=0.01, help_text="Round final amount to nearest value")
+    
+    # Template Settings
+    is_default = models.BooleanField(default=False, help_text="Make this the default template")
+    is_active = models.BooleanField(default=True, help_text="Template is active and can be used")
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['company', 'template_name']
+        ordering = ['-created_at']
+        verbose_name = "Bill Template"
+        verbose_name_plural = "Bill Templates"
+    
+    def __str__(self):
+        return f"{self.company.company_name} - {self.template_name}"
+    
+    def save(self, *args, **kwargs):
+        # Ensure only one default template per company
+        if self.is_default:
+            BillTemplate.objects.filter(company=self.company, is_default=True).update(is_default=False)
+        super().save(*args, **kwargs)
+
+
+class ServiceBill(models.Model):
+    """
+    Manpower Service Bill Model
+    """
+    # Bill Information
+    bill_number = models.CharField(max_length=50, unique=True)
+    bill_date = models.DateField()
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='service_bills')
+    template = models.ForeignKey(BillTemplate, on_delete=models.PROTECT, related_name='bills')
+    
+    # Client Information (Bill To)
+    client_name = models.CharField(max_length=200)
+    client_address = models.TextField()
+    client_gst_number = models.CharField(max_length=15, blank=True, null=True)
+    client_contact_person = models.CharField(max_length=100, blank=True, null=True)
+    client_phone = models.CharField(max_length=15, blank=True, null=True)
+    
+    # Service Period
+    service_period_from = models.DateField()
+    service_period_to = models.DateField()
+    
+    # Calculated Totals
+    total_gross_wages = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_esi_contribution = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_service_charge = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    taxable_value = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    cgst_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    sgst_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    igst_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    
+    # Additional Information
+    reference_document = models.CharField(max_length=100, blank=True, null=True, help_text="PO Number or reference")
+    payment_terms = models.CharField(max_length=200, blank=True, null=True)
+    due_date = models.DateField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    
+    # Status
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('sent', 'Sent'),
+        ('paid', 'Paid'),
+        ('overdue', 'Overdue'),
+        ('cancelled', 'Cancelled'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Service Bill"
+        verbose_name_plural = "Service Bills"
+    
+    def __str__(self):
+        return f"Bill #{self.bill_number} - {self.client_name}"
+    
+    def save(self, *args, **kwargs):
+        # Auto-generate bill number if not provided
+        if not self.bill_number:
+            self.bill_number = self.generate_bill_number()
+        
+        # Save first to get primary key
+        super().save(*args, **kwargs)
+        
+        # Then calculate totals and save again if needed
+        old_total = self.total_amount
+        self.calculate_totals()
+        if old_total != self.total_amount:
+            super().save(*args, **kwargs)
+    
+    def generate_bill_number(self):
+        """Generate unique bill number"""
+        import datetime
+        today = datetime.date.today()
+        prefix = f"{self.company.company_code}{today.strftime('%Y%m')}"
+        
+        # Get last bill number for this month
+        last_bill = ServiceBill.objects.filter(
+            bill_number__startswith=prefix,
+            company=self.company
+        ).order_by('-bill_number').first()
+        
+        if last_bill:
+            last_number = int(last_bill.bill_number[-4:])  # Get last 4 digits
+            new_number = last_number + 1
+        else:
+            new_number = 1
+        
+        return f"{prefix}{new_number:04d}"
+    
+    def calculate_totals(self):
+        """Calculate all totals based on line items and template rules"""
+        # Get all line items (only if the instance has been saved)
+        if self.pk:
+            line_items = self.line_items.all()
+            # Calculate gross wages total
+            self.total_gross_wages = sum(item.total_amount for item in line_items)
+        else:
+            # If not saved yet, start with zero
+            self.total_gross_wages = 0
+        
+        # Calculate ESI contribution
+        if self.template.apply_esi:
+            self.total_esi_contribution = (self.total_gross_wages * self.template.esi_rate) / 100
+        else:
+            self.total_esi_contribution = 0
+        
+        # Calculate service charge
+        if self.template.apply_service_charge:
+            self.total_service_charge = (self.total_gross_wages * self.template.service_charge_rate) / 100
+        else:
+            self.total_service_charge = 0
+        
+        # Calculate taxable value
+        self.taxable_value = self.total_gross_wages + self.total_esi_contribution + self.total_service_charge
+        
+        # Calculate taxes
+        if self.template.apply_cgst_sgst:
+            self.cgst_amount = (self.taxable_value * self.template.cgst_rate) / 100
+            self.sgst_amount = (self.taxable_value * self.template.sgst_rate) / 100
+            self.igst_amount = 0
+        elif self.template.apply_igst:
+            self.igst_amount = (self.taxable_value * self.template.igst_rate) / 100
+            self.cgst_amount = 0
+            self.sgst_amount = 0
+        else:
+            self.cgst_amount = 0
+            self.sgst_amount = 0
+            self.igst_amount = 0
+        
+        # Calculate total amount
+        self.total_amount = self.taxable_value + self.cgst_amount + self.sgst_amount + self.igst_amount
+        
+        # Apply rounding
+        if self.template.round_to_nearest:
+            self.total_amount = round(self.total_amount / self.template.round_to_nearest) * self.template.round_to_nearest
+    
+    def get_amount_in_words(self):
+        """Convert total amount to words"""
+        # This would need a number-to-words conversion library
+        # For now, return a placeholder
+        return f"Rupees {self.total_amount} only"
+
+
+class ServiceBillItem(models.Model):
+    """
+    Individual line items for Service Bills
+    """
+    bill = models.ForeignKey(ServiceBill, on_delete=models.CASCADE, related_name='line_items')
+    
+    # Item Details
+    description = models.CharField(max_length=200, help_text="e.g., Production Incentive, Attendance Award")
+    hsn_code = models.CharField(max_length=10, default="998519")
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+    unit_rate = models.DecimalField(max_digits=12, decimal_places=2)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    
+    # Additional Details
+    notes = models.TextField(blank=True, null=True)
+    
+    # Ordering
+    order = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        ordering = ['order', 'id']
+        verbose_name = "Service Bill Item"
+        verbose_name_plural = "Service Bill Items"
+    
+    def __str__(self):
+        return f"{self.description} - {self.bill.bill_number}"
+    
+    def save(self, *args, **kwargs):
+        # Calculate total amount
+        self.total_amount = self.quantity * self.unit_rate
+        
+        super().save(*args, **kwargs)
+        
+        # Update bill totals
+        self.bill.save()
 

@@ -10,3 +10,17 @@ def add_class(field, css_class):
         return field.as_widget(attrs={"class": css_class})
     # If not, return the field as is
     return field
+
+@register.filter(name='mul')
+def mul(value, arg):
+    try:
+        return float(value) * float(arg)
+    except:
+        return 0
+
+@register.filter(name='div')
+def div(value, arg):
+    try:
+        return float(value) / float(arg) if float(arg) != 0 else 0
+    except:
+        return 0

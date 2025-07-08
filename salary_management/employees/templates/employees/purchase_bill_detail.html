@@ -1,33 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Purchase Bill Detail{% endblock %}
+
+{% block content %}
 <div class="container mt-5">
-    <h1>Bill #{{ bill_number }} Details</h1>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Item</th>
-                <th>Category</th>
-                <th>Units</th>
-                <th>Per Unit Cost</th>
-                <th>Gross Total</th>
-                <th>CGST</th>
-                <th>SGST</th>
-                <th>IGST</th>
-                <th>Net Price</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in purchases %}
-            <tr>
-                <td>{{ item.purchased_item }}</td>
-                <td>{{ item.category }}</td>
-                <td>{{ item.units_bought }}</td>
-                <td>{{ item.per_unit_cost }}</td>
-                <td>{{ item.gross_total }}</td>
-                <td>{{ item.cgst_rate }}%</td>
-                <td>{{ item.sgst_rate }}%</td>
-                <td>{{ item.igst_rate }}%</td>
-                <td>{{ item.net_price }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Bill #{{ bill_number }} Details</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle text-center">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Item</th>
+                            <th scope="col">Units</th>
+                            <th scope="col">Per Unit Cost</th>
+                            <th scope="col">Gross Total</th>
+                            <th scope="col">CGST</th>
+                            <th scope="col">SGST</th>
+                            <th scope="col">IGST</th>
+                            <th scope="col">Net Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in purchases %}
+                        <tr>
+                            <td>{{ item.purchased_item }}</td>
+                            <td>{{ item.units_bought }}</td>
+                            <td>₹{{ item.per_unit_cost|floatformat:2 }}</td>
+                            <td>₹{{ item.gross_total|floatformat:2 }}</td>
+                            <td>{{ item.cgst_rate }}%</td>
+                            <td>{{ item.sgst_rate }}%</td>
+                            <td>{{ item.igst_rate }}%</td>
+                            <td>₹{{ item.net_price|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-muted">No items to display.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
+{% endblock %}

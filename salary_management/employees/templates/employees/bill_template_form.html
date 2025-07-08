@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if template %}Edit Template{% else %}Create Bill Template{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-cog"></i>
+                        {% if template %}Edit Bill Template{% else %}Create New Bill Template{% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-info-circle"></i> Basic Information
+                                </h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.template_name.id_for_label }}" class="form-label">
+                                        <strong>Template Name</strong> <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.template_name }}
+                                    {% if form.template_name.errors %}
+                                        <div class="text-danger small">{{ form.template_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.default_hsn_code.id_for_label }}" class="form-label">
+                                        <strong>Default HSN Code</strong>
+                                    </label>
+                                    {{ form.default_hsn_code }}
+                                    {% if form.default_hsn_code.errors %}
+                                        <div class="text-danger small">{{ form.default_hsn_code.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                                        <strong>Description</strong>
+                                    </label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                        <div class="text-danger small">{{ form.description.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tax Rates -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-percentage"></i> Tax Rates (%)
+                                </h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.esi_rate.id_for_label }}" class="form-label">
+                                        <strong>ESI Rate</strong> <span class="text-muted">(typically 3.25%)</span>
+                                    </label>
+                                    <div class="input-group">
+                                        {{ form.esi_rate }}
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                    {% if form.esi_rate.errors %}
+                                        <div class="text-danger small">{{ form.esi_rate.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.service_charge_rate.id_for_label }}" class="form-label">
+                                        <strong>Service Charge Rate</strong> <span class="text-muted">(typically 6%)</span>
+                                    </label>
+                                    <div class="input-group">
+                                        {{ form.service_charge_rate }}
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                    {% if form.service_charge_rate.errors %}
+                                        <div class="text-danger small">{{ form.service_charge_rate.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.cgst_rate.id_for_label }}" class="form-label">
+                                        <strong>CGST Rate</strong> <span class="text-muted">(typically 9%)</span>
+                                    </label>
+                                    <div class="input-group">
+                                        {{ form.cgst_rate }}
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                    {% if form.cgst_rate.errors %}
+                                        <div class="text-danger small">{{ form.cgst_rate.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.sgst_rate.id_for_label }}" class="form-label">
+                                        <strong>SGST Rate</strong> <span class="text-muted">(typically 9%)</span>
+                                    </label>
+                                    <div class="input-group">
+                                        {{ form.sgst_rate }}
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                    {% if form.sgst_rate.errors %}
+                                        <div class="text-danger small">{{ form.sgst_rate.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.igst_rate.id_for_label }}" class="form-label">
+                                        <strong>IGST Rate</strong> <span class="text-muted">(typically 18%)</span>
+                                    </label>
+                                    <div class="input-group">
+                                        {{ form.igst_rate }}
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                    {% if form.igst_rate.errors %}
+                                        <div class="text-danger small">{{ form.igst_rate.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Calculation Rules -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-calculator"></i> Calculation Rules
+                                </h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    {{ form.apply_esi }}
+                                    <label class="form-check-label" for="{{ form.apply_esi.id_for_label }}">
+                                        <strong>Apply ESI Contribution</strong>
+                                        <small class="text-muted d-block">Include ESI contribution in calculations</small>
+                                    </label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    {{ form.apply_service_charge }}
+                                    <label class="form-check-label" for="{{ form.apply_service_charge.id_for_label }}">
+                                        <strong>Apply Service Charge</strong>
+                                        <small class="text-muted d-block">Include service charge in calculations</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    {{ form.apply_cgst_sgst }}
+                                    <label class="form-check-label" for="{{ form.apply_cgst_sgst.id_for_label }}">
+                                        <strong>Apply CGST/SGST</strong>
+                                        <small class="text-muted d-block">For same state transactions</small>
+                                    </label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    {{ form.apply_igst }}
+                                    <label class="form-check-label" for="{{ form.apply_igst.id_for_label }}">
+                                        <strong>Apply IGST</strong>
+                                        <small class="text-muted d-block">For inter-state transactions</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Settings -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-tools"></i> Additional Settings
+                                </h5>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.round_to_nearest.id_for_label }}" class="form-label">
+                                        <strong>Round to Nearest</strong>
+                                    </label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">₹</span>
+                                        </div>
+                                        {{ form.round_to_nearest }}
+                                    </div>
+                                    {% if form.round_to_nearest.errors %}
+                                        <div class="text-danger small">{{ form.round_to_nearest.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check mt-4">
+                                    {{ form.is_default }}
+                                    <label class="form-check-label" for="{{ form.is_default.id_for_label }}">
+                                        <strong>Set as Default Template</strong>
+                                        <small class="text-muted d-block">Use this template by default</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check mt-4">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        <strong>Template Active</strong>
+                                        <small class="text-muted d-block">Template is available for use</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Errors -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Action Buttons -->
+                        <div class="row">
+                            <div class="col-12">
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'employees:bill_template_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left"></i> Back to Templates
+                                    </a>
+                                    <div>
+                                        <button type="submit" class="btn btn-primary mr-2">
+                                            <i class="fas fa-save"></i>
+                                            {% if template %}Update Template{% else %}Create Template{% endif %}
+                                        </button>
+                                        {% if template %}
+                                        <a href="{% url 'employees:bill_template_detail' template.pk %}" class="btn btn-info">
+                                            <i class="fas fa-eye"></i> View Template
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+
+    // Tax type validation - ensure only one is selected
+    const cgstSgstCheckbox = document.getElementById('id_apply_cgst_sgst');
+    const igstCheckbox = document.getElementById('id_apply_igst');
+    
+    if (cgstSgstCheckbox && igstCheckbox) {
+        cgstSgstCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                igstCheckbox.checked = false;
+            }
+        });
+        
+        igstCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                cgstSgstCheckbox.checked = false;
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 

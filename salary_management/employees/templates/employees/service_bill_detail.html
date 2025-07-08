@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Service Bill #{{ bill.bill_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Action Buttons -->
+            <div class="mb-3 d-print-none">
+                <a href="{% url 'employees:service_bill_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Bills
+                </a>
+                <a href="{% url 'employees:service_bill_update' bill.pk %}" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Edit Bill
+                </a>
+                <a href="{% url 'employees:service_bill_print' bill.pk %}" class="btn btn-info" target="_blank">
+                    <i class="fas fa-print"></i> Print
+                </a>
+                <button onclick="window.print()" class="btn btn-success">
+                    <i class="fas fa-file-pdf"></i> Print/PDF
+                </button>
+            </div>
+
+            <!-- Bill Content -->
+            <div class="bill-container bg-white p-4 border">
+                <!-- Bill Header -->
+                <div class="row mb-4">
+                    <div class="col-8">
+                        <h2 class="fw-bold text-uppercase">{{ bill.company.company_name }}</h2>
+                        <div class="company-details">
+                            <p class="mb-1">{{ bill.company.company_address }}</p>
+                            <p class="mb-1">Contact: {{ bill.company.company_contact_person_name }}</p>
+                            <p class="mb-1">Phone: {{ bill.company.company_contact_person_number }}</p>
+                            <p class="mb-1">Email: {{ bill.company.company_contact_person_email }}</p>
+                            <p class="mb-1">GST No: {{ bill.company.company_gst_number }}</p>
+                        </div>
+                    </div>
+                    <div class="col-4 text-end">
+                        <div class="bill-info border p-3">
+                            <h3 class="h5 fw-bold mb-2">BILL</h3>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td><strong>Bill No</strong></td>
+                                    <td>{{ bill.bill_number }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Dated</strong></td>
+                                    <td>{{ bill.bill_date|date:"d-M-y" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bill To Section -->
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <div class="border p-3">
+                            <h5 class="fw-bold mb-2">Bill to</h5>
+                            <p class="fw-bold mb-1">{{ bill.client_name }}</p>
+                            <p class="mb-1">{{ bill.client_address }}</p>
+                            {% if bill.client_gst_number %}
+                            <p class="mb-1">GST No: {{ bill.client_gst_number }}</p>
+                            {% endif %}
+                            {% if bill.client_contact_person %}
+                            <p class="mb-1">Contact: {{ bill.client_contact_person }}</p>
+                            {% endif %}
+                            {% if bill.client_phone %}
+                            <p class="mb-1">Phone: {{ bill.client_phone }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border p-3">
+                            <h5 class="fw-bold mb-2">Service Period</h5>
+                            <p>From: {{ bill.service_period_from|date:"d M Y" }}</p>
+                            <p>To: {{ bill.service_period_to|date:"d M Y" }}</p>
+                            {% if bill.reference_document %}
+                            <p>Reference: {{ bill.reference_document }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description of Service -->
+                <div class="mb-4">
+                    <h5 class="fw-bold mb-3">Description of Service</h5>
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 50%;">Description</th>
+                                <th style="width: 15%;">HSN CODE</th>
+                                <th style="width: 10%;">Qty</th>
+                                <th style="width: 15%;">Rate</th>
+                                <th style="width: 10%;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in line_items %}
+                            <tr>
+                                <td>{{ item.description }}</td>
+                                <td class="text-center">{{ item.hsn_code }}</td>
+                                <td class="text-center">{{ item.quantity }}</td>
+                                <td class="text-end">₹{{ item.unit_rate|floatformat:2 }}</td>
+                                <td class="text-end">₹{{ item.total_amount|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                            
+                            <!-- Empty rows for spacing (like in the original bill) -->
+                            {% for i in "12345" %}
+                            <tr>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                            </tr>
+                            {% endfor %}
+                            
+                            <!-- Totals Section -->
+                            <tr>
+                                <td colspan="4" class="text-end fw-bold">TOTAL GROSS WAGES</td>
+                                <td class="text-end fw-bold">₹{{ bill.total_gross_wages|floatformat:2 }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Calculation Section -->
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <!-- Left side calculations -->
+                        <table class="table table-bordered">
+                            <tbody>
+                                {% if bill.template.apply_esi %}
+                                <tr>
+                                    <td>ESI CONTRIBUTION @{{ bill.template.esi_rate }}%</td>
+                                    <td class="text-end">₹{{ bill.total_gross_wages|floatformat:2 }}</td>
+                                    <td class="text-end">₹{{ bill.total_esi_contribution|floatformat:2 }}</td>
+                                </tr>
+                                {% endif %}
+                                
+                                {% if bill.template.apply_service_charge %}
+                                <tr>
+                                    <td>SERVICE CHARGE @ {{ bill.template.service_charge_rate }}%</td>
+                                    <td class="text-end">₹{{ bill.total_gross_wages|floatformat:2 }}</td>
+                                    <td class="text-end">₹{{ bill.total_service_charge|floatformat:2 }}</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="col-6">
+                        <!-- Right side totals -->
+                        <table class="table table-bordered">
+                            <tbody>
+                                <tr>
+                                    <td class="text-end fw-bold">Taxable Value</td>
+                                    <td class="text-end fw-bold">₹{{ bill.taxable_value|floatformat:2 }}</td>
+                                </tr>
+                                
+                                {% if bill.template.apply_cgst_sgst %}
+                                <tr>
+                                    <td>CGST @ {{ bill.template.cgst_rate }}%</td>
+                                    <td class="text-end">₹{{ bill.cgst_amount|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <td>SGST @ {{ bill.template.sgst_rate }}%</td>
+                                    <td class="text-end">₹{{ bill.sgst_amount|floatformat:2 }}</td>
+                                </tr>
+                                {% elif bill.template.apply_igst %}
+                                <tr>
+                                    <td>IGST @ {{ bill.template.igst_rate }}%</td>
+                                    <td class="text-end">₹{{ bill.igst_amount|floatformat:2 }}</td>
+                                </tr>
+                                {% endif %}
+                                
+                                <tr class="table-secondary">
+                                    <td class="text-end fw-bold">TOTAL</td>
+                                    <td class="text-end fw-bold">₹{{ bill.total_amount|floatformat:2 }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Amount in Words -->
+                <div class="mb-4">
+                    <p><strong>Amount (in word):</strong> {{ bill.get_amount_in_words }}</p>
+                </div>
+
+                <!-- Footer -->
+                <div class="row mt-5">
+                    <div class="col-8">
+                        {% if bill.payment_terms %}
+                        <p><strong>Payment Terms:</strong> {{ bill.payment_terms }}</p>
+                        {% endif %}
+                        {% if bill.notes %}
+                        <p><strong>Notes:</strong> {{ bill.notes }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-4 text-end">
+                        <div class="mt-5 pt-3">
+                            <p class="mb-0">For {{ bill.company.company_name }}</p>
+                            <div style="height: 60px;"></div>
+                            <p class="mt-3 mb-0 border-top pt-2">Authorized Signatory</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bill Status -->
+                <div class="row mt-3 d-print-none">
+                    <div class="col-12">
+                        <span class="badge 
+                            {% if bill.status == 'draft' %}bg-secondary
+                            {% elif bill.status == 'sent' %}bg-primary
+                            {% elif bill.status == 'paid' %}bg-success
+                            {% elif bill.status == 'overdue' %}bg-danger
+                            {% else %}bg-warning{% endif %}">
+                            {{ bill.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .d-print-none {
+        display: none !important;
+    }
+    
+    .bill-container {
+        box-shadow: none !important;
+        border: none !important;
+    }
+    
+    body {
+        font-size: 12px;
+    }
+    
+    table {
+        font-size: 11px;
+    }
+}
+
+.bill-container {
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.company-details p {
+    font-size: 0.9rem;
+}
+
+.bill-info {
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %} 

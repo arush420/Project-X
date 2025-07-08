@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load bill_filters %}
+
+{% block title %}Service Bills{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-file-invoice text-primary"></i> Service Bills
+                </h2>
+                <div class="btn-group">
+                    <a href="{% url 'employees:quick_bill_create' %}" class="btn btn-success">
+                        <i class="fas fa-bolt"></i> Quick Bill
+                    </a>
+                    <a href="{% url 'employees:service_bill_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Detailed Bill
+                    </a>
+                </div>
+            </div>
+
+            <!-- Filter Options -->
+            <div class="card mb-4">
+                <div class="card-body py-3">
+                    <form method="get" class="d-flex align-items-center">
+                        <div class="form-group mr-3 mb-0">
+                            <label for="status" class="sr-only">Status</label>
+                            <select name="status" id="status" class="form-control">
+                                <option value="">All Status</option>
+                                {% for value, label in status_choices %}
+                                    <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-filter"></i> Filter
+                        </button>
+                        {% if request.GET.status %}
+                            <a href="{% url 'employees:service_bill_list' %}" class="btn btn-outline-secondary ml-2">
+                                <i class="fas fa-times"></i> Clear
+                            </a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+
+            {% if bills %}
+                <div class="row">
+                    {% for bill in bills %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 font-weight-bold">Bill #{{ bill.bill_number }}</h6>
+                                <span class="badge
+                                    {% if bill.status == 'draft' %}badge-secondary
+                                    {% elif bill.status == 'sent' %}badge-primary
+                                    {% elif bill.status == 'paid' %}badge-success
+                                    {% elif bill.status == 'overdue' %}badge-danger
+                                    {% else %}badge-warning{% endif %}">
+                                    {{ bill.get_status_display }}
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <h6 class="text-primary">{{ bill.client_name }}</h6>
+                                        <p class="text-muted small mb-2">{{ bill.client_address|truncatewords:10 }}</p>
+                                    </div>
+                                </div>
+
+                                <div class="row small">
+                                    <div class="col-6">
+                                        <strong>Date:</strong> {{ bill.bill_date|date:"M d, Y" }}<br>
+                                        <strong>Period:</strong> {{ bill.service_period_from|date:"M d" }} - {{ bill.service_period_to|date:"M d" }}
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>Template:</strong> {{ bill.template.template_name|truncatewords:2 }}<br>
+                                        <strong>Items:</strong> {{ bill.line_items.count }}
+                                    </div>
+                                </div>
+
+                                <hr class="my-3">
+
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong class="text-success">₹{{ bill.total_amount|floatformat:2 }}</strong>
+                                        <small class="text-muted d-block">Total Amount</small>
+                                    </div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i> {{ bill.created_at|date:"M d, Y" }}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <div class="btn-group w-100" role="group">
+                                    <a href="{% url 'employees:service_bill_detail' bill.pk %}"
+                                       class="btn btn-sm btn-outline-info" title="View Bill">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'employees:service_bill_update' bill.pk %}"
+                                       class="btn btn-sm btn-outline-primary" title="Edit Bill">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'employees:service_bill_print' bill.pk %}"
+                                       class="btn btn-sm btn-outline-success" target="_blank" title="Print Bill">
+                                        <i class="fas fa-print"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            onclick="confirmDelete('{{ bill.bill_number }}', '{% url 'employees:service_bill_delete' bill.pk %}')"
+                                            title="Delete Bill">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Summary Statistics -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <h5 class="mb-0">{{ bills.count }}</h5>
+                                        <small class="text-muted">Total Bills</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h5 class="mb-0 text-success">₹{{ total_amount|floatformat:0 }}</h5>
+                                        <small class="text-muted">Total Value</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h5 class="mb-0 text-primary">{{ sent_count }}</h5>
+                                        <small class="text-muted">Sent Bills</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h5 class="mb-0 text-warning">{{ paid_count }}</h5>
+                                        <small class="text-muted">Paid Bills</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-file-invoice text-muted" style="font-size: 4rem;"></i>
+                    </div>
+                    <h4 class="text-muted">No Service Bills Found</h4>
+                    <p class="text-muted mb-4">
+                        {% if request.GET.status %}
+                            No bills found with the selected status. <a href="{% url 'employees:service_bill_list' %}">View all bills</a>
+                        {% else %}
+                            Start creating professional manpower service bills for your clients.
+                        {% endif %}
+                    </p>
+                    <div class="btn-group">
+                        <a href="{% url 'employees:quick_bill_create' %}" class="btn btn-success">
+                            <i class="fas fa-bolt"></i> Create Quick Bill
+                        </a>
+                        <a href="{% url 'employees:service_bill_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Create Detailed Bill
+                        </a>
+                    </div>
+
+                    {% if not bills and not templates_exist %}
+                        <div class="mt-4">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Tip:</strong> Create a <a href="{% url 'employees:bill_template_create' %}">Bill Template</a> first to set up your calculation rules.
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle text-warning"></i> Confirm Delete
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete bill <strong id="billNumber"></strong>?</p>
+                <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <a href="#" id="confirmDeleteBtn" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Delete Bill
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(billNumber, deleteUrl) {
+    document.getElementById('billNumber').textContent = billNumber;
+    document.getElementById('confirmDeleteBtn').href = deleteUrl;
+    $('#deleteModal').modal('show');
+}
+</script>
+{% endblock %}

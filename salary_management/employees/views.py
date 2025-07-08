@@ -11,7 +11,7 @@ from django.views.generic.edit import UpdateView
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q, Sum
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
@@ -33,11 +33,12 @@ from openpyxl.utils.datetime import days_to_time
 
 # Import your models and forms
 from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company,
-                     StaffSalary, AdvanceTransaction, SalaryRule, SalaryOtherField, SalaryTotals, VerificationRequest, EInvoice, EInvoiceLineItem)
+                     StaffSalary, AdvanceTransaction, SalaryRule, SalaryOtherField, SalaryTotals, VerificationRequest,VendorInformation, EInvoice, EInvoiceLineItem, BillTemplate, ServiceBill, ServiceBillItem, Purchase, PurchaseLineItem)
 from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm,
                     CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm,
                     AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, SalaryOtherFieldFormSet,
-                    UploadForm, ReportForm, VerificationRequestForm, EInvoiceForm, EInvoiceLineItemFormSet)
+                    UploadForm, ReportForm, VerificationRequestForm, EInvoiceForm, EInvoiceLineItemFormSet,
+                    BillTemplateForm, ServiceBillForm, ServiceBillItemForm, ServiceBillItemFormSet, QuickBillForm, PurchaseForm, PurchaseLineItemFormSet)
 
 
 def get_user_role_flags(user):
@@ -365,7 +366,7 @@ def home(request):
     }
     return render(request, 'employees/home.html', context)
 
-
+# To do List
 def add_task(request):
     if request.method == 'POST':
         title = request.POST.get('title')
@@ -986,36 +987,68 @@ def vendor_information_delete(request, pk):
 
 
 def purchase_item_input(request):
-    # Define formset for PurchaseItem
-    PurchaseItemFormSet = modelformset_factory(PurchaseItem, fields=(
-        'organization_code', 'organization_name', 'organization_gst_number', 'bill_number', 'po_number',
-        'order_by', 'order_for', 'purchased_item', 'category', 'hsn_code', 'date_of_purchase',
-        'per_unit_cost', 'units_bought', 'cgst_rate', 'sgst_rate', 'igst_rate', 'payment_status',
-        'payment_by', 'payment_date', 'payment_mode', 'remark'
-    ), extra=1, can_delete=True)
+    # Use the already defined PurchaseItemFormSet from forms.py
+    from .forms import PurchaseItemFormSet
 
+    # ✅ Get selected vendor ID
+    selected_vendor_id = request.GET.get('vendor_id')
+    selected_vendor = None
+
+    # ✅ Try to get selected vendor
+    if selected_vendor_id:
+        try:
+            selected_vendor = VendorInformation.objects.get(id=selected_vendor_id)
+        except VendorInformation.DoesNotExist:
+            selected_vendor = None
+
+    # ✅ Handle POST
     if request.method == "POST":
         formset = PurchaseItemFormSet(request.POST)
         if formset.is_valid():
-            formset.save()
+            instances = formset.save(commit=False)
+            for instance in instances:
+                if selected_vendor:
+                    instance.order_for = selected_vendor
+                instance.save()
+            formset.save_m2m()
             messages.success(request, "Purchase items saved successfully.")
-            return redirect('employees:purchase_item_input')
+            return redirect(f"{reverse('employees:purchase_item_input')}?vendor_id={selected_vendor_id or ''}")
         else:
-            messages.error(request, "There was an error saving your data. Please check the form.")
+            # Show detailed error messages
+            error_messages = []
+            for i, form in enumerate(formset):
+                if form.errors:
+                    for field, errors in form.errors.items():
+                        for error in errors:
+                            error_messages.append(f"Form {i+1}, {field}: {error}")
+            if formset.non_form_errors():
+                error_messages.extend(formset.non_form_errors())
+            
+            error_msg = "Form validation errors: " + "; ".join(error_messages) if error_messages else "Unknown form error"
+            messages.error(request, error_msg)
     else:
         formset = PurchaseItemFormSet(queryset=PurchaseItem.objects.none())
 
-    # Paginate the purchases
-    purchases = PurchaseItem.objects.all().order_by('bill_number')
-    paginator = Paginator(purchases, 10)  # 10 items per page
+    # ✅ Filter purchases
+    purchases = PurchaseItem.objects.all().order_by('-bill_number')
+    if selected_vendor:
+        purchases = purchases.filter(order_for=selected_vendor)
+
+    paginator = Paginator(purchases, 10)
     page_number = request.GET.get('page')
     purchases = paginator.get_page(page_number)
+
+    vendors = VendorInformation.objects.all()
 
     context = {
         'formset': formset,
         'purchases': purchases,
+        'vendors': vendors,
+        'selected_vendor_id': selected_vendor_id,
     }
+
     return render(request, 'employees/purchase_item_input.html', context)
+
 
 
 def purchase_bill_detail(request, bill_number):
@@ -1324,3 +1357,430 @@ def e_invoice_delete(request, pk):
         messages.success(request, 'E-Invoice deleted successfully!')
         return redirect('employees:e_invoice_list')
     return render(request, 'employees/e_invoice_confirm_delete.html', {'invoice': invoice})
+
+
+# Bill Template Management Views
+@login_required
+def bill_template_list(request):
+    """List all bill templates for the user's company"""
+    user_company = getattr(request.user.profile, 'company', None)
+    if user_company:
+        templates = BillTemplate.objects.filter(company=user_company)
+    else:
+        templates = BillTemplate.objects.all()
+    
+    return render(request, 'employees/bill_template_list.html', {'templates': templates})
+
+
+@login_required
+def bill_template_create(request):
+    """Create a new bill template"""
+    if request.method == 'POST':
+        form = BillTemplateForm(request.POST)
+        if form.is_valid():
+            template = form.save(commit=False)
+            # Set the company to user's company if available
+            user_company = getattr(request.user.profile, 'company', None)
+            if user_company:
+                template.company = user_company
+            else:
+                # If no user company, require company selection or use first available
+                template.company = Company.objects.first()
+            template.save()
+            messages.success(request, 'Bill template created successfully!')
+            return redirect('employees:bill_template_list')
+    else:
+        form = BillTemplateForm()
+    
+    return render(request, 'employees/bill_template_form.html', {'form': form})
+
+
+@login_required
+def bill_template_update(request, pk):
+    """Update an existing bill template"""
+    template = get_object_or_404(BillTemplate, pk=pk)
+    
+    if request.method == 'POST':
+        form = BillTemplateForm(request.POST, instance=template)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Bill template updated successfully!')
+            return redirect('employees:bill_template_list')
+    else:
+        form = BillTemplateForm(instance=template)
+    
+    return render(request, 'employees/bill_template_form.html', {
+        'form': form,
+        'template': template
+    })
+
+
+@login_required
+def bill_template_detail(request, pk):
+    """View bill template details"""
+    template = get_object_or_404(BillTemplate, pk=pk)
+    return render(request, 'employees/bill_template_detail.html', {'template': template})
+
+
+@login_required
+def bill_template_delete(request, pk):
+    """Delete a bill template"""
+    template = get_object_or_404(BillTemplate, pk=pk)
+    if request.method == 'POST':
+        template.delete()
+        messages.success(request, 'Bill template deleted successfully!')
+        return redirect('employees:bill_template_list')
+    return render(request, 'employees/bill_template_confirm_delete.html', {'template': template})
+
+
+# Service Bill Management Views
+@login_required
+def service_bill_list(request):
+    """List all service bills for the user's company"""
+    user_company = getattr(request.user.profile, 'company', None)
+    if user_company:
+        bills = ServiceBill.objects.filter(company=user_company).order_by('-created_at')
+    else:
+        bills = ServiceBill.objects.all().order_by('-created_at')
+
+    # Add filtering options
+    status_filter = request.GET.get('status')
+    if status_filter:
+        bills = bills.filter(status=status_filter)
+
+    # Calculate statistics
+    total_amount = bills.aggregate(total=Sum('total_amount'))['total'] or 0
+    sent_count = bills.filter(status='sent').count()
+    paid_count = bills.filter(status='paid').count()
+
+    return render(request, 'employees/service_bill_list.html', {
+        'bills': bills,
+        'status_choices': ServiceBill.STATUS_CHOICES,
+        'total_amount': total_amount,
+        'sent_count': sent_count,
+        'paid_count': paid_count,
+    })
+
+
+@login_required
+def service_bill_create(request):
+    """Create a new service bill with line items"""
+    user_company = getattr(request.user.profile, 'company', None)
+    
+    if request.method == 'POST':
+        form = ServiceBillForm(request.POST, company=user_company)
+        formset = ServiceBillItemFormSet(request.POST)
+        
+        if form.is_valid() and formset.is_valid():
+            # Save the bill first
+            bill = form.save(commit=False)
+            if user_company:
+                bill.company = user_company
+            else:
+                bill.company = Company.objects.first()
+            bill.save()
+            
+            # Save line items
+            for item_form in formset:
+                if item_form.cleaned_data and not item_form.cleaned_data.get('DELETE', False):
+                    item = item_form.save(commit=False)
+                    item.bill = bill
+                    item.save()
+            
+            # Recalculate totals
+            bill.save()
+
+            # --- Create EInvoice ---
+            EInvoice.objects.create(
+                invoice_number=bill.bill_number,
+                invoice_date=bill.bill_date,
+                invoice_type='B2B',
+                document_type='INV',
+                reverse_charge=False,
+                supplier_gstin=bill.company.company_gst_number,
+                supplier_legal_name=bill.company.company_name,
+                supplier_address=bill.company.company_address,
+                supplier_place_of_supply=bill.company.company_address,
+                supplier_state_code=get_state_code(bill.company.company_address),
+                buyer_gstin=bill.client_gst_number or '',
+                buyer_legal_name=bill.client_name,
+                buyer_address=bill.client_address,
+                buyer_state_code=get_state_code(bill.client_address),
+                payment_terms=bill.payment_terms,
+                due_date=bill.due_date,
+                reference_document=bill.reference_document,
+                total_taxable_value=bill.taxable_value,
+                total_cgst=bill.cgst_amount,
+                total_sgst=bill.sgst_amount,
+                total_igst=bill.igst_amount,
+                total_tax_amount=bill.cgst_amount + bill.sgst_amount + bill.igst_amount,
+                total_invoice_value=bill.total_amount,
+                status='pending',
+            )
+            # --- End EInvoice creation ---
+            
+            messages.success(request, 'Service bill created successfully!')
+            return redirect('employees:service_bill_detail', pk=bill.pk)
+    else:
+        form = ServiceBillForm(company=user_company)
+        formset = ServiceBillItemFormSet(queryset=ServiceBillItem.objects.none())
+    
+    return render(request, 'employees/service_bill_form.html', {
+        'form': form,
+        'formset': formset
+    })
+
+
+@login_required
+def service_bill_update(request, pk):
+    """Update an existing service bill"""
+    bill = get_object_or_404(ServiceBill, pk=pk)
+    user_company = getattr(request.user.profile, 'company', None)
+    
+    if request.method == 'POST':
+        form = ServiceBillForm(request.POST, instance=bill, company=user_company)
+        formset = ServiceBillItemFormSet(request.POST, queryset=bill.line_items.all())
+        
+        if form.is_valid() and formset.is_valid():
+            # Save the bill
+            bill = form.save()
+            
+            # Save line items
+            for item_form in formset:
+                if item_form.cleaned_data:
+                    if item_form.cleaned_data.get('DELETE', False):
+                        if item_form.instance.pk:
+                            item_form.instance.delete()
+                    else:
+                        item = item_form.save(commit=False)
+                        item.bill = bill
+                        item.save()
+            
+            # Recalculate totals
+            bill.save()
+            
+            messages.success(request, 'Service bill updated successfully!')
+            return redirect('employees:service_bill_detail', pk=bill.pk)
+    else:
+        form = ServiceBillForm(instance=bill, company=user_company)
+        formset = ServiceBillItemFormSet(queryset=bill.line_items.all())
+    
+    return render(request, 'employees/service_bill_form.html', {
+        'form': form,
+        'formset': formset,
+        'bill': bill
+    })
+
+
+@login_required
+def service_bill_detail(request, pk):
+    """View service bill details"""
+    bill = get_object_or_404(ServiceBill, pk=pk)
+    line_items = bill.line_items.all()
+    return render(request, 'employees/service_bill_detail.html', {
+        'bill': bill,
+        'line_items': line_items
+    })
+
+
+@login_required
+def service_bill_delete(request, pk):
+    """Delete a service bill"""
+    bill = get_object_or_404(ServiceBill, pk=pk)
+    if request.method == 'POST':
+        bill.delete()
+        messages.success(request, 'Service bill deleted successfully!')
+        return redirect('employees:service_bill_list')
+    return render(request, 'employees/service_bill_confirm_delete.html', {'bill': bill})
+
+
+@login_required
+def quick_bill_create(request):
+    """Quick bill creation with single item"""
+    user_company = getattr(request.user.profile, 'company', None)
+    
+    if request.method == 'POST':
+        form = QuickBillForm(request.POST, company=user_company)
+        if form.is_valid():
+            # Create the service bill
+            bill = ServiceBill(
+                company=form.cleaned_data['company'],
+                template=form.cleaned_data['template'],
+                bill_date=form.cleaned_data['bill_date'],
+                client_name=form.cleaned_data['client_name'],
+                client_address=form.cleaned_data['client_address'],
+                service_period_from=form.cleaned_data['service_period_from'],
+                service_period_to=form.cleaned_data['service_period_to']
+            )
+            bill.save()
+            
+            # Create the single item
+            item = ServiceBillItem(
+                bill=bill,
+                description=form.cleaned_data['item_description'],
+                quantity=1,
+                unit_rate=form.cleaned_data['item_amount']
+            )
+            item.save()
+            
+            # Recalculate totals
+            bill.save()
+
+            # --- Create EInvoice ---
+            EInvoice.objects.create(
+                invoice_number=bill.bill_number,
+                invoice_date=bill.bill_date,
+                invoice_type='B2B',
+                document_type='INV',
+                reverse_charge=False,
+                supplier_gstin=bill.company.company_gst_number,
+                supplier_legal_name=bill.company.company_name,
+                supplier_address=bill.company.company_address,
+                supplier_place_of_supply=bill.company.company_address,
+                supplier_state_code=get_state_code(bill.company.company_address),
+                buyer_gstin=bill.client_gst_number or '',
+                buyer_legal_name=bill.client_name,
+                buyer_address=bill.client_address,
+                buyer_state_code=get_state_code(bill.client_address),
+                payment_terms=bill.payment_terms,
+                due_date=bill.due_date,
+                reference_document=bill.reference_document,
+                total_taxable_value=bill.taxable_value,
+                total_cgst=bill.cgst_amount,
+                total_sgst=bill.sgst_amount,
+                total_igst=bill.igst_amount,
+                total_tax_amount=bill.cgst_amount + bill.sgst_amount + bill.igst_amount,
+                total_invoice_value=bill.total_amount,
+                status='pending',
+            )
+            # --- End EInvoice creation ---
+            
+            messages.success(request, 'Quick bill created successfully!')
+            return redirect('employees:service_bill_detail', pk=bill.pk)
+    else:
+        form = QuickBillForm(company=user_company)
+    
+    return render(request, 'employees/quick_bill_form.html', {'form': form})
+
+
+@login_required
+def service_bill_print(request, pk):
+    """Print view for service bill"""
+    bill = get_object_or_404(ServiceBill, pk=pk)
+    line_items = bill.line_items.all()
+    
+    context = {
+        'bill': bill,
+        'line_items': line_items,
+        'company': bill.company,
+        'template': bill.template
+    }
+    return render(request, 'employees/service_bill_print.html', context)
+
+def get_state_code(address):
+    # Dummy: always return '27' (Maharashtra) for demo
+    return '27'
+
+@login_required
+def get_vendor_details(request, vendor_id):
+    """API endpoint to fetch vendor details by ID"""
+    try:
+        vendor = VendorInformation.objects.get(id=vendor_id)
+        data = {
+            'vendor_id': vendor.vendor_id,
+            'vendor_name': vendor.vendor_name,
+            'vendor_gst_number': vendor.vendor_gst_number,
+            'vendor_address': vendor.vendor_address,
+            'district': vendor.district,
+            'state': vendor.state,
+            'pincode': vendor.pincode,
+            'vendor_account_number': vendor.vendor_account_number,
+            'vendor_ifsc_code': vendor.vendor_ifsc_code,
+            'vendor_contact_person_name': vendor.vendor_contact_person_name,
+            'vendor_contact_person_number': vendor.vendor_contact_person_number,
+        }
+        return JsonResponse(data)
+    except VendorInformation.DoesNotExist:
+        return JsonResponse({'error': 'Vendor not found'}, status=404)
+
+@login_required
+def purchase_tabular_create(request):
+    """Create purchase with multiple line items in tabular format"""
+    if request.method == 'POST':
+        purchase_form = PurchaseForm(request.POST, request.FILES)
+        formset = PurchaseLineItemFormSet(request.POST, instance=None)
+        
+        if purchase_form.is_valid() and formset.is_valid():
+            try:
+                # Save the main purchase record
+                purchase = purchase_form.save()
+                
+                # Save the line items
+                formset.instance = purchase
+                formset.save()
+                
+                # Calculate totals
+                purchase.calculate_totals()
+                
+                messages.success(request, f'Purchase {purchase.bill_number} created successfully!')
+                return redirect('employees:purchase_tabular_detail', purchase_id=purchase.id)
+                
+            except Exception as e:
+                messages.error(request, f'Error creating purchase: {str(e)}')
+        else:
+            # Collect form errors
+            errors = []
+            if not purchase_form.is_valid():
+                for field, field_errors in purchase_form.errors.items():
+                    for error in field_errors:
+                        errors.append(f"{field}: {error}")
+            
+            if not formset.is_valid():
+                for i, form in enumerate(formset.forms):
+                    if form.errors:
+                        for field, field_errors in form.errors.items():
+                            for error in field_errors:
+                                errors.append(f"Item {i+1} - {field}: {error}")
+            
+            if errors:
+                messages.error(request, f'Please fix the following errors: {", ".join(errors)}')
+    else:
+        purchase_form = PurchaseForm()
+        formset = PurchaseLineItemFormSet(instance=None)
+    
+    vendors = VendorInformation.objects.all()
+    
+    context = {
+        'purchase_form': purchase_form,
+        'formset': formset,
+        'vendors': vendors,
+        'title': 'Create Purchase Order',
+    }
+    
+    return render(request, 'employees/purchase_tabular_create.html', context)
+
+@login_required
+def purchase_tabular_detail(request, purchase_id):
+    """View purchase details"""
+    purchase = get_object_or_404(Purchase, id=purchase_id)
+    line_items = purchase.line_items.all()
+    
+    context = {
+        'purchase': purchase,
+        'line_items': line_items,
+        'title': f'Purchase {purchase.bill_number}',
+    }
+    
+    return render(request, 'employees/purchase_tabular_detail.html', context)
+
+@login_required
+def purchase_tabular_list(request):
+    """List all purchases"""
+    purchases = Purchase.objects.all().order_by('-created_at')
+    
+    context = {
+        'purchases': purchases,
+        'title': 'Purchase Orders',
+    }
+    
+    return render(request, 'employees/purchase_tabular_list.html', context)

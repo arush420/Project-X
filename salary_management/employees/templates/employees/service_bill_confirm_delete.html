@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Bill - {{ bill.bill_number }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Confirm Delete
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Warning!</strong> This action cannot be undone.
+                    </div>
+                    
+                    <p>Are you sure you want to delete the service bill:</p>
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h5 class="card-title">Bill #{{ bill.bill_number }}</h5>
+                            <p class="card-text">
+                                <strong>Client:</strong> {{ bill.client_name }}<br>
+                                <strong>Date:</strong> {{ bill.bill_date|date:"M d, Y" }}<br>
+                                <strong>Amount:</strong> ₹{{ bill.total_amount|floatformat:2 }}<br>
+                                <strong>Status:</strong> 
+                                <span class="badge 
+                                    {% if bill.status == 'draft' %}badge-secondary
+                                    {% elif bill.status == 'sent' %}badge-primary
+                                    {% elif bill.status == 'paid' %}badge-success
+                                    {% elif bill.status == 'overdue' %}badge-danger
+                                    {% else %}badge-warning{% endif %}">
+                                    {{ bill.get_status_display }}
+                                </span>
+                            </p>
+                            <small class="text-muted">
+                                Created: {{ bill.created_at|date:"M d, Y g:i A" }}
+                                • Items: {{ bill.line_items.count }}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    {% if bill.status == 'paid' %}
+                        <div class="alert alert-warning mt-3">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <strong>Note:</strong> This bill is marked as paid. Deleting it may affect your records.
+                        </div>
+                    {% endif %}
+                    
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'employees:service_bill_detail' bill.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Yes, Delete Bill
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

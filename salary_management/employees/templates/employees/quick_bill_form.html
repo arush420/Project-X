@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quick Bill Creation{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-bolt"></i> Quick Bill Creation
+                    </h4>
+                    <small>Create a bill quickly with single item</small>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Company and Template Selection -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-success border-bottom pb-2">
+                                    <i class="fas fa-building"></i> Company & Template
+                                </h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.company.id_for_label }}" class="form-label">
+                                        <strong>Company</strong> <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.company }}
+                                    {% if form.company.errors %}
+                                        <div class="text-danger small">{{ form.company.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.template.id_for_label }}" class="form-label">
+                                        <strong>Bill Template</strong> <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.template }}
+                                    {% if form.template.errors %}
+                                        <div class="text-danger small">{{ form.template.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bill Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-success border-bottom pb-2">
+                                    <i class="fas fa-file-invoice"></i> Bill Information
+                                </h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.bill_date.id_for_label }}" class="form-label">
+                                        <strong>Bill Date</strong> <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.bill_date }}
+                                    {% if form.bill_date.errors %}
+                                        <div class="text-danger small">{{ form.bill_date.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Client Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-success border-bottom pb-2">
+                                    <i class="fas fa-user"></i> Client Information
+                                </h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.client_name.id_for_label }}" class="form-label">
+                                        <strong>Client Name</strong> <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.client_name }}
+                                    {% if form.client_name.errors %}
+                                        <div class="text-danger small">{{ form.client_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.client_address.id_for_label }}" class="form-label">
+                                        <strong>Client Address</strong> <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.client_address }}
+                                    {% if form.client_address.errors %}
+                                        <div class="text-danger small">{{ form.client_address.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Service Period -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-success border-bottom pb-2">
+                                    <i class="fas fa-calendar"></i> Service Period
+                                </h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.service_period_from.id_for_label }}" class="form-label">
+                                        <strong>From Date</strong> <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.service_period_from }}
+                                    {% if form.service_period_from.errors %}
+                                        <div class="text-danger small">{{ form.service_period_from.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.service_period_to.id_for_label }}" class="form-label">
+                                        <strong>To Date</strong> <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.service_period_to }}
+                                    {% if form.service_period_to.errors %}
+                                        <div class="text-danger small">{{ form.service_period_to.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Service Item -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-success border-bottom pb-2">
+                                    <i class="fas fa-list"></i> Service Item
+                                </h5>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.item_description.id_for_label }}" class="form-label">
+                                        <strong>Description</strong> <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.item_description }}
+                                    {% if form.item_description.errors %}
+                                        <div class="text-danger small">{{ form.item_description.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.item_amount.id_for_label }}" class="form-label">
+                                        <strong>Amount (₹)</strong> <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">₹</span>
+                                        {{ form.item_amount }}
+                                    </div>
+                                    {% if form.item_amount.errors %}
+                                        <div class="text-danger small">{{ form.item_amount.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Errors -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Action Buttons -->
+                        <div class="row">
+                            <div class="col-12">
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'employees:service_bill_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left"></i> Back to Bills
+                                    </a>
+                                    <div>
+                                        <button type="submit" class="btn btn-success me-2">
+                                            <i class="fas fa-bolt"></i> Create Quick Bill
+                                        </button>
+                                        <a href="{% url 'employees:service_bill_create' %}" class="btn btn-outline-primary">
+                                            <i class="fas fa-plus"></i> Create Detailed Bill
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Card -->
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Quick Bill Help</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li><strong>Quick Bill</strong> is perfect for single-item invoices</li>
+                        <li>All calculations (ESI, Service Charge, GST) will be applied automatically based on your template</li>
+                        <li>For multiple items, use the <a href="{% url 'employees:service_bill_create' %}">Detailed Bill</a> option</li>
+                        <li>Make sure to create a <a href="{% url 'employees:bill_template_create' %}">Bill Template</a> first if you haven't already</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

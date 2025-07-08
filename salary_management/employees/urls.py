@@ -83,4 +83,30 @@ urlpatterns = [
 
     # Report
     path('generate/', ReportView.as_view(), name='generate_report'),
+
+    # Bill Template Management
+    path('bill-templates/', views.bill_template_list, name='bill_template_list'),
+    path('bill-templates/create/', views.bill_template_create, name='bill_template_create'),
+    path('bill-templates/<int:pk>/update/', views.bill_template_update, name='bill_template_update'),
+    path('bill-templates/<int:pk>/detail/', views.bill_template_detail, name='bill_template_detail'),
+    path('bill-templates/<int:pk>/delete/', views.bill_template_delete, name='bill_template_delete'),
+
+    # Service Bill Management
+    path('service-bills/', views.service_bill_list, name='service_bill_list'),
+    path('service-bills/create/', views.service_bill_create, name='service_bill_create'),
+    path('service-bills/<int:pk>/update/', views.service_bill_update, name='service_bill_update'),
+    path('service-bills/<int:pk>/detail/', views.service_bill_detail, name='service_bill_detail'),
+    path('service-bills/<int:pk>/delete/', views.service_bill_delete, name='service_bill_delete'),
+    path('service-bills/<int:pk>/print/', views.service_bill_print, name='service_bill_print'),
+    
+    # Quick Bill Creation
+    path('quick-bill/', views.quick_bill_create, name='quick_bill_create'),
+    
+    # API endpoints
+    path('api/vendor/<int:vendor_id>/', views.get_vendor_details, name='get_vendor_details'),
+    
+    # Tabular Purchase Management
+    path('purchase-tabular/', views.purchase_tabular_list, name='purchase_tabular_list'),
+    path('purchase-tabular/create/', views.purchase_tabular_create, name='purchase_tabular_create'),
+    path('purchase-tabular/<int:purchase_id>/', views.purchase_tabular_detail, name='purchase_tabular_detail'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

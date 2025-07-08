@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ template.template_name }} - Template Details{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-cog"></i> {{ template.template_name }}
+                    </h4>
+                    <div>
+                        {% if template.is_default %}
+                            <span class="badge badge-success">Default</span>
+                        {% endif %}
+                        {% if not template.is_active %}
+                            <span class="badge badge-secondary">Inactive</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Basic Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-info border-bottom pb-2">
+                                <i class="fas fa-info-circle"></i> Basic Information
+                            </h5>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Template Name:</strong> {{ template.template_name }}</p>
+                            <p><strong>Default HSN Code:</strong> {{ template.default_hsn_code }}</p>
+                            <p><strong>Created:</strong> {{ template.created_at|date:"M d, Y g:i A" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Status:</strong> 
+                                {% if template.is_active %}
+                                    <span class="badge badge-success">Active</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">Inactive</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Default Template:</strong>
+                                {% if template.is_default %}
+                                    <span class="badge badge-primary">Yes</span>
+                                {% else %}
+                                    <span class="badge badge-outline-secondary">No</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Last Updated:</strong> {{ template.updated_at|date:"M d, Y g:i A" }}</p>
+                        </div>
+                        {% if template.description %}
+                        <div class="col-12">
+                            <p><strong>Description:</strong></p>
+                            <p class="text-muted">{{ template.description }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tax Rates -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-info border-bottom pb-2">
+                                <i class="fas fa-percentage"></i> Tax Rates
+                            </h5>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Service Charges</h6>
+                                    <p class="mb-2"><strong>ESI Rate:</strong> {{ template.esi_rate }}%</p>
+                                    <p class="mb-0"><strong>Service Charge:</strong> {{ template.service_charge_rate }}%</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">GST Rates</h6>
+                                    {% if template.apply_cgst_sgst %}
+                                        <p class="mb-2"><strong>CGST:</strong> {{ template.cgst_rate }}%</p>
+                                        <p class="mb-0"><strong>SGST:</strong> {{ template.sgst_rate }}%</p>
+                                    {% elif template.apply_igst %}
+                                        <p class="mb-0"><strong>IGST:</strong> {{ template.igst_rate }}%</p>
+                                    {% else %}
+                                        <p class="mb-0 text-muted">No GST configured</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calculation Rules -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-info border-bottom pb-2">
+                                <i class="fas fa-calculator"></i> Calculation Rules
+                            </h5>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Applied Charges:</h6>
+                            <ul class="list-unstyled">
+                                <li>
+                                    {% if template.apply_esi %}
+                                        <i class="fas fa-check text-success"></i>
+                                    {% else %}
+                                        <i class="fas fa-times text-danger"></i>
+                                    {% endif %}
+                                    ESI Contribution
+                                </li>
+                                <li>
+                                    {% if template.apply_service_charge %}
+                                        <i class="fas fa-check text-success"></i>
+                                    {% else %}
+                                        <i class="fas fa-times text-danger"></i>
+                                    {% endif %}
+                                    Service Charge
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Tax Configuration:</h6>
+                            <ul class="list-unstyled">
+                                <li>
+                                    {% if template.apply_cgst_sgst %}
+                                        <i class="fas fa-check text-success"></i>
+                                    {% else %}
+                                        <i class="fas fa-times text-danger"></i>
+                                    {% endif %}
+                                    CGST/SGST (Same State)
+                                </li>
+                                <li>
+                                    {% if template.apply_igst %}
+                                        <i class="fas fa-check text-success"></i>
+                                    {% else %}
+                                        <i class="fas fa-times text-danger"></i>
+                                    {% endif %}
+                                    IGST (Inter-State)
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Additional Settings -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-info border-bottom pb-2">
+                                <i class="fas fa-tools"></i> Additional Settings
+                            </h5>
+                        </div>
+                        <div class="col-md-12">
+                            <p><strong>Rounding:</strong> Round to nearest ₹{{ template.round_to_nearest }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Sample Calculation -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-info border-bottom pb-2">
+                                <i class="fas fa-calculator"></i> Sample Calculation (₹10,000 base amount)
+                            </h5>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td>Base Amount</td>
+                                        <td class="text-right">₹10,000.00</td>
+                                    </tr>
+                                    {% if template.apply_esi %}
+                                    <tr>
+                                        <td>ESI Contribution ({{ template.esi_rate }}%)</td>
+                                        <td class="text-right">₹{{ template.esi_rate|floatformat:2 |mul:100 }}</td>
+                                    </tr>
+                                    {% endif %}
+                                    {% if template.apply_service_charge %}
+                                    <tr>
+                                        <td>Service Charge ({{ template.service_charge_rate }}%)</td>
+                                        <td class="text-right">₹{{ template.service_charge_rate|floatformat:2 |mul:100 }}</td>
+                                    </tr>
+                                    {% endif %}
+                                    <tr class="table-secondary">
+                                        <td><strong>Taxable Value</strong></td>
+                                        <td class="text-right"><strong>₹{% widthratio 10000 1 1 %}{% if template.apply_esi %}{% widthratio template.esi_rate 1 100 %}{% endif %}{% if template.apply_service_charge %}{% widthratio template.service_charge_rate 1 100 %}{% endif %}.00</strong></td>
+                                    </tr>
+                                    {% if template.apply_cgst_sgst %}
+                                    <tr>
+                                        <td>CGST ({{ template.cgst_rate }}%)</td>
+                                        <td class="text-right">₹{% widthratio template.cgst_rate 1 100 %}.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>SGST ({{ template.sgst_rate }}%)</td>
+                                        <td class="text-right">₹{% widthratio template.sgst_rate 1 100 %}.00</td>
+                                    </tr>
+                                    {% elif template.apply_igst %}
+                                    <tr>
+                                        <td>IGST ({{ template.igst_rate }}%)</td>
+                                        <td class="text-right">₹{% widthratio template.igst_rate 1 100 %}.00</td>
+                                    </tr>
+                                    {% endif %}
+                                    <tr class="table-success">
+                                        <td><strong>Final Total</strong></td>
+                                        <td class="text-right"><strong>₹12,000.00 (approx)</strong></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="row">
+                        <div class="col-12">
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'employees:bill_template_list' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Back to Templates
+                                </a>
+                                <div>
+                                    <a href="{% url 'employees:bill_template_update' template.pk %}" class="btn btn-primary mr-2">
+                                        <i class="fas fa-edit"></i> Edit Template
+                                    </a>
+                                    <a href="{% url 'employees:service_bill_create' %}?template={{ template.pk }}" class="btn btn-success mr-2">
+                                        <i class="fas fa-plus"></i> Use Template
+                                    </a>
+                                    <a href="{% url 'employees:bill_template_delete' template.pk %}" class="btn btn-outline-danger">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
