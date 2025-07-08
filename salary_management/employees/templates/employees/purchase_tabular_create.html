@@ -114,35 +114,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="form-group mb-3">
-                                            <label class="form-label font-weight-bold">CGST Rate (%)</label>
-                                            {{ purchase_form.cgst_rate }}
-                                            {% if purchase_form.cgst_rate.errors %}
-                                                <div class="text-danger small">{{ purchase_form.cgst_rate.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group mb-3">
-                                            <label class="form-label font-weight-bold">SGST Rate (%)</label>
-                                            {{ purchase_form.sgst_rate }}
-                                            {% if purchase_form.sgst_rate.errors %}
-                                                <div class="text-danger small">{{ purchase_form.sgst_rate.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group mb-3">
-                                            <label class="form-label font-weight-bold">IGST Rate (%)</label>
-                                            {{ purchase_form.igst_rate }}
-                                            {% if purchase_form.igst_rate.errors %}
-                                                <div class="text-danger small">{{ purchase_form.igst_rate.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
+
                             </div>
                         </div>
 
@@ -160,13 +132,19 @@
                                     <table class="table table-bordered table-striped" id="items-table">
                                         <thead class="table-dark">
                                             <tr>
-                                                <th width="25%">Item Name</th>
-                                                <th width="15%">HSN Code</th>
-                                                <th width="15%">Unit Cost (₹)</th>
-                                                <th width="10%">Quantity</th>
-                                                <th width="15%">Gross Total (₹)</th>
-                                                <th width="15%">Total (₹)</th>
-                                                <th width="5%">Action</th>
+                                                <th width="12%">Item Name</th>
+                                                <th width="8%">HSN Code</th>
+                                                <th width="8%">Unit Cost (₹)</th>
+                                                <th width="6%">Quantity</th>
+                                                <th width="8%">Gross Total (₹)</th>
+                                                <th width="8%">CGST Rate (%)</th>
+                                                <th width="8%">CGST Amount (₹)</th>
+                                                <th width="8%">SGST Rate (%)</th>
+                                                <th width="8%">SGST Amount (₹)</th>
+                                                <th width="8%">IGST Rate (%)</th>
+                                                <th width="8%">IGST Amount (₹)</th>
+                                                <th width="8%">Total (₹)</th>
+                                                <th width="4%">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody id="items-tbody">
@@ -198,6 +176,33 @@
                                                     </td>
                                                     <td>
                                                         <span class="gross-total">0.00</span>
+                                                    </td>
+                                                    <td>
+                                                        {{ form.cgst_rate }}
+                                                        {% if form.cgst_rate.errors %}
+                                                            <div class="text-danger small">{{ form.cgst_rate.errors }}</div>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <span class="cgst-amount">0.00</span>
+                                                    </td>
+                                                    <td>
+                                                        {{ form.sgst_rate }}
+                                                        {% if form.sgst_rate.errors %}
+                                                            <div class="text-danger small">{{ form.sgst_rate.errors }}</div>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <span class="sgst-amount">0.00</span>
+                                                    </td>
+                                                    <td>
+                                                        {{ form.igst_rate }}
+                                                        {% if form.igst_rate.errors %}
+                                                            <div class="text-danger small">{{ form.igst_rate.errors }}</div>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <span class="igst-amount">0.00</span>
                                                     </td>
                                                     <td>
                                                         <span class="total-amount">0.00</span>
@@ -278,6 +283,31 @@
                                             {% if purchase_form.payment_mode.errors %}
                                                 <div class="text-danger small">{{ purchase_form.payment_mode.errors }}</div>
                                             {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Partial Payment Amount Field (shown only when part payment is selected) -->
+                                <div class="row" id="partial-payment-row" style="display: none;">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label font-weight-bold">Amount Paid (₹)</label>
+                                            {{ purchase_form.amount_paid }}
+                                            {% if purchase_form.amount_paid.errors %}
+                                                <div class="text-danger small">{{ purchase_form.amount_paid.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label font-weight-bold">Total Amount (₹)</label>
+                                            <div class="form-control bg-light" id="total-amount-display">0.00</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label font-weight-bold">Balance Amount (₹)</label>
+                                            <div class="form-control bg-light text-danger" id="balance-amount-display">0.00</div>
                                         </div>
                                     </div>
                                 </div>
@@ -413,10 +443,68 @@ document.addEventListener('DOMContentLoaded', function() {
     // Calculate totals on input change
     document.addEventListener('input', function(e) {
         if (e.target.name && (e.target.name.includes('per_unit_cost') || e.target.name.includes('units_bought') || 
-            e.target.name === 'cgst_rate' || e.target.name === 'sgst_rate' || e.target.name === 'igst_rate')) {
+            e.target.name.includes('cgst_rate') || e.target.name.includes('sgst_rate') || e.target.name.includes('igst_rate'))) {
             updateTotals();
         }
+        
+        // Update balance amount when amount paid changes
+        if (e.target.name === 'amount_paid') {
+            updateBalanceAmount();
+        }
     });
+    
+    // Handle payment status change
+    document.addEventListener('change', function(e) {
+        if (e.target.name === 'payment_status') {
+            handlePaymentStatusChange();
+        }
+    });
+    
+    function handlePaymentStatusChange() {
+        const paymentStatus = document.querySelector('select[name="payment_status"]').value;
+        const partialPaymentRow = document.getElementById('partial-payment-row');
+        const paymentFields = document.querySelectorAll('.payment-field');
+        
+        if (paymentStatus === 'part_payment_vendor') {
+            // Show partial payment fields
+            partialPaymentRow.style.display = 'block';
+            // Hide other payment fields for cleaner UI
+            paymentFields.forEach(field => {
+                if (field.getAttribute('data-field') !== 'payment_mode') {
+                    field.style.display = 'none';
+                }
+            });
+        } else if (paymentStatus === 'unpaid_vendor') {
+            // Hide partial payment fields and most payment fields
+            partialPaymentRow.style.display = 'none';
+            paymentFields.forEach(field => {
+                field.style.display = 'none';
+            });
+        } else {
+            // Full payment - show all payment fields, hide partial payment
+            partialPaymentRow.style.display = 'none';
+            paymentFields.forEach(field => {
+                field.style.display = 'block';
+            });
+        }
+    }
+    
+    function updateBalanceAmount() {
+        const totalAmount = parseFloat(document.getElementById('grand-total').textContent) || 0;
+        const amountPaid = parseFloat(document.querySelector('input[name="amount_paid"]').value) || 0;
+        const balanceAmount = totalAmount - amountPaid;
+        
+        document.getElementById('total-amount-display').textContent = totalAmount.toFixed(2);
+        document.getElementById('balance-amount-display').textContent = balanceAmount.toFixed(2);
+        
+        // Change color based on balance
+        const balanceElement = document.getElementById('balance-amount-display');
+        if (balanceAmount <= 0) {
+            balanceElement.className = 'form-control bg-light text-success';
+        } else {
+            balanceElement.className = 'form-control bg-light text-danger';
+        }
+    }
     
     function createNewItemRow(index) {
         const row = document.createElement('tr');
@@ -428,6 +516,12 @@ document.addEventListener('DOMContentLoaded', function() {
             <td><input type="number" name="form-${index}-per_unit_cost" class="form-control" step="0.01" required></td>
             <td><input type="number" name="form-${index}-units_bought" class="form-control" min="1" required></td>
             <td><span class="gross-total">0.00</span></td>
+            <td><input type="number" name="form-${index}-cgst_rate" class="form-control form-control-sm" step="0.01" min="0" max="100" placeholder="0"></td>
+            <td><span class="cgst-amount">0.00</span></td>
+            <td><input type="number" name="form-${index}-sgst_rate" class="form-control form-control-sm" step="0.01" min="0" max="100" placeholder="0"></td>
+            <td><span class="sgst-amount">0.00</span></td>
+            <td><input type="number" name="form-${index}-igst_rate" class="form-control form-control-sm" step="0.01" min="0" max="100" placeholder="0"></td>
+            <td><span class="igst-amount">0.00</span></td>
             <td><span class="total-amount">0.00</span></td>
             <td>
                 <input type="checkbox" name="form-${index}-DELETE" style="display: none;">
@@ -443,41 +537,53 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateTotals() {
         let subtotal = 0;
+        let totalCgst = 0;
+        let totalSgst = 0;
+        let totalIgst = 0;
         
-        // Get GST rates from the Purchase form
-        const cgstRate = parseFloat(document.querySelector('input[name="cgst_rate"]')?.value || 0);
-        const sgstRate = parseFloat(document.querySelector('input[name="sgst_rate"]')?.value || 0);
-        const igstRate = parseFloat(document.querySelector('input[name="igst_rate"]')?.value || 0);
-        
-        // Calculate subtotal from all line items
+        // Calculate subtotal and taxes for each row
         document.querySelectorAll('.item-row').forEach(row => {
             if (row.style.display !== 'none') {
                 const unitCost = parseFloat(row.querySelector('input[name*="per_unit_cost"]')?.value || 0);
                 const quantity = parseFloat(row.querySelector('input[name*="units_bought"]')?.value || 0);
+                const cgstRate = parseFloat(row.querySelector('input[name*="cgst_rate"]')?.value || 0);
+                const sgstRate = parseFloat(row.querySelector('input[name*="sgst_rate"]')?.value || 0);
+                const igstRate = parseFloat(row.querySelector('input[name*="igst_rate"]')?.value || 0);
                 
                 const grossTotal = unitCost * quantity;
-                subtotal += grossTotal;
+                const cgstAmount = grossTotal * cgstRate / 100;
+                const sgstAmount = grossTotal * sgstRate / 100;
+                const igstAmount = grossTotal * igstRate / 100;
+                const totalWithGst = grossTotal + cgstAmount + sgstAmount + igstAmount;
                 
-                // Update gross total display for this row
+                // Update display for this row
                 row.querySelector('.gross-total').textContent = grossTotal.toFixed(2);
+                row.querySelector('.cgst-amount').textContent = cgstAmount.toFixed(2);
+                row.querySelector('.sgst-amount').textContent = sgstAmount.toFixed(2);
+                row.querySelector('.igst-amount').textContent = igstAmount.toFixed(2);
+                row.querySelector('.total-amount').textContent = totalWithGst.toFixed(2);
                 
-                // For now, show the same as gross total (GST will be calculated at Purchase level)
-                row.querySelector('.total-amount').textContent = grossTotal.toFixed(2);
+                // Add to totals
+                subtotal += grossTotal;
+                totalCgst += cgstAmount;
+                totalSgst += sgstAmount;
+                totalIgst += igstAmount;
             }
         });
-        
-        // Calculate GST on total subtotal
-        const totalCgst = subtotal * cgstRate / 100;
-        const totalSgst = subtotal * sgstRate / 100;
-        const totalIgst = subtotal * igstRate / 100;
         
         // Calculate grand total (subtotal + all taxes)
         const grandTotal = subtotal + totalCgst + totalSgst + totalIgst;
         document.getElementById('grand-total').textContent = grandTotal.toFixed(2);
+        
+        // Update balance amount if in partial payment mode
+        if (document.getElementById('partial-payment-row').style.display !== 'none') {
+            updateBalanceAmount();
+        }
     }
     
-    // Initialize totals on page load
+    // Initialize totals and payment status on page load
     updateTotals();
+    handlePaymentStatusChange();
 });
 </script>
 

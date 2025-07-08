@@ -24,3 +24,27 @@ def div(value, arg):
         return float(value) / float(arg) if float(arg) != 0 else 0
     except:
         return 0
+
+@register.filter(name='total_cgst_amount')
+def total_cgst_amount(line_items):
+    """Calculate total CGST amount from all line items"""
+    try:
+        return sum(item.cgst_amount for item in line_items)
+    except:
+        return 0
+
+@register.filter(name='total_sgst_amount')
+def total_sgst_amount(line_items):
+    """Calculate total SGST amount from all line items"""
+    try:
+        return sum(item.sgst_amount for item in line_items)
+    except:
+        return 0
+
+@register.filter(name='total_igst_amount')
+def total_igst_amount(line_items):
+    """Calculate total IGST amount from all line items"""
+    try:
+        return sum(item.igst_amount for item in line_items)
+    except:
+        return 0

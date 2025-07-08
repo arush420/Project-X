@@ -718,6 +718,9 @@ class Purchase(models.Model):
     payment_by = models.CharField(max_length=50, blank=True, default='NA')
     payment_date = models.DateField(blank=True, null=True)
     
+    # Partial Payment Tracking
+    amount_paid = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Amount paid so far")
+    
     PAYMENT_CHOICES = [
         ('bank_transfer', 'Bank Transfer'),
         ('cash', 'Cash'),
@@ -738,12 +741,29 @@ class Purchase(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    @property
+    def balance_amount(self):
+        """Calculate remaining balance amount"""
+        return self.total_net_amount - self.amount_paid
+    
+    @property
+    def is_fully_paid(self):
+        """Check if purchase is fully paid"""
+        return self.balance_amount <= 0
+    
+    @property
+    def payment_percentage(self):
+        """Calculate payment percentage"""
+        if self.total_net_amount > 0:
+            return (self.amount_paid / self.total_net_amount) * 100
+        return 0
+    
     def calculate_totals(self):
-        """Calculate totals from all line items"""
+        """Calculate totals from all line items with per-item GST"""
         line_items = self.line_items.all()
         self.total_gross_amount = sum(item.total_amount for item in line_items)
-        self.total_gst_amount = self.total_gross_amount * (self.cgst_rate + self.sgst_rate + self.igst_rate) / 100
-        self.total_net_amount = self.total_gross_amount + self.total_gst_amount
+        self.total_gst_amount = sum(item.cgst_amount + item.sgst_amount + item.igst_amount for item in line_items)
+        self.total_net_amount = sum(item.total_with_gst for item in line_items)
         self.save()
     
     def __str__(self):
@@ -768,12 +788,32 @@ class PurchaseLineItem(models.Model):
     units_bought = models.PositiveIntegerField()
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, editable=False)
     
+    # GST Rates (Per Item)
+    cgst_rate = models.DecimalField(max_digits=4, decimal_places=2, default=0.0)
+    sgst_rate = models.DecimalField(max_digits=4, decimal_places=2, default=0.0)
+    igst_rate = models.DecimalField(max_digits=4, decimal_places=2, default=0.0)
+    
+    # Calculated GST Amounts
+    cgst_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, editable=False)
+    sgst_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, editable=False)
+    igst_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, editable=False)
+    total_with_gst = models.DecimalField(max_digits=12, decimal_places=2, default=0, editable=False)
+    
     # Ordering
     order = models.PositiveIntegerField(default=0)
     
     def save(self, *args, **kwargs):
-        # Calculate total amount for this line item
+        # Calculate total amount for this line item (without GST)
         self.total_amount = self.per_unit_cost * self.units_bought
+        
+        # Calculate GST amounts
+        self.cgst_amount = self.total_amount * self.cgst_rate / 100
+        self.sgst_amount = self.total_amount * self.sgst_rate / 100
+        self.igst_amount = self.total_amount * self.igst_rate / 100
+        
+        # Calculate total with GST
+        self.total_with_gst = self.total_amount + self.cgst_amount + self.sgst_amount + self.igst_amount
+        
         super().save(*args, **kwargs)
         
         # Recalculate purchase totals

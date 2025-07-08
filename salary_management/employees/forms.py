@@ -246,7 +246,7 @@ class PurchaseForm(forms.ModelForm):
             'organization_code', 'organization_name', 'organization_gst_number', 
             'bill_number', 'po_number', 'order_by', 'order_for', 'date_of_purchase',
             'cgst_rate', 'sgst_rate', 'igst_rate', 'payment_status', 'payment_by', 
-            'payment_date', 'payment_mode', 'remark', 'bill_file'
+            'payment_date', 'payment_mode', 'amount_paid', 'remark', 'bill_file'
         ]
         widgets = {
             'organization_code': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
@@ -264,6 +264,7 @@ class PurchaseForm(forms.ModelForm):
             'payment_by': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'NA'}),
             'payment_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'payment_mode': forms.Select(attrs={'class': 'form-select'}),
+            'amount_paid': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
             'remark': forms.TextInput(attrs={'class': 'form-control'}),
             'bill_file': forms.FileInput(attrs={'class': 'form-control'}),
         }
@@ -301,12 +302,15 @@ class PurchaseForm(forms.ModelForm):
 class PurchaseLineItemForm(forms.ModelForm):
     class Meta:
         model = PurchaseLineItem
-        fields = ['purchased_item', 'hsn_code', 'per_unit_cost', 'units_bought']
+        fields = ['purchased_item', 'hsn_code', 'per_unit_cost', 'units_bought', 'cgst_rate', 'sgst_rate', 'igst_rate']
         widgets = {
             'purchased_item': forms.TextInput(attrs={'class': 'form-control'}),
             'hsn_code': forms.TextInput(attrs={'class': 'form-control'}),
             'per_unit_cost': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'units_bought': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
+            'cgst_rate': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'step': '0.01', 'min': '0', 'max': '100', 'placeholder': '0'}),
+            'sgst_rate': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'step': '0.01', 'min': '0', 'max': '100', 'placeholder': '0'}),
+            'igst_rate': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'step': '0.01', 'min': '0', 'max': '100', 'placeholder': '0'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -315,6 +319,11 @@ class PurchaseLineItemForm(forms.ModelForm):
         if not kwargs.get('instance'):
             for field in self.fields.values():
                 field.required = False
+        
+        # Set GST fields as not required and with default values
+        self.fields['cgst_rate'].required = False
+        self.fields['sgst_rate'].required = False
+        self.fields['igst_rate'].required = False
 
 # Formset for handling multiple purchase line items
 PurchaseLineItemFormSet = inlineformset_factory(
