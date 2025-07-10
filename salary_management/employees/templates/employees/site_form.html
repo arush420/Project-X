@@ -35,10 +35,47 @@
                         </div>
 
                         <div class="form-group mb-3">
-                            <label for="{{ form.site_address.id_for_label }}">Address</label>
-                            {{ form.site_address|add_class:"form-control" }}
-                            {% if form.site_address.errors %}
-                                <div class="text-danger">{{ form.site_address.errors }}</div>
+                            <label for="{{ form.site_address_line1.id_for_label }}">Address Line 1</label>
+                            {{ form.site_address_line1|add_class:"form-control" }}
+                            {% if form.site_address_line1.errors %}
+                                <div class="text-danger">{{ form.site_address_line1.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="{{ form.site_address_line2.id_for_label }}">Address Line 2</label>
+                            {{ form.site_address_line2|add_class:"form-control" }}
+                            {% if form.site_address_line2.errors %}
+                                <div class="text-danger">{{ form.site_address_line2.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_city.id_for_label }}">City</label>
+                                    {{ form.site_city|add_class:"form-control" }}
+                                    {% if form.site_city.errors %}
+                                        <div class="text-danger">{{ form.site_city.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_state.id_for_label }}">State</label>
+                                    {{ form.site_state|add_class:"form-control" }}
+                                    {% if form.site_state.errors %}
+                                        <div class="text-danger">{{ form.site_state.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="{{ form.site_pincode.id_for_label }}">Pincode</label>
+                            {{ form.site_pincode|add_class:"form-control" }}
+                            {% if form.site_pincode.errors %}
+                                <div class="text-danger">{{ form.site_pincode.errors }}</div>
                             {% endif %}
                         </div>
 

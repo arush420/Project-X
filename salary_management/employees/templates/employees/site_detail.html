@@ -32,7 +32,11 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Address:</strong></td>
-                                    <td>{{ site.site_address|default:"Not provided" }}</td>
+                                    <td>
+                                        {{ site.site_address_line1 }}<br>
+                                        {% if site.site_address_line2 %}{{ site.site_address_line2 }}<br>{% endif %}
+                                        {{ site.site_city }}, {{ site.site_state }} - {{ site.site_pincode }}
+                                    </td>
                                 </tr>
                             </table>
                         </div>

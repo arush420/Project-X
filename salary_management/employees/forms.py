@@ -383,7 +383,8 @@ class SiteForm(forms.ModelForm):
     class Meta:
         model = Site
         fields = [
-            'site_code', 'site_name', 'site_address',
+            'site_code', 'site_name',
+            'site_address_line1', 'site_address_line2', 'site_city', 'site_state', 'site_pincode',
             'site_gst_number', 'site_account_number', 'site_ifsc_code',
             'site_contact_person_name', 'site_contact_person_number', 'site_contact_person_email',
             'site_pf_code', 'site_esic_code',
@@ -401,10 +402,25 @@ class SiteForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Enter site name'
             }),
-            'site_address': forms.Textarea(attrs={
+            'site_address_line1': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter full address',
-                'rows': 3
+                'placeholder': 'Address Line 1'
+            }),
+            'site_address_line2': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Address Line 2 (optional)'
+            }),
+            'site_city': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'City'
+            }),
+            'site_state': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'State'
+            }),
+            'site_pincode': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Pincode'
             }),
             'site_gst_number': forms.TextInput(attrs={
                 'class': 'form-control',
