@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Confirm Delete</h4>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Are you sure you want to delete the following site?</p>
+                    
+                    <div class="alert alert-info">
+                        <strong>Site Code:</strong> {{ site.site_code }}<br>
+                        <strong>Site Name:</strong> {{ site.site_name }}<br>
+                        <strong>Contact:</strong> {{ site.site_contact_person_name }}
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-warning"></i> 
+                        <strong>Warning:</strong> This action cannot be undone. All data associated with this site will be permanently deleted.
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Yes, Delete Site
+                        </button>
+                        <a href="{% url 'employees:site_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

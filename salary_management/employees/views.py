@@ -33,12 +33,15 @@ from openpyxl.utils.datetime import days_to_time
 
 # Import your models and forms
 from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company,
-                     StaffSalary, AdvanceTransaction, SalaryRule, SalaryOtherField, SalaryTotals, VerificationRequest,VendorInformation, EInvoice, EInvoiceLineItem, BillTemplate, ServiceBill, ServiceBillItem, Purchase, PurchaseLineItem)
+                     StaffSalary, AdvanceTransaction, SalaryRule, SalaryOtherField, SalaryTotals, VerificationRequest,
+                     VendorInformation, EInvoice, EInvoiceLineItem, BillTemplate, ServiceBill, ServiceBillItem,
+                     Purchase, PurchaseLineItem, Site)
 from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm,
                     CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm,
                     AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, SalaryOtherFieldFormSet,
                     UploadForm, ReportForm, VerificationRequestForm, EInvoiceForm, EInvoiceLineItemFormSet,
-                    BillTemplateForm, ServiceBillForm, ServiceBillItemForm, ServiceBillItemFormSet, QuickBillForm, PurchaseForm, PurchaseLineItemFormSet)
+                    BillTemplateForm, ServiceBillForm, ServiceBillItemForm, ServiceBillItemFormSet, QuickBillForm,
+                    PurchaseForm, PurchaseLineItemFormSet, SiteForm)
 
 
 def get_user_role_flags(user):
@@ -1155,6 +1158,59 @@ def delete_company(request, company_id):
     company.delete()
     messages.success(request, "Company deleted successfully!")
     return redirect('employees:company_list')
+
+
+def site_list(request):
+    query = request.GET.get('q', '')
+    sites = Site.objects.filter(site_name__icontains=query) if query else Site.objects.all()
+    context = {
+        'sites': sites,
+        'query': query,
+    }
+    return render(request, 'employees/site_list.html', context)
+
+def site_add(request):
+    if request.method == 'POST':
+        form = SiteForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Site added successfully!")
+            return redirect('employees:site_list')
+        else:
+            # Debug: Print form errors
+            print("Form validation errors:", form.errors)
+            messages.error(request, f"Form validation failed: {form.errors}")
+    else:
+        form = SiteForm()
+    return render(request, 'employees/site_form.html', {'form': form})
+
+def site_detail(request, site_id):
+    site = get_object_or_404(Site, id=site_id)
+    return render(request, 'employees/site_detail.html', {
+        'site': site,
+    })
+
+def site_update(request, site_id):
+    site = get_object_or_404(Site, id=site_id)
+    if request.method == 'POST':
+        form = SiteForm(request.POST, instance=site)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Site updated successfully!")
+            return redirect('employees:site_list')
+        else:
+            # Debug: Print form errors
+            print("Form validation errors:", form.errors)
+            messages.error(request, f"Form validation failed: {form.errors}")
+    else:
+        form = SiteForm(instance=site)
+    return render(request, 'employees/site_form.html', {'form': form})
+
+def delete_site(request, site_id):
+    site = get_object_or_404(Site, id=site_id)
+    site.delete()
+    messages.success(request, "Site deleted successfully!")
+    return redirect('employees:site_list')
 
 
 # Upload view for attendance, advance, and arrears files

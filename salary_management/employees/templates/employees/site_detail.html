@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4><i class="fas fa-building"></i> Site Details</h4>
+                    <div>
+                        <a href="{% url 'employees:site_update' site.id %}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <a href="{% url 'employees:site_list' %}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Basic Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="text-primary"><i class="fas fa-info-circle"></i> Basic Information</h5>
+                            <table class="table table-bordered">
+                                <tr>
+                                    <td><strong>Site Code:</strong></td>
+                                    <td>{{ site.site_code }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Site Name:</strong></td>
+                                    <td>{{ site.site_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Address:</strong></td>
+                                    <td>{{ site.site_address|default:"Not provided" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-primary"><i class="fas fa-user"></i> Contact Information</h5>
+                            <table class="table table-bordered">
+                                <tr>
+                                    <td><strong>Contact Person:</strong></td>
+                                    <td>{{ site.site_contact_person_name|default:"Not provided" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Phone Number:</strong></td>
+                                    <td>{{ site.site_contact_person_number|default:"Not provided" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Email:</strong></td>
+                                    <td>{{ site.site_contact_person_email|default:"Not provided" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Legal Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h5 class="text-primary"><i class="fas fa-file-contract"></i> Legal Information</h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <td><strong>GST Number:</strong></td>
+                                            <td>{{ site.site_gst_number|default:"Not provided" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>PF Code:</strong></td>
+                                            <td>{{ site.site_pf_code|default:"Not provided" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>ESIC Code:</strong></td>
+                                            <td>{{ site.site_esic_code|default:"Not provided" }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-4">
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <td><strong>Account Number:</strong></td>
+                                            <td>{{ site.site_account_number|default:"Not provided" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>IFSC Code:</strong></td>
+                                            <td>{{ site.site_ifsc_code|default:"Not provided" }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payroll Settings -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h5 class="text-primary"><i class="fas fa-calculator"></i> Payroll Settings</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <td><strong>Salary Component Type:</strong></td>
+                                            <td>{{ site.get_site_salary_component_type_display }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Service Charge (Salary):</strong></td>
+                                            <td>{{ site.site_service_charge_salary|default:"Not set" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Service Charge (Overtime):</strong></td>
+                                            <td>{{ site.site_service_charge_over_time|default:"Not set" }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <td><strong>OT Rule:</strong></td>
+                                            <td>{{ site.site_ot_rule|default:"Not set" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Bonus Formula:</strong></td>
+                                            <td>{{ site.site_bonus_formula|default:"Not set" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>PF Deduction:</strong></td>
+                                            <td>{{ site.site_pf_deduction|default:"Not set" }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deduction Rules -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h5 class="text-primary"><i class="fas fa-minus-circle"></i> Deduction Rules</h5>
+                            <table class="table table-bordered">
+                                <tr>
+                                    <td><strong>ESIC Deduction Rule:</strong></td>
+                                    <td>{{ site.site_esic_deduction_rule|default:"Not set" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Welfare Deduction Rule:</strong></td>
+                                    <td>{{ site.site_welfare_deduction_rule|default:"Not set" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+
+
+                    <!-- Timestamps -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h5 class="text-primary"><i class="fas fa-clock"></i> Timestamps</h5>
+                            <table class="table table-bordered">
+                                <tr>
+                                    <td><strong>Created At:</strong></td>
+                                    <td>{{ site.created_at|date:"M d, Y H:i:s" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Updated At:</strong></td>
+                                    <td>{{ site.updated_at|date:"M d, Y H:i:s" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load custom_filter %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4>{{ form.instance.pk|yesno:"Edit Site,Add New Site" }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_code.id_for_label }}">Site Code *</label>
+                                    {{ form.site_code|add_class:"form-control" }}
+                                    {% if form.site_code.errors %}
+                                        <div class="text-danger">{{ form.site_code.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_name.id_for_label }}">Site Name *</label>
+                                    {{ form.site_name|add_class:"form-control" }}
+                                    {% if form.site_name.errors %}
+                                        <div class="text-danger">{{ form.site_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="{{ form.site_address.id_for_label }}">Address</label>
+                            {{ form.site_address|add_class:"form-control" }}
+                            {% if form.site_address.errors %}
+                                <div class="text-danger">{{ form.site_address.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_contact_person_name.id_for_label }}">Contact Person</label>
+                                    {{ form.site_contact_person_name|add_class:"form-control" }}
+                                    {% if form.site_contact_person_name.errors %}
+                                        <div class="text-danger">{{ form.site_contact_person_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_contact_person_number.id_for_label }}">Contact Number</label>
+                                    {{ form.site_contact_person_number|add_class:"form-control" }}
+                                    {% if form.site_contact_person_number.errors %}
+                                        <div class="text-danger">{{ form.site_contact_person_number.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="{{ form.site_contact_person_email.id_for_label }}">Contact Email</label>
+                            {{ form.site_contact_person_email|add_class:"form-control" }}
+                            {% if form.site_contact_person_email.errors %}
+                                <div class="text-danger">{{ form.site_contact_person_email.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_gst_number.id_for_label }}">GST Number</label>
+                                    {{ form.site_gst_number|add_class:"form-control" }}
+                                    {% if form.site_gst_number.errors %}
+                                        <div class="text-danger">{{ form.site_gst_number.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_salary_component_type.id_for_label }}">Salary Component Type</label>
+                                    {{ form.site_salary_component_type|add_class:"form-control" }}
+                                    {% if form.site_salary_component_type.errors %}
+                                        <div class="text-danger">{{ form.site_salary_component_type.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_pf_code.id_for_label }}">PF Code</label>
+                                    {{ form.site_pf_code|add_class:"form-control" }}
+                                    {% if form.site_pf_code.errors %}
+                                        <div class="text-danger">{{ form.site_pf_code.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_esic_code.id_for_label }}">ESIC Code</label>
+                                    {{ form.site_esic_code|add_class:"form-control" }}
+                                    {% if form.site_esic_code.errors %}
+                                        <div class="text-danger">{{ form.site_esic_code.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_account_number.id_for_label }}">Account Number</label>
+                                    {{ form.site_account_number|add_class:"form-control" }}
+                                    {% if form.site_account_number.errors %}
+                                        <div class="text-danger">{{ form.site_account_number.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_ifsc_code.id_for_label }}">IFSC Code</label>
+                                    {{ form.site_ifsc_code|add_class:"form-control" }}
+                                    {% if form.site_ifsc_code.errors %}
+                                        <div class="text-danger">{{ form.site_ifsc_code.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Service Charges -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_service_charge_salary.id_for_label }}">Service Charge (Salary)</label>
+                                    {{ form.site_service_charge_salary|add_class:"form-control" }}
+                                    {% if form.site_service_charge_salary.errors %}
+                                        <div class="text-danger">{{ form.site_service_charge_salary.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_service_charge_over_time.id_for_label }}">Service Charge (Overtime)</label>
+                                    {{ form.site_service_charge_over_time|add_class:"form-control" }}
+                                    {% if form.site_service_charge_over_time.errors %}
+                                        <div class="text-danger">{{ form.site_service_charge_over_time.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payroll Rules -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_ot_rule.id_for_label }}">OT Rule</label>
+                                    {{ form.site_ot_rule|add_class:"form-control" }}
+                                    {% if form.site_ot_rule.errors %}
+                                        <div class="text-danger">{{ form.site_ot_rule.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_bonus_formula.id_for_label }}">Bonus Formula</label>
+                                    {{ form.site_bonus_formula|add_class:"form-control" }}
+                                    {% if form.site_bonus_formula.errors %}
+                                        <div class="text-danger">{{ form.site_bonus_formula.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Deduction Rules -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_pf_deduction.id_for_label }}">PF Deduction</label>
+                                    {{ form.site_pf_deduction|add_class:"form-control" }}
+                                    {% if form.site_pf_deduction.errors %}
+                                        <div class="text-danger">{{ form.site_pf_deduction.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_esic_deduction_rule.id_for_label }}">ESIC Deduction Rule</label>
+                                    {{ form.site_esic_deduction_rule|add_class:"form-control" }}
+                                    {% if form.site_esic_deduction_rule.errors %}
+                                        <div class="text-danger">{{ form.site_esic_deduction_rule.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.site_welfare_deduction_rule.id_for_label }}">Welfare Deduction Rule</label>
+                                    {{ form.site_welfare_deduction_rule|add_class:"form-control" }}
+                                    {% if form.site_welfare_deduction_rule.errors %}
+                                        <div class="text-danger">{{ form.site_welfare_deduction_rule.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Save Site
+                            </button>
+                            <a href="{% url 'employees:site_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

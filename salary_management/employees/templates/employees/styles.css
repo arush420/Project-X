@@ -84,10 +84,7 @@ h1 {
 
 /* Responsive Styles */
 @media (max-width: 768px) {
-    .col-md-9 {
-        width: 100%;
-    }
-
+    .col-md-9,
     .col-md-3 {
         width: 100%;
     }
@@ -98,19 +95,8 @@ h1 {
     }
 }
 
-
 /* Staff employee comment box */
 .custom-comment-box {
-  height: 50px !important; /* Reduce the height */
-  width: 100% !important;  /* Widen the width */
+    height: 50px !important;
+    width: 100% !important;
 }
-
-
-/* template tags */
-from django import template
-
-register = template.Library()
-
-@register.filter(name='add_class')
-def add_class(field, css):
-    return field.as_widget(attrs={"class": css})

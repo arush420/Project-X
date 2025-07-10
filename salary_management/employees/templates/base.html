@@ -328,13 +328,25 @@
                             <i class="fas fa-building"></i> Site
                         </a>
                         <div class="dropdown-menu" aria-labelledby="siteDropdown">
+                            <!-- Company Section -->
                             <a class="dropdown-item" href="{% url 'employees:company_add' %}">
                                 <i class="fas fa-plus"></i> Add Company
                             </a>
                             <a class="dropdown-item" href="{% url 'employees:company_list' %}">
                                 <i class="fas fa-list"></i> Company List
                             </a>
+
+                            <!-- Site Section -->
+                            <a class="dropdown-item" href="{% url 'employees:site_add' %}">
+                                <i class="fas fa-plus"></i> Add Site
+                            </a>
+                            <a class="dropdown-item" href="{% url 'employees:site_list' %}">
+                                <i class="fas fa-list"></i> Site List
+                            </a>
+
                             <div class="dropdown-divider"></div>
+
+                            <!-- Salary Section -->
                             <a class="dropdown-item" href="{% url 'employees:generate_salary' %}">
                                 <i class="fas fa-calculator"></i> Generate Salary
                             </a>
@@ -342,6 +354,7 @@
                                 <i class="fas fa-money-bill-wave"></i> Salary List
                             </a>
                         </div>
+
                     </li>
 
                     <li class="nav-item dropdown">

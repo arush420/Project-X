@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load form_extras %}
+
+{% block title %}
+    {% if is_update %}
+        Update Site
+    {% else %}
+        Add Site
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">
+                        {% if is_update %}
+                            Update Site
+                        {% else %}
+                            Add New Site
+                        {% endif %}
+                    </h4>
+                </div>
+
+                <div class="card-body">
+                    {% if messages %}
+                        <div class="alert alert-info" role="alert">
+                            {% for message in messages %}
+                                <p class="mb-0">{{ message }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% if site_form.errors %}
+                        <div class="alert alert-danger">
+                            {{ site_form.errors }}
+                        </div>
+                    {% endif %}
+
+                    <form method="POST" action="">
+                        {% csrf_token %}
+
+                        <h5 class="mt-4 text-primary">General Details</h5>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">{{ site_form.site_code.label_tag }} {{ site_form.site_code }}</div>
+                            <div class="form-group col-md-6">{{ site_form.site_name.label_tag }} {{ site_form.site_name }}</div>
+                        </div>
+                        <div class="form-group">{{ site_form.site_address.label_tag }} {{ site_form.site_address }}</div>
+
+                        <h5 class="mt-4 text-primary">Contact Details</h5>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">{{ site_form.site_contact_person_name.label_tag }} {{ site_form.site_contact_person_name }}</div>
+                            <div class="form-group col-md-6">{{ site_form.site_contact_person_number.label_tag }} {{ site_form.site_contact_person_number }}</div>
+                        </div>
+                        <div class="form-group">{{ site_form.site_contact_person_email.label_tag }} {{ site_form.site_contact_person_email }}</div>
+
+                        <h5 class="mt-4 text-primary">Compliance Information</h5>
+                        <div class="form-row">
+                            <div class="form-group col-md-4">{{ site_form.site_gst_number.label_tag }} {{ site_form.site_gst_number }}</div>
+                            <div class="form-group col-md-4">{{ site_form.site_pf_code.label_tag }} {{ site_form.site_pf_code }}</div>
+                            <div class="form-group col-md-4">{{ site_form.site_esic_code.label_tag }} {{ site_form.site_esic_code }}</div>
+                        </div>
+
+                        <h5 class="mt-4 text-primary">Finance Details</h5>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">{{ site_form.site_account_number.label_tag }} {{ site_form.site_account_number }}</div>
+                            <div class="form-group col-md-6">{{ site_form.site_ifsc_code.label_tag }} {{ site_form.site_ifsc_code }}</div>
+                        </div>
+
+                        <h5 class="mt-4 text-primary">Payroll Settings</h5>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">{{ site_form.site_service_charge_salary.label_tag }} {{ site_form.site_service_charge_salary }}</div>
+                            <div class="form-group col-md-6">{{ site_form.site_service_charge_over_time.label_tag }} {{ site_form.site_service_charge_over_time }}</div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">{{ site_form.site_salary_component_type.label_tag }} {{ site_form.site_salary_component_type }}</div>
+                            <div class="form-group col-md-6">{{ site_form.site_ot_rule.label_tag }} {{ site_form.site_ot_rule }}</div>
+                        </div>
+
+                        <h5 class="mt-4 text-primary">Deductions and Bonus</h5>
+                        <div class="form-row">
+                            <div class="form-group col-md-4">{{ site_form.site_bonus_formula.label_tag }} {{ site_form.site_bonus_formula }}</div>
+                            <div class="form-group col-md-4">{{ site_form.site_pf_deduction.label_tag }} {{ site_form.site_pf_deduction }}</div>
+                            <div class="form-group col-md-4">{{ site_form.site_esic_deduction_rule.label_tag }} {{ site_form.site_esic_deduction_rule }}</div>
+                        </div>
+                        <div class="form-group">{{ site_form.site_welfare_deduction_rule.label_tag }} {{ site_form.site_welfare_deduction_rule }}</div>
+
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                {% if is_update %}
+                                    Update Site
+                                {% else %}
+                                    Add Site
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card-footer text-center">
+                    <a href="{% url 'employees:site_list' %}" class="btn btn-link">Back to Site List</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

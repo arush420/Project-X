@@ -2,7 +2,7 @@ from django import forms
 from .models import (Employee, Task, Payment, PurchaseItem, VendorInformation,
                      Company, SalaryRule, Profile, StaffSalary, AdvanceTransaction, SalaryOtherField, Report,
                      VerificationRequest, EInvoice, EInvoiceLineItem, BillTemplate, ServiceBill, ServiceBillItem,
-                     Purchase, PurchaseLineItem)
+                     Purchase, PurchaseLineItem, Site)
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 import re
@@ -354,6 +354,140 @@ class CompanyForm(forms.ModelForm):
              # add new fields here
         ]
 
+# Adding a Company form
+class AddCompanyForm(forms.Form):
+    company_code = forms.CharField(max_length=4)
+    company_name = forms.CharField(max_length=100)
+    company_address = forms.CharField(widget=forms.Textarea)
+    company_gst_number = forms.CharField(max_length=20, validators=[validate_gst_number])
+    company_account_number = forms.CharField(max_length=20)
+    company_ifsc_code = forms.CharField(max_length=11, validators=[validate_ifsc_code])
+    company_contact_person_name = forms.CharField(max_length=100)
+    company_contact_person_number = forms.CharField(max_length=10)
+    company_contact_person_email = forms.EmailField()
+    company_pf_code = forms.CharField(max_length=20)
+    company_esic_code = forms.CharField(max_length=20)
+    company_service_charge_salary = forms.CharField(max_length=20)
+    company_service_charge_over_time = forms.CharField(max_length=20)
+    company_salary_component_type = forms.ChoiceField(choices=Company.USER_TYPE_CHOICES)
+    company_ot_rule = forms.CharField(max_length=20)
+    company_bonus_formula = forms.CharField(max_length=20)
+    company_pf_deduction = forms.CharField(max_length=20)
+    company_esic_deduction_rule = forms.CharField(max_length=20)
+    company_welfare_deduction_rule = forms.CharField(max_length=20),
+    hra = forms.BooleanField(required=False, initial=False, label="HRA")
+    allowance = forms.BooleanField(required=False, initial=False, label="Allowance")
+
+#Adding Site
+class SiteForm(forms.ModelForm):
+    class Meta:
+        model = Site
+        fields = [
+            'site_code', 'site_name', 'site_address',
+            'site_gst_number', 'site_account_number', 'site_ifsc_code',
+            'site_contact_person_name', 'site_contact_person_number', 'site_contact_person_email',
+            'site_pf_code', 'site_esic_code',
+            'site_service_charge_salary', 'site_service_charge_over_time',
+            'site_salary_component_type', 'site_ot_rule', 'site_bonus_formula',
+            'site_pf_deduction', 'site_esic_deduction_rule', 'site_welfare_deduction_rule',
+        ]
+
+        widgets = {
+            'site_code': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter 4-digit site code'
+            }),
+            'site_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter site name'
+            }),
+            'site_address': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter full address',
+                'rows': 3
+            }),
+            'site_gst_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter GST number'
+            }),
+            'site_account_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter bank account number'
+            }),
+            'site_ifsc_code': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter IFSC code'
+            }),
+            'site_contact_person_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter contact person name'
+            }),
+            'site_contact_person_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter 10-digit mobile number'
+            }),
+            'site_contact_person_email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter email address'
+            }),
+            'site_pf_code': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter PF code'
+            }),
+            'site_esic_code': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter ESIC code'
+            }),
+            'site_service_charge_salary': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g. 5 for 5%'
+            }),
+            'site_service_charge_over_time': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g. 7.5 for 7.5%'
+            }),
+            'site_salary_component_type': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'site_ot_rule': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g. 2x for double rate OT'
+            }),
+            'site_bonus_formula': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Bonus calculation rule (if any)'
+            }),
+            'site_pf_deduction': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'PF deduction rule'
+            }),
+            'site_esic_deduction_rule': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'ESIC deduction rule'
+            }),
+            'site_welfare_deduction_rule': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Welfare fund rule'
+            }),
+        }
+
+    def clean_site_code(self):
+        site_code = self.cleaned_data.get('site_code', '').strip()
+        if len(site_code) != 4:
+            raise forms.ValidationError("Site code must be exactly 4 characters long.")
+        return site_code.upper()
+
+    def clean_site_contact_person_number(self):
+        number = self.cleaned_data.get('site_contact_person_number', '')
+        if not number.isdigit() or len(number) < 10 or len(number) > 15:
+            raise forms.ValidationError("Contact number must be between 10 and 15 digits.")
+        return number
+
+    def clean_site_ifsc_code(self):
+        code = self.cleaned_data.get('site_ifsc_code', '').strip()
+        if code and len(code) != 11:
+            raise forms.ValidationError("IFSC code must be exactly 11 characters long.")
+        return code.upper()
 
 class SalaryRuleForm(forms.ModelForm):
     # Checkbox fields
@@ -415,31 +549,6 @@ class SalaryOtherFieldForm(forms.ModelForm):
 
 # Define a formset for adding multiple salary rules at once
 SalaryOtherFieldFormSet = modelformset_factory(SalaryOtherField, form=SalaryOtherFieldForm, extra=1)
-
-
-# Adding a Company form
-class AddCompanyForm(forms.Form):
-    company_code = forms.CharField(max_length=4)
-    company_name = forms.CharField(max_length=100)
-    company_address = forms.CharField(widget=forms.Textarea)
-    company_gst_number = forms.CharField(max_length=20, validators=[validate_gst_number])
-    company_account_number = forms.CharField(max_length=20)
-    company_ifsc_code = forms.CharField(max_length=11, validators=[validate_ifsc_code])
-    company_contact_person_name = forms.CharField(max_length=100)
-    company_contact_person_number = forms.CharField(max_length=10)
-    company_contact_person_email = forms.EmailField()
-    company_pf_code = forms.CharField(max_length=20)
-    company_esic_code = forms.CharField(max_length=20)
-    company_service_charge_salary = forms.CharField(max_length=20)
-    company_service_charge_over_time = forms.CharField(max_length=20)
-    company_salary_component_type = forms.ChoiceField(choices=Company.USER_TYPE_CHOICES)
-    company_ot_rule = forms.CharField(max_length=20)
-    company_bonus_formula = forms.CharField(max_length=20)
-    company_pf_deduction = forms.CharField(max_length=20)
-    company_esic_deduction_rule = forms.CharField(max_length=20)
-    company_welfare_deduction_rule = forms.CharField(max_length=20),
-    hra = forms.BooleanField(required=False, initial=False, label="HRA")
-    allowance = forms.BooleanField(required=False, initial=False, label="Allowance")
 
 
 # attendance and advance upload form

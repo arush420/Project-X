@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Site List{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <h2 class="mb-4">Site List</h2>
+
+            <!-- Search Bar -->
+            <form method="GET" action="{% url 'employees:site_list' %}" class="form-inline mb-3">
+                <input class="form-control mr-sm-2" type="search" name="q" value="{{ query }}" placeholder="Search for a site" aria-label="Search">
+                <button class="btn btn-outline-primary my-2 my-sm-0" type="submit">Search</button>
+            </form>
+
+            <!-- Add New Site Button -->
+            <a href="{% url 'employees:site_add' %}" class="btn btn-success mb-3">Add New Site</a>
+
+            <!-- Site Table -->
+            <div class="table-responsive">
+                <table class="table table-hover mt-3">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Site Code</th>
+                            <th>Site Name</th>
+                            <th>GST Number</th>
+                            <th>Contact Person</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for site in sites %}
+                            <tr>
+                                <td>{{ site.site_code }}</td>
+                                <td>{{ site.site_name }}</td>
+                                <td>{{ site.site_gst_number }}</td>
+                                <td>{{ site.site_contact_person_name }}</td>
+                                <td>
+                                    <a href="{% url 'employees:site_detail' site.id %}" class="btn btn-info btn-sm">View</a>
+                                    <a href="{% url 'employees:site_update' site.id %}" class="btn btn-warning btn-sm">Edit</a>
+                                    <form method="POST" action="{% url 'employees:delete_site' site.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this site?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -73,6 +73,39 @@ class Company(models.Model):
     def __str__(self):
         return self.company_name
 
+class Site(models.Model):
+    site_code = models.CharField(max_length=4, default="0000")
+    site_name = models.CharField(max_length=100, default="")
+    site_address = models.CharField(max_length=255, default="")
+    site_contact_person_name = models.CharField(max_length=100, default="")
+    site_contact_person_number = models.CharField(validators=[phone_regex], max_length=10, default="0000000000")
+    site_contact_person_email = models.EmailField(max_length=100, default="")
+    site_gst_number = models.CharField(max_length=20, default="0")
+    site_pf_code = models.CharField(max_length=20, default="0")
+    site_esic_code = models.CharField(max_length=20, default="0")
+    site_service_charge_salary = models.CharField(max_length=20, default="0")
+    site_service_charge_over_time = models.CharField(max_length=20, default="0")
+    site_account_number = models.CharField(max_length=20, default="0")
+    site_ifsc_code = models.CharField(max_length=11, default="0")
+
+    USER_TYPE_CHOICES = [
+        ('Hour', 'Hour'),
+        ('Day', 'Day'),
+        ('Month', 'Month')
+    ]
+    site_salary_component_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default="Month")
+    site_ot_rule = models.CharField(max_length=20, default="0")
+    site_bonus_formula = models.CharField(max_length=20, default="0")
+    site_pf_deduction = models.CharField(max_length=20, default="0")
+    site_esic_deduction_rule = models.CharField(max_length=20, default="0")
+    site_welfare_deduction_rule = models.CharField(max_length=20, default="0")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.site_name
+
+
 
 class SalaryRule(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='salary_rules')

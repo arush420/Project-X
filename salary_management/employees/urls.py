@@ -62,6 +62,14 @@ urlpatterns = [
     path('companies/<int:company_id>/detail/', views.company_detail, name='company_detail'),
 
 
+    # Site form
+    path('site/', views.site_list, name='site_list'),
+    path('site/add/', views.site_add, name='site_add'),
+    path('site/<int:site_id>/update/', views.site_update, name='site_update'),
+    path('site/<int:site_id>/delete/', views.delete_site, name='delete_site'),
+    path('site/<int:site_id>/detail/', views.site_detail, name='site_detail'),
+
+
     # advance and attendance upload form
     path('upload/', views.employees_upload_details, name='employees_upload_details'),
     path('sample-download/', views.sample_download, name='sample_download'),
