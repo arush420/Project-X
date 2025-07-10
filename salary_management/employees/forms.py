@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 import re
 from django.forms import modelformset_factory, inlineformset_factory
 from django.core.exceptions import ValidationError
+import json
 
 
 # Constants for validation
@@ -763,9 +764,7 @@ class ServiceBillForm(forms.ModelForm):
         model = ServiceBill
         fields = [
             'bill_number', 'bill_date', 'template', 'client_name', 'client_address',
-            'client_gst_number', 'client_contact_person', 'client_phone',
-            'service_period_from', 'service_period_to', 'reference_document',
-            'payment_terms', 'due_date', 'notes', 'status'
+            'client_gst_number', 'status'
         ]
         widgets = {
             'bill_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Auto-generated if blank'}),
@@ -774,14 +773,6 @@ class ServiceBillForm(forms.ModelForm):
             'client_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter client name'}),
             'client_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Enter client address'}),
             'client_gst_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '22AAAAA0000A1Z5', 'maxlength': '15'}),
-            'client_contact_person': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter contact person name'}),
-            'client_phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter phone number'}),
-            'service_period_from': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'service_period_to': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'reference_document': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., PO Number'}),
-            'payment_terms': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Net 30 days'}),
-            'due_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Additional notes'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
         }
 
@@ -796,30 +787,40 @@ class ServiceBillForm(forms.ModelForm):
             self.fields['template'].queryset = BillTemplate.objects.filter(is_active=True)
         
         self.fields['template'].empty_label = "Select Template"
-
-    def clean(self):
-        cleaned_data = super().clean()
-        service_period_from = cleaned_data.get('service_period_from')
-        service_period_to = cleaned_data.get('service_period_to')
         
-        if service_period_from and service_period_to and service_period_from > service_period_to:
-            raise ValidationError("Service period 'from' date cannot be later than 'to' date.")
+        # Add data attributes to options
+        choices = []
+        for template in self.fields['template'].queryset:
+            choices.append((template.pk, {
+                'label': template.template_name,
+                'data-cgst-rate': str(template.cgst_rate),
+                'data-sgst-rate': str(template.sgst_rate),
+                'data-igst-rate': str(template.igst_rate),
+                'data-apply-cgst-sgst': template.apply_cgst_sgst,
+                'data-apply-igst': template.apply_igst,
+            }))
         
-        return cleaned_data
+        self.fields['template'].choices = [("", "Select Template")] + [
+            (pk, attrs['label']) for pk, attrs in choices
+        ]
+        
+        # This is a bit of a hack to get the data attributes into the rendered HTML
+        self.fields['template'].widget.choices = self.fields['template'].choices
+        self.fields['template'].widget.attrs.update({
+            'data-options': json.dumps({pk: attrs for pk, attrs in choices})
+        })
 
 
 class ServiceBillItemForm(forms.ModelForm):
     class Meta:
         model = ServiceBillItem
         fields = [
-            'description', 'hsn_code', 'quantity', 'unit_rate', 'notes', 'order'
+            'description', 'hsn_code', 'amount', 'order'
         ]
         widgets = {
-            'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Production Incentive'}),
-            'hsn_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '998519'}),
-            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0.01', 'placeholder': '1.00'}),
-            'unit_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0.01', 'placeholder': '0.00'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Additional notes for this item'}),
+            'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Manpower Supply'}),
+            'hsn_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'HSN'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
             'order': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'placeholder': '0'}),
         }
 

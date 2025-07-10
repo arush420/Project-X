@@ -1,8 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load bill_filters %}
+{% load custom_filter %}
 
 {% block title %}Service Bills{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'employees/service_bill.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid mt-4">

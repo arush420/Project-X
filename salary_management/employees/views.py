@@ -1522,6 +1522,7 @@ def service_bill_list(request):
 def service_bill_create(request):
     """Create a new service bill with line items"""
     user_company = getattr(request.user.profile, 'company', None)
+    sites = Site.objects.all()
     
     if request.method == 'POST':
         form = ServiceBillForm(request.POST, company=user_company)
@@ -1583,7 +1584,8 @@ def service_bill_create(request):
     
     return render(request, 'employees/service_bill_form.html', {
         'form': form,
-        'formset': formset
+        'formset': formset,
+        'sites': sites
     })
 
 
@@ -1592,6 +1594,7 @@ def service_bill_update(request, pk):
     """Update an existing service bill"""
     bill = get_object_or_404(ServiceBill, pk=pk)
     user_company = getattr(request.user.profile, 'company', None)
+    sites = Site.objects.all()
     
     if request.method == 'POST':
         form = ServiceBillForm(request.POST, instance=bill, company=user_company)
@@ -1624,7 +1627,8 @@ def service_bill_update(request, pk):
     return render(request, 'employees/service_bill_form.html', {
         'form': form,
         'formset': formset,
-        'bill': bill
+        'bill': bill,
+        'sites': sites
     })
 
 

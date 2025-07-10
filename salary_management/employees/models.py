@@ -1159,14 +1159,13 @@ class BillTemplate(models.Model):
             BillTemplate.objects.filter(company=self.company, is_default=True).update(is_default=False)
         super().save(*args, **kwargs)
 
-
 class ServiceBill(models.Model):
     """
     Manpower Service Bill Model
     """
     # Bill Information
-    bill_number = models.CharField(max_length=50, unique=True)
-    bill_date = models.DateField()
+    bill_number = models.CharField(max_length=50, unique=True, blank=True)
+    bill_date = models.DateField(default=timezone.now)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='service_bills')
     template = models.ForeignKey(BillTemplate, on_delete=models.PROTECT, related_name='bills')
     
@@ -1174,28 +1173,14 @@ class ServiceBill(models.Model):
     client_name = models.CharField(max_length=200)
     client_address = models.TextField()
     client_gst_number = models.CharField(max_length=15, blank=True, null=True)
-    client_contact_person = models.CharField(max_length=100, blank=True, null=True)
-    client_phone = models.CharField(max_length=15, blank=True, null=True)
-    
-    # Service Period
-    service_period_from = models.DateField()
-    service_period_to = models.DateField()
     
     # Calculated Totals
     total_gross_wages = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-    total_esi_contribution = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-    total_service_charge = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     taxable_value = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     cgst_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     sgst_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     igst_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     total_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-    
-    # Additional Information
-    reference_document = models.CharField(max_length=100, blank=True, null=True, help_text="PO Number or reference")
-    payment_terms = models.CharField(max_length=200, blank=True, null=True)
-    due_date = models.DateField(blank=True, null=True)
-    notes = models.TextField(blank=True, null=True)
     
     # Status
     STATUS_CHOICES = [
@@ -1210,102 +1195,60 @@ class ServiceBill(models.Model):
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         ordering = ['-created_at']
         verbose_name = "Service Bill"
         verbose_name_plural = "Service Bills"
-    
+
     def __str__(self):
-        return f"Bill #{self.bill_number} - {self.client_name}"
-    
+        return f"Bill {self.bill_number} for {self.client_name}"
+
     def save(self, *args, **kwargs):
-        # Auto-generate bill number if not provided
         if not self.bill_number:
             self.bill_number = self.generate_bill_number()
         
-        # Save first to get primary key
+        # Ensure calculation is done before saving
+        if self.pk:  # only calculate if the instance is already saved
+            self.calculate_totals()
+            
         super().save(*args, **kwargs)
-        
-        # Then calculate totals and save again if needed
-        old_total = self.total_amount
-        self.calculate_totals()
-        if old_total != self.total_amount:
-            super().save(*args, **kwargs)
-    
-    def generate_bill_number(self):
-        """Generate unique bill number"""
-        import datetime
-        today = datetime.date.today()
-        prefix = f"{self.company.company_code}{today.strftime('%Y%m')}"
-        
-        # Get last bill number for this month
-        last_bill = ServiceBill.objects.filter(
-            bill_number__startswith=prefix,
-            company=self.company
-        ).order_by('-bill_number').first()
-        
-        if last_bill:
-            last_number = int(last_bill.bill_number[-4:])  # Get last 4 digits
-            new_number = last_number + 1
-        else:
-            new_number = 1
-        
-        return f"{prefix}{new_number:04d}"
-    
-    def calculate_totals(self):
-        """Calculate all totals based on line items and template rules"""
-        # Get all line items (only if the instance has been saved)
-        if self.pk:
-            line_items = self.line_items.all()
-            # Calculate gross wages total
-            self.total_gross_wages = sum(item.total_amount for item in line_items)
-        else:
-            # If not saved yet, start with zero
-            self.total_gross_wages = 0
-        
-        # Calculate ESI contribution
-        if self.template.apply_esi:
-            self.total_esi_contribution = (self.total_gross_wages * self.template.esi_rate) / 100
-        else:
-            self.total_esi_contribution = 0
-        
-        # Calculate service charge
-        if self.template.apply_service_charge:
-            self.total_service_charge = (self.total_gross_wages * self.template.service_charge_rate) / 100
-        else:
-            self.total_service_charge = 0
-        
-        # Calculate taxable value
-        self.taxable_value = self.total_gross_wages + self.total_esi_contribution + self.total_service_charge
-        
-        # Calculate taxes
-        if self.template.apply_cgst_sgst:
-            self.cgst_amount = (self.taxable_value * self.template.cgst_rate) / 100
-            self.sgst_amount = (self.taxable_value * self.template.sgst_rate) / 100
-            self.igst_amount = 0
-        elif self.template.apply_igst:
-            self.igst_amount = (self.taxable_value * self.template.igst_rate) / 100
-            self.cgst_amount = 0
-            self.sgst_amount = 0
-        else:
-            self.cgst_amount = 0
-            self.sgst_amount = 0
-            self.igst_amount = 0
-        
-        # Calculate total amount
-        self.total_amount = self.taxable_value + self.cgst_amount + self.sgst_amount + self.igst_amount
-        
-        # Apply rounding
-        if self.template.round_to_nearest:
-            self.total_amount = round(self.total_amount / self.template.round_to_nearest) * self.template.round_to_nearest
-    
-    def get_amount_in_words(self):
-        """Convert total amount to words"""
-        # This would need a number-to-words conversion library
-        # For now, return a placeholder
-        return f"Rupees {self.total_amount} only"
 
+    def generate_bill_number(self):
+        # Generate a unique bill number, e.g., "BILL-2023-10-0001"
+        today = timezone.now()
+        year = today.year
+        month = today.month
+        
+        last_bill = ServiceBill.objects.filter(created_at__year=year, created_at__month=month).order_by('id').last()
+        
+        if last_bill and last_bill.bill_number:
+            try:
+                last_num = int(last_bill.bill_number.split('-')[-1])
+                new_num = last_num + 1
+            except (IndexError, ValueError):
+                new_num = 1
+        else:
+            new_num = 1
+            
+        return f"BILL-{year}-{month:02d}-{new_num:04d}"
+
+    def calculate_totals(self):
+        line_items = self.line_items.all()
+        
+        # total_gross_wages is the sum of the amount of all line items
+        self.total_gross_wages = sum(item.amount for item in line_items)
+        
+        # For simplicity now, let's assume taxable_value and total_amount are the same as total_gross_wages
+        self.taxable_value = self.total_gross_wages
+        self.total_amount = self.total_gross_wages
+        self.cgst_amount = 0
+        self.sgst_amount = 0
+        self.igst_amount = 0
+
+    def get_amount_in_words(self):
+        # Placeholder for amount in words conversion
+        return "Amount in words not implemented"
 
 class ServiceBillItem(models.Model):
     """
@@ -1314,32 +1257,25 @@ class ServiceBillItem(models.Model):
     bill = models.ForeignKey(ServiceBill, on_delete=models.CASCADE, related_name='line_items')
     
     # Item Details
-    description = models.CharField(max_length=200, help_text="e.g., Production Incentive, Attendance Award")
-    hsn_code = models.CharField(max_length=10, default="998519")
-    quantity = models.DecimalField(max_digits=10, decimal_places=2, default=1)
-    unit_rate = models.DecimalField(max_digits=12, decimal_places=2)
-    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
-    
-    # Additional Details
-    notes = models.TextField(blank=True, null=True)
+    description = models.CharField(max_length=200, help_text="e.g., Manpower Supply")
+    hsn_code = models.CharField(max_length=10)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     
     # Ordering
     order = models.PositiveIntegerField(default=0)
-    
+
     class Meta:
         ordering = ['order', 'id']
         verbose_name = "Service Bill Item"
         verbose_name_plural = "Service Bill Items"
-    
+
     def __str__(self):
-        return f"{self.description} - {self.bill.bill_number}"
-    
+        return self.description
+
     def save(self, *args, **kwargs):
-        # Calculate total amount
-        self.total_amount = self.quantity * self.unit_rate
-        
         super().save(*args, **kwargs)
         
-        # Update bill totals
-        self.bill.save()
+        # Update parent bill totals
+        if self.bill:
+            self.bill.save() # This will trigger calculate_totals on the bill
 

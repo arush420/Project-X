@@ -5,6 +5,10 @@
     {% if bill %}Edit Service Bill{% else %}Create Service Bill{% endif %}
 {% endblock %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'employees/service_bill.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid mt-4">
     <div class="row justify-content-center">
@@ -67,15 +71,25 @@
                         <div class="row mb-4">
                             <div class="col-12">
                                 <h5 class="text-primary border-bottom pb-2">
-                                    <i class="fas fa-user"></i> Client Information
+                                    <i class="fas fa-user"></i> Site Information
                                 </h5>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="{{ form.client_name.id_for_label }}" class="form-label">
-                                        <strong>Client Name</strong> <span class="text-danger">*</span>
+                                    <label for="site_select" class="form-label">
+                                        <strong>Site Name</strong> <span class="text-danger">*</span>
                                     </label>
-                                    {{ form.client_name }}
+                                    <select id="site_select" name="client_name" class="form-control">
+                                        <option value="">Select a Site</option>
+                                        {% for site in sites %}
+                                            <option value="{{ site.site_name }}" 
+                                                data-gst="{{ site.site_gst_number }}"
+                                                data-address="{{ site.site_address_line1 }}{% if site.site_address_line2 %} {{ site.site_address_line2 }}{% endif %}, {{ site.site_city }}, {{ site.site_state }} - {{ site.site_pincode }}"
+                                                {% if form.client_name.value == site.site_name %}selected{% endif %}>
+                                                {{ site.site_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
                                     {% if form.client_name.errors %}
                                         <div class="text-danger small">{{ form.client_name.errors }}</div>
                                     {% endif %}
@@ -84,7 +98,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="{{ form.client_gst_number.id_for_label }}" class="form-label">
-                                        <strong>Client GST Number</strong>
+                                        <strong>Site GST Number</strong>
                                     </label>
                                     {{ form.client_gst_number }}
                                     {% if form.client_gst_number.errors %}
@@ -95,117 +109,11 @@
                             <div class="col-md-8">
                                 <div class="form-group">
                                     <label for="{{ form.client_address.id_for_label }}" class="form-label">
-                                        <strong>Client Address</strong> <span class="text-danger">*</span>
+                                        <strong>Site Address</strong> <span class="text-danger">*</span>
                                     </label>
                                     {{ form.client_address }}
                                     {% if form.client_address.errors %}
                                         <div class="text-danger small">{{ form.client_address.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="{{ form.client_contact_person.id_for_label }}" class="form-label">
-                                        <strong>Contact Person</strong>
-                                    </label>
-                                    {{ form.client_contact_person }}
-                                    {% if form.client_contact_person.errors %}
-                                        <div class="text-danger small">{{ form.client_contact_person.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="form-group">
-                                    <label for="{{ form.client_phone.id_for_label }}" class="form-label">
-                                        <strong>Phone Number</strong>
-                                    </label>
-                                    {{ form.client_phone }}
-                                    {% if form.client_phone.errors %}
-                                        <div class="text-danger small">{{ form.client_phone.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Service Period & Additional Info -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h5 class="text-primary border-bottom pb-2">
-                                    <i class="fas fa-calendar"></i> Service Period & Details
-                                </h5>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label for="{{ form.service_period_from.id_for_label }}" class="form-label">
-                                        <strong>From Date</strong> <span class="text-danger">*</span>
-                                    </label>
-                                    {{ form.service_period_from }}
-                                    {% if form.service_period_from.errors %}
-                                        <div class="text-danger small">{{ form.service_period_from.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label for="{{ form.service_period_to.id_for_label }}" class="form-label">
-                                        <strong>To Date</strong> <span class="text-danger">*</span>
-                                    </label>
-                                    {{ form.service_period_to }}
-                                    {% if form.service_period_to.errors %}
-                                        <div class="text-danger small">{{ form.service_period_to.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label for="{{ form.reference_document.id_for_label }}" class="form-label">
-                                        <strong>Reference/PO Number</strong>
-                                    </label>
-                                    {{ form.reference_document }}
-                                    {% if form.reference_document.errors %}
-                                        <div class="text-danger small">{{ form.reference_document.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label for="{{ form.status.id_for_label }}" class="form-label">
-                                        <strong>Status</strong>
-                                    </label>
-                                    {{ form.status }}
-                                    {% if form.status.errors %}
-                                        <div class="text-danger small">{{ form.status.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="{{ form.payment_terms.id_for_label }}" class="form-label">
-                                        <strong>Payment Terms</strong>
-                                    </label>
-                                    {{ form.payment_terms }}
-                                    {% if form.payment_terms.errors %}
-                                        <div class="text-danger small">{{ form.payment_terms.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="{{ form.due_date.id_for_label }}" class="form-label">
-                                        <strong>Due Date</strong>
-                                    </label>
-                                    {{ form.due_date }}
-                                    {% if form.due_date.errors %}
-                                        <div class="text-danger small">{{ form.due_date.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="form-group">
-                                    <label for="{{ form.notes.id_for_label }}" class="form-label">
-                                        <strong>Notes</strong>
-                                    </label>
-                                    {{ form.notes }}
-                                    {% if form.notes.errors %}
-                                        <div class="text-danger small">{{ form.notes.errors }}</div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -216,104 +124,73 @@
                             <div class="col-12">
                                 <h5 class="text-primary border-bottom pb-2">
                                     <i class="fas fa-list"></i> Service Items
-                                    <button type="button" class="btn btn-sm btn-success float-right" id="addItem">
-                                        <i class="fas fa-plus"></i> Add Item
-                                    </button>
                                 </h5>
-                            </div>
-                            <div class="col-12">
-                                <div id="formset-container">
-                                    {{ formset.management_form }}
-                                    {% for form in formset %}
-                                        <div class="formset-form border rounded p-3 mb-3" id="form-{{ forloop.counter0 }}">
-                                            {% if form.non_field_errors %}
-                                                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
-                                            {% endif %}
-                                            
-                                            <div class="row">
-                                                <div class="col-md-5">
-                                                    <div class="form-group">
-                                                        <label for="{{ form.description.id_for_label }}" class="form-label">
-                                                            <strong>Description</strong>
-                                                        </label>
-                                                        {{ form.description }}
-                                                        {% if form.description.errors %}
-                                                            <div class="text-danger small">{{ form.description.errors }}</div>
-                                                        {% endif %}
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <div class="form-group">
-                                                        <label for="{{ form.hsn_code.id_for_label }}" class="form-label">
-                                                            <strong>HSN Code</strong>
-                                                        </label>
-                                                        {{ form.hsn_code }}
-                                                        {% if form.hsn_code.errors %}
-                                                            <div class="text-danger small">{{ form.hsn_code.errors }}</div>
-                                                        {% endif %}
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-1">
-                                                    <div class="form-group">
-                                                        <label for="{{ form.quantity.id_for_label }}" class="form-label">
-                                                            <strong>Qty</strong>
-                                                        </label>
-                                                        {{ form.quantity }}
-                                                        {% if form.quantity.errors %}
-                                                            <div class="text-danger small">{{ form.quantity.errors }}</div>
-                                                        {% endif %}
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <div class="form-group">
-                                                        <label for="{{ form.unit_rate.id_for_label }}" class="form-label">
-                                                            <strong>Rate (₹)</strong>
-                                                        </label>
-                                                        {{ form.unit_rate }}
-                                                        {% if form.unit_rate.errors %}
-                                                            <div class="text-danger small">{{ form.unit_rate.errors }}</div>
-                                                        {% endif %}
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-1">
-                                                    <div class="form-group">
-                                                        <label for="{{ form.order.id_for_label }}" class="form-label">
-                                                            <strong>Order</strong>
-                                                        </label>
-                                                        {{ form.order }}
-                                                        {% if form.order.errors %}
-                                                            <div class="text-danger small">{{ form.order.errors }}</div>
-                                                        {% endif %}
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-1">
-                                                    <div class="form-group">
-                                                        <label class="form-label">&nbsp;</label>
-                                                        <button type="button" class="btn btn-danger btn-sm d-block remove-form">
+                                {{ formset.management_form }}
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped" id="items-table">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Description of Service</th>
+                                                <th>HSN Code</th>
+                                                <th>Amount (₹)</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="items-tbody">
+                                            {% for form in formset %}
+                                                <tr class="item-row">
+                                                    <td>{{ form.description }}</td>
+                                                    <td>{{ form.hsn_code }}</td>
+                                                    <td>{{ form.amount }}</td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-sm btn-danger remove-item">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
                                                         {{ form.DELETE }}
-                                                    </div>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <button type="button" class="btn btn-success" id="add-item">
+                                            <i class="fas fa-plus me-2"></i>Add Item
+                                        </button>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <div class="card bg-light">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-6"><strong>Total Gross Wages:</strong></div>
+                                                    <div class="col-6 text-end">₹<span id="total-gross-wages">0.00</span></div>
+                                                </div>
+                                                <div class="row mt-2">
+                                                    <div class="col-6"><strong>Taxable Value:</strong></div>
+                                                    <div class="col-6 text-end">₹<span id="taxable-value">0.00</span></div>
+                                                </div>
+                                                <hr>
+                                                <div class="row mt-2">
+                                                    <div class="col-6"><strong>CGST:</strong></div>
+                                                    <div class="col-6 text-end">₹<span id="cgst-amount">0.00</span></div>
+                                                </div>
+                                                <div class="row mt-2">
+                                                    <div class="col-6"><strong>SGST:</strong></div>
+                                                    <div class="col-6 text-end">₹<span id="sgst-amount">0.00</span></div>
+                                                </div>
+                                                <div class="row mt-2">
+                                                    <div class="col-6"><strong>IGST:</strong></div>
+                                                    <div class="col-6 text-end">₹<span id="igst-amount">0.00</span></div>
+                                                </div>
+                                                <hr>
+                                                <div class="row mt-2">
+                                                    <div class="col-6"><strong>Grand Total:</strong></div>
+                                                    <div class="col-6 text-end"><strong>₹<span id="grand-total">0.00</span></strong></div>
                                                 </div>
                                             </div>
-                                            
-                                            {% if form.notes %}
-                                            <div class="row">
-                                                <div class="col-12">
-                                                    <div class="form-group">
-                                                        <label for="{{ form.notes.id_for_label }}" class="form-label">
-                                                            <strong>Notes</strong>
-                                                        </label>
-                                                        {{ form.notes }}
-                                                        {% if form.notes.errors %}
-                                                            <div class="text-danger small">{{ form.notes.errors }}</div>
-                                                        {% endif %}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {% endif %}
                                         </div>
-                                    {% endfor %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -356,50 +233,157 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Dynamic formset handling
-    const container = document.getElementById('formset-container');
-    const addButton = document.getElementById('addItem');
-    const totalForms = document.querySelector('#id_form-TOTAL_FORMS');
-    
-    let formIndex = parseInt(totalForms.value);
-    
-    addButton.addEventListener('click', function() {
-        const emptyFormDiv = container.querySelector('.formset-form').cloneNode(true);
-        
-        // Update form IDs and names
-        emptyFormDiv.innerHTML = emptyFormDiv.innerHTML.replace(/form-\d+/g, `form-${formIndex}`);
-        emptyFormDiv.innerHTML = emptyFormDiv.innerHTML.replace(/form-\d+-/g, `form-${formIndex}-`);
-        emptyFormDiv.id = `form-${formIndex}`;
-        
-        // Clear input values
-        emptyFormDiv.querySelectorAll('input, textarea, select').forEach(function(input) {
-            if (input.type !== 'hidden') {
-                input.value = '';
-            }
-        });
-        
-        container.appendChild(emptyFormDiv);
-        
-        formIndex++;
-        totalForms.value = formIndex;
-    });
-    
-    // Remove form functionality
-    container.addEventListener('click', function(e) {
-        if (e.target.classList.contains('remove-form') || e.target.closest('.remove-form')) {
-            const formDiv = e.target.closest('.formset-form');
-            const deleteCheckbox = formDiv.querySelector('input[name$="-DELETE"]');
-            
-            if (deleteCheckbox) {
-                deleteCheckbox.checked = true;
-                formDiv.style.display = 'none';
+    // --- Autofill for Site Information ---
+    const siteSelect = document.getElementById('site_select');
+    if (siteSelect) {
+        const gstInput = document.getElementById('id_client_gst_number');
+        const addressInput = document.getElementById('id_client_address');
+
+        function handleSiteChange() {
+            const selectedOption = siteSelect.options[siteSelect.selectedIndex];
+            if (selectedOption && selectedOption.value) {
+                gstInput.value = selectedOption.dataset.gst || '';
+                addressInput.value = selectedOption.dataset.address || '';
             } else {
-                formDiv.remove();
-                formIndex--;
-                totalForms.value = formIndex;
+                gstInput.value = '';
+                addressInput.value = '';
             }
         }
+        siteSelect.addEventListener('change', handleSiteChange);
+        if (siteSelect.value) {
+            handleSiteChange();
+        }
+    }
+
+    // --- Dynamic Formset & Calculations ---
+    const itemsTbody = document.getElementById('items-tbody');
+    const templateSelect = document.getElementById('id_template');
+    const addItemButton = document.getElementById('add-item');
+    let formIndex = {{ formset.total_form_count }};
+
+    function updateTotals() {
+        let totalGrossWages = 0;
+        
+        itemsTbody.querySelectorAll('.item-row').forEach(row => {
+            if (row.style.display !== 'none') {
+                const amountInput = row.querySelector('input[name*="amount"]');
+                if (amountInput && amountInput.value) {
+                    totalGrossWages += parseFloat(amountInput.value) || 0;
+                }
+            }
+        });
+
+        let taxableValue = totalGrossWages;
+        let cgstAmount = 0, sgstAmount = 0, igstAmount = 0;
+
+        if (templateSelect && templateSelect.value) {
+            const templateOptions = JSON.parse(templateSelect.dataset.options || '{}');
+            const selectedTemplateData = templateOptions[templateSelect.value];
+
+            if (selectedTemplateData) {
+                const cgstRate = parseFloat(selectedTemplateData['data-cgst-rate'] || 0);
+                const sgstRate = parseFloat(selectedTemplateData['data-sgst-rate'] || 0);
+                const igstRate = parseFloat(selectedTemplateData['data-igst-rate'] || 0);
+
+                if (selectedTemplateData['data-apply-cgst-sgst']) {
+                    cgstAmount = taxableValue * (cgstRate / 100);
+                    sgstAmount = taxableValue * (sgstRate / 100);
+                } else if (selectedTemplateData['data-apply-igst']) {
+                    igstAmount = taxableValue * (igstRate / 100);
+                }
+            }
+        }
+
+        let grandTotal = taxableValue + cgstAmount + sgstAmount + igstAmount;
+
+        document.getElementById('total-gross-wages').textContent = totalGrossWages.toFixed(2);
+        document.getElementById('taxable-value').textContent = taxableValue.toFixed(2);
+        document.getElementById('cgst-amount').textContent = cgstAmount.toFixed(2);
+        document.getElementById('sgst-amount').textContent = sgstAmount.toFixed(2);
+        document.getElementById('igst-amount').textContent = igstAmount.toFixed(2);
+        document.getElementById('grand-total').textContent = grandTotal.toFixed(2);
+    }
+
+    function updateFormCount() {
+        document.querySelector('input[name="form-TOTAL_FORMS"]').value = itemsTbody.querySelectorAll('.item-row:not([style*="display: none"])').length;
+    }
+    
+    // Event delegation for items table
+    itemsTbody.addEventListener('input', function(e) {
+        if (e.target && e.target.matches('input[name*="amount"]')) {
+            updateTotals();
+        }
     });
+
+    itemsTbody.addEventListener('click', function(e) {
+        const removeButton = e.target.closest('.remove-item');
+        if (removeButton) {
+            const row = removeButton.closest('tr');
+            const deleteCheckbox = row.querySelector('input[type="checkbox"][name*="DELETE"]');
+            if (deleteCheckbox) {
+                deleteCheckbox.checked = true;
+                row.style.display = 'none';
+            } else {
+                row.remove();
+            }
+            updateTotals();
+            updateFormCount();
+        }
+    });
+    
+    // Event for template change
+    if (templateSelect) {
+        templateSelect.addEventListener('change', updateTotals);
+    }
+
+    // Event for adding a new item
+    if(addItemButton) {
+        const formsetPrefix = 'form';
+        
+        addItemButton.addEventListener('click', function() {
+            const totalFormsInput = document.querySelector(`input[name="${formsetPrefix}-TOTAL_FORMS"]`);
+            let formIndex = parseInt(totalFormsInput.value);
+
+            const newRow = createNewItemRow(formsetPrefix, formIndex);
+            itemsTbody.appendChild(newRow);
+
+            totalFormsInput.value = formIndex + 1;
+        });
+    }
+
+    function createNewItemRow(prefix, index) {
+        const newRow = document.createElement('tr');
+        newRow.classList.add('item-row');
+        
+        newRow.innerHTML = `
+            <td><input type="text" name="${prefix}-${index}-description" class="form-control" required></td>
+            <td><input type="text" name="${prefix}-${index}-hsn_code" class="form-control" required></td>
+            <td><input type="number" name="${prefix}-${index}-amount" class="form-control" step="0.01" required></td>
+            <td>
+                <input type="hidden" name="${prefix}-${index}-id">
+                <input type="checkbox" name="${prefix}-${index}-DELETE" style="display: none;">
+                <button type="button" class="btn btn-sm btn-danger remove-item"><i class="fas fa-trash"></i></button>
+            </td>
+        `;
+        return newRow;
+    }
+
+    // Initial calculation on page load
+    updateTotals();
+    updateFormCount();
 });
 </script>
+<style>
+.table th {
+    background-color: #343a40;
+    color: white;
+    font-weight: 600;
+}
+.item-row input, .item-row select {
+    margin-bottom: 0;
+}
+.remove-item {
+    padding: 0.25rem 0.5rem;
+}
+</style>
 {% endblock %} 
