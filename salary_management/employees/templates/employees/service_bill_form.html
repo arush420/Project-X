@@ -31,7 +31,7 @@
                                     <i class="fas fa-info-circle"></i> Bill Information
                                 </h5>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="{{ form.bill_number.id_for_label }}" class="form-label">
                                         <strong>Bill Number</strong>
@@ -43,7 +43,7 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="{{ form.bill_date.id_for_label }}" class="form-label">
                                         <strong>Bill Date</strong> <span class="text-danger">*</span>
@@ -54,7 +54,7 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="{{ form.template.id_for_label }}" class="form-label">
                                         <strong>Bill Template</strong> <span class="text-danger">*</span>
@@ -62,6 +62,17 @@
                                     {{ form.template }}
                                     {% if form.template.errors %}
                                         <div class="text-danger small">{{ form.template.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="{{ form.status.id_for_label }}" class="form-label">
+                                        <strong>Status</strong>
+                                    </label>
+                                    {{ form.status }}
+                                    {% if form.status.errors %}
+                                        <div class="text-danger small">{{ form.status.errors }}</div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -126,6 +137,11 @@
                                     <i class="fas fa-list"></i> Service Items
                                 </h5>
                                 {{ formset.management_form }}
+                                {% if formset.non_form_errors %}
+                                    <div class="alert alert-danger">
+                                        {{ formset.non_form_errors }}
+                                    </div>
+                                {% endif %}
                                 <div class="table-responsive">
                                     <table class="table table-bordered table-striped" id="items-table">
                                         <thead class="table-dark">
@@ -139,9 +155,24 @@
                                         <tbody id="items-tbody">
                                             {% for form in formset %}
                                                 <tr class="item-row">
-                                                    <td>{{ form.description }}</td>
-                                                    <td>{{ form.hsn_code }}</td>
-                                                    <td>{{ form.amount }}</td>
+                                                    <td>
+                                                        {{ form.description }}
+                                                        {% if form.description.errors %}
+                                                            <div class="text-danger small">{{ form.description.errors }}</div>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {{ form.hsn_code }}
+                                                        {% if form.hsn_code.errors %}
+                                                            <div class="text-danger small">{{ form.hsn_code.errors }}</div>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {{ form.amount }}
+                                                        {% if form.amount.errors %}
+                                                            <div class="text-danger small">{{ form.amount.errors }}</div>
+                                                        {% endif %}
+                                                    </td>
                                                     <td>
                                                         <button type="button" class="btn btn-sm btn-danger remove-item">
                                                             <i class="fas fa-trash"></i>

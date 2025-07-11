@@ -780,6 +780,13 @@ class ServiceBillForm(forms.ModelForm):
         company = kwargs.pop('company', None)
         super().__init__(*args, **kwargs)
         
+        # Set default status to 'draft' if not provided
+        if not self.instance.pk:  # Only for new instances
+            self.fields['status'].initial = 'draft'
+        
+        # Make status field not required since it has a default
+        self.fields['status'].required = False
+        
         # Filter templates by company if provided
         if company:
             self.fields['template'].queryset = BillTemplate.objects.filter(company=company, is_active=True)
@@ -815,13 +822,12 @@ class ServiceBillItemForm(forms.ModelForm):
     class Meta:
         model = ServiceBillItem
         fields = [
-            'description', 'hsn_code', 'amount', 'order'
+            'description', 'hsn_code', 'amount'
         ]
         widgets = {
             'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Manpower Supply'}),
             'hsn_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'HSN'}),
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
-            'order': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'placeholder': '0'}),
         }
 
 
@@ -832,83 +838,3 @@ ServiceBillItemFormSet = modelformset_factory(
     extra=1,  # Number of additional blank forms to display
     can_delete=True,  # Allow deletion of existing items
 )
-
-
-# Quick Bill Generation Form (for creating bills with basic info)
-class QuickBillForm(forms.Form):
-    # Company and template selection
-    company = forms.ModelChoiceField(
-        queryset=Company.objects.all(),
-        widget=forms.Select(attrs={'class': 'form-select'}),
-    )
-    template = forms.ModelChoiceField(
-        queryset=BillTemplate.objects.all(),
-        widget=forms.Select(attrs={'class': 'form-select'}),
-    )
-    
-    # Basic bill information
-    bill_date = forms.DateField(
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-        initial=forms.DateField().initial or None
-    )
-    
-    # Client information
-    client_name = forms.CharField(
-        max_length=200,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter client name'})
-    )
-    client_address = forms.CharField(
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Enter client address'})
-    )
-    
-    # Service period
-    service_period_from = forms.DateField(
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
-    )
-    service_period_to = forms.DateField(
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
-    )
-    
-    # Single item for quick creation
-    item_description = forms.CharField(
-        max_length=200,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Production Incentive'}),
-        label="Description"
-    )
-    item_amount = forms.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
-        label="Amount"
-    )
-
-    def __init__(self, *args, **kwargs):
-        company = kwargs.pop('company', None)
-        super().__init__(*args, **kwargs)
-        
-        # Filter templates by company if provided
-        if company:
-            self.fields['template'].queryset = BillTemplate.objects.filter(company=company, is_active=True)
-            self.fields['company'].initial = company
-        
-        # Set today's date as default
-        from datetime import date
-        today = date.today()
-        self.fields['bill_date'].initial = today
-        
-        # Set default service period to current month
-        from calendar import monthrange
-        first_day = today.replace(day=1)
-        last_day = today.replace(day=monthrange(today.year, today.month)[1])
-        self.fields['service_period_from'].initial = first_day
-        self.fields['service_period_to'].initial = last_day
-
-    def clean(self):
-        cleaned_data = super().clean()
-        service_period_from = cleaned_data.get('service_period_from')
-        service_period_to = cleaned_data.get('service_period_to')
-        
-        if service_period_from and service_period_to and service_period_from > service_period_to:
-            raise ValidationError("Service period 'from' date cannot be later than 'to' date.")
-        
-        return cleaned_data

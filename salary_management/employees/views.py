@@ -17,7 +17,7 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, logger
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import Group, User
 from django.db import IntegrityError, transaction
@@ -28,8 +28,12 @@ from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
 import json
 import csv
+import logging
 from django.utils.timezone import now
 from openpyxl.utils.datetime import days_to_time
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 # Import your models and forms
 from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company,
@@ -40,8 +44,7 @@ from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, Purcha
                     CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm,
                     AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, SalaryOtherFieldFormSet,
                     UploadForm, ReportForm, VerificationRequestForm, EInvoiceForm, EInvoiceLineItemFormSet,
-                    BillTemplateForm, ServiceBillForm, ServiceBillItemForm, ServiceBillItemFormSet, QuickBillForm,
-                    PurchaseForm, PurchaseLineItemFormSet, SiteForm)
+                    BillTemplateForm, ServiceBillForm, ServiceBillItemForm, ServiceBillItemFormSet)
 
 
 def get_user_role_flags(user):
@@ -615,7 +618,7 @@ class GenerateSalaryView(PermissionRequiredMixin, View):
 
             except Exception as e:
                 # Log the error for debugging
-                logger.error(f"Error calculating salary for {employee.name}:e")
+                logger.error(f"Error calculating salary for {employee.name}: {e}")
                 messages.error(request, f"Error calculating salary for {employee.name}. Please check the input values.")
 
         return salary_data, totals
@@ -1525,59 +1528,113 @@ def service_bill_create(request):
     sites = Site.objects.all()
     
     if request.method == 'POST':
+        logger.debug(f"POST data received: {request.POST}")
+        
         form = ServiceBillForm(request.POST, company=user_company)
         formset = ServiceBillItemFormSet(request.POST)
         
+        logger.debug(f"Form is_valid: {form.is_valid()}")
+        logger.debug(f"Formset is_valid: {formset.is_valid()}")
+        
+        if not form.is_valid():
+            logger.error(f"Form errors: {form.errors}")
+            logger.error(f"Form non-field errors: {form.non_field_errors()}")
+        
+        if not formset.is_valid():
+            logger.error(f"Formset errors: {formset.errors}")
+            logger.error(f"Formset non-form errors: {formset.non_form_errors()}")
+        
         if form.is_valid() and formset.is_valid():
-            # Save the bill first
-            bill = form.save(commit=False)
-            if user_company:
-                bill.company = user_company
-            else:
-                bill.company = Company.objects.first()
-            bill.save()
-            
-            # Save line items
-            for item_form in formset:
-                if item_form.cleaned_data and not item_form.cleaned_data.get('DELETE', False):
-                    item = item_form.save(commit=False)
-                    item.bill = bill
-                    item.save()
-            
-            # Recalculate totals
-            bill.save()
+            try:
+                # Save the bill first
+                bill = form.save(commit=False)
+                if user_company:
+                    bill.company = user_company
+                else:
+                    bill.company = Company.objects.first()
+                
+                logger.debug(f"About to save bill with company: {bill.company}")
+                bill.save()
+                logger.debug(f"Bill saved successfully with ID: {bill.pk}")
+                
+                # Save line items
+                items_saved = 0
+                for item_form in formset:
+                    if item_form.cleaned_data and not item_form.cleaned_data.get('DELETE', False):
+                        item = item_form.save(commit=False)
+                        item.bill = bill
+                        item.save()
+                        items_saved += 1
+                        logger.debug(f"Saved item: {item.description} - {item.amount}")
+                
+                logger.debug(f"Total items saved: {items_saved}")
+                
+                # Recalculate totals
+                bill.save()
+                logger.debug("Bill totals recalculated")
 
-            # --- Create EInvoice ---
-            EInvoice.objects.create(
-                invoice_number=bill.bill_number,
-                invoice_date=bill.bill_date,
-                invoice_type='B2B',
-                document_type='INV',
-                reverse_charge=False,
-                supplier_gstin=bill.company.company_gst_number,
-                supplier_legal_name=bill.company.company_name,
-                supplier_address=bill.company.company_address,
-                supplier_place_of_supply=bill.company.company_address,
-                supplier_state_code=get_state_code(bill.company.company_address),
-                buyer_gstin=bill.client_gst_number or '',
-                buyer_legal_name=bill.client_name,
-                buyer_address=bill.client_address,
-                buyer_state_code=get_state_code(bill.client_address),
-                payment_terms=bill.payment_terms,
-                due_date=bill.due_date,
-                reference_document=bill.reference_document,
-                total_taxable_value=bill.taxable_value,
-                total_cgst=bill.cgst_amount,
-                total_sgst=bill.sgst_amount,
-                total_igst=bill.igst_amount,
-                total_tax_amount=bill.cgst_amount + bill.sgst_amount + bill.igst_amount,
-                total_invoice_value=bill.total_amount,
-                status='pending',
-            )
-            # --- End EInvoice creation ---
+                # Create EInvoice
+                try:
+                    EInvoice.objects.create(
+                        invoice_number=bill.bill_number,
+                        invoice_date=bill.bill_date,
+                        invoice_type='B2B',
+                        document_type='INV',
+                        reverse_charge=False,
+                        supplier_gstin=bill.company.company_gst_number,
+                        supplier_legal_name=bill.company.company_name,
+                        supplier_address=bill.company.company_address,
+                        supplier_place_of_supply=bill.company.company_address,
+                        supplier_state_code=get_state_code(bill.company.company_address),
+                        buyer_gstin=bill.client_gst_number or '',
+                        buyer_legal_name=bill.client_name,
+                        buyer_address=bill.client_address,
+                        buyer_state_code=get_state_code(bill.client_address),
+                        payment_terms=bill.payment_terms,
+                        due_date=bill.due_date,
+                        reference_document=bill.reference_document,
+                        total_taxable_value=bill.taxable_value,
+                        total_cgst=bill.cgst_amount,
+                        total_sgst=bill.sgst_amount,
+                        total_igst=bill.igst_amount,
+                        total_tax_amount=bill.cgst_amount + bill.sgst_amount + bill.igst_amount,
+                        total_invoice_value=bill.total_amount,
+                        status='pending',
+                    )
+                    logger.debug("EInvoice created successfully")
+                except Exception as e:
+                    logger.error(f"Error creating EInvoice: {e}")
+                    # Don't fail the bill creation if EInvoice fails
+                
+                messages.success(request, 'Service bill created successfully!')
+                return redirect('employees:service_bill_detail', pk=bill.pk)
+                
+            except Exception as e:
+                logger.error(f"Error saving bill: {e}")
+                messages.error(request, f'Error creating service bill: {str(e)}')
+        else:
+            # Collect and display form errors
+            error_messages = []
+            if not form.is_valid():
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        error_messages.append(f"{field}: {error}")
             
-            messages.success(request, 'Service bill created successfully!')
-            return redirect('employees:service_bill_detail', pk=bill.pk)
+            if not formset.is_valid():
+                for i, form_errors in enumerate(formset.errors):
+                    if form_errors:
+                        for field, errors in form_errors.items():
+                            for error in errors:
+                                error_messages.append(f"Item {i+1} - {field}: {error}")
+                
+                if formset.non_form_errors():
+                    for error in formset.non_form_errors():
+                        error_messages.append(f"Formset error: {error}")
+            
+            if error_messages:
+                messages.error(request, f'Please fix the following errors: {"; ".join(error_messages)}')
+            else:
+                messages.error(request, 'Please check the form and try again.')
     else:
         form = ServiceBillForm(company=user_company)
         formset = ServiceBillItemFormSet(queryset=ServiceBillItem.objects.none())
@@ -1652,75 +1709,6 @@ def service_bill_delete(request, pk):
         messages.success(request, 'Service bill deleted successfully!')
         return redirect('employees:service_bill_list')
     return render(request, 'employees/service_bill_confirm_delete.html', {'bill': bill})
-
-
-@login_required
-def quick_bill_create(request):
-    """Quick bill creation with single item"""
-    user_company = getattr(request.user.profile, 'company', None)
-    
-    if request.method == 'POST':
-        form = QuickBillForm(request.POST, company=user_company)
-        if form.is_valid():
-            # Create the service bill
-            bill = ServiceBill(
-                company=form.cleaned_data['company'],
-                template=form.cleaned_data['template'],
-                bill_date=form.cleaned_data['bill_date'],
-                client_name=form.cleaned_data['client_name'],
-                client_address=form.cleaned_data['client_address'],
-                service_period_from=form.cleaned_data['service_period_from'],
-                service_period_to=form.cleaned_data['service_period_to']
-            )
-            bill.save()
-            
-            # Create the single item
-            item = ServiceBillItem(
-                bill=bill,
-                description=form.cleaned_data['item_description'],
-                quantity=1,
-                unit_rate=form.cleaned_data['item_amount']
-            )
-            item.save()
-            
-            # Recalculate totals
-            bill.save()
-
-            # --- Create EInvoice ---
-            EInvoice.objects.create(
-                invoice_number=bill.bill_number,
-                invoice_date=bill.bill_date,
-                invoice_type='B2B',
-                document_type='INV',
-                reverse_charge=False,
-                supplier_gstin=bill.company.company_gst_number,
-                supplier_legal_name=bill.company.company_name,
-                supplier_address=bill.company.company_address,
-                supplier_place_of_supply=bill.company.company_address,
-                supplier_state_code=get_state_code(bill.company.company_address),
-                buyer_gstin=bill.client_gst_number or '',
-                buyer_legal_name=bill.client_name,
-                buyer_address=bill.client_address,
-                buyer_state_code=get_state_code(bill.client_address),
-                payment_terms=bill.payment_terms,
-                due_date=bill.due_date,
-                reference_document=bill.reference_document,
-                total_taxable_value=bill.taxable_value,
-                total_cgst=bill.cgst_amount,
-                total_sgst=bill.sgst_amount,
-                total_igst=bill.igst_amount,
-                total_tax_amount=bill.cgst_amount + bill.sgst_amount + bill.igst_amount,
-                total_invoice_value=bill.total_amount,
-                status='pending',
-            )
-            # --- End EInvoice creation ---
-            
-            messages.success(request, 'Quick bill created successfully!')
-            return redirect('employees:service_bill_detail', pk=bill.pk)
-    else:
-        form = QuickBillForm(company=user_company)
-    
-    return render(request, 'employees/quick_bill_form.html', {'form': form})
 
 
 @login_required

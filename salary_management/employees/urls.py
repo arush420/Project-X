@@ -107,9 +107,6 @@ urlpatterns = [
     path('service-bills/<int:pk>/delete/', views.service_bill_delete, name='service_bill_delete'),
     path('service-bills/<int:pk>/print/', views.service_bill_print, name='service_bill_print'),
     
-    # Quick Bill Creation
-    path('quick-bill/', views.quick_bill_create, name='quick_bill_create'),
-    
     # API endpoints
     path('api/vendor/<int:vendor_id>/', views.get_vendor_details, name='get_vendor_details'),
     

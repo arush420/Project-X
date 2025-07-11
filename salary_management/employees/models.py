@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 from os import times
 from random import choices
+import math
 
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.exceptions import ValidationError
@@ -1159,6 +1160,44 @@ class BillTemplate(models.Model):
             BillTemplate.objects.filter(company=self.company, is_default=True).update(is_default=False)
         super().save(*args, **kwargs)
 
+def number_to_indian_words(number):
+    # Helper for integer part
+    def int_to_words(n):
+        units = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"]
+        tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"]
+        thousands = ["", "Thousand", "Lakh", "Crore"]
+        if n == 0:
+            return "Zero"
+        words = ""
+        if n >= 10000000:
+            words += int_to_words(n // 10000000) + " Crore "
+            n %= 10000000
+        if n >= 100000:
+            words += int_to_words(n // 100000) + " Lakh "
+            n %= 100000
+        if n >= 1000:
+            words += int_to_words(n // 1000) + " Thousand "
+            n %= 1000
+        if n >= 100:
+            words += int_to_words(n // 100) + " Hundred "
+            n %= 100
+        if n > 0:
+            if n < 20:
+                words += units[n] + " "
+            else:
+                words += tens[n // 10] + " "
+                if n % 10:
+                    words += units[n % 10] + " "
+        return words.strip()
+
+    rupees = int(math.floor(number))
+    paise = int(round((number - rupees) * 100))
+    words = int_to_words(rupees) + " Rupees"
+    if paise > 0:
+        words += " and " + int_to_words(paise) + " Paise"
+    words += " Only"
+    return words
+
 class ServiceBill(models.Model):
     """
     Manpower Service Bill Model
@@ -1205,14 +1244,18 @@ class ServiceBill(models.Model):
         return f"Bill {self.bill_number} for {self.client_name}"
 
     def save(self, *args, **kwargs):
+        # Generate bill number if not provided
         if not self.bill_number:
             self.bill_number = self.generate_bill_number()
         
-        # Ensure calculation is done before saving
-        if self.pk:  # only calculate if the instance is already saved
-            self.calculate_totals()
-            
+        # Save first to get the pk
         super().save(*args, **kwargs)
+        
+        # Calculate totals after saving (when pk exists)
+        if self.pk:
+            self.calculate_totals()
+            # Save again with updated totals
+            super().save(*args, **kwargs)
 
     def generate_bill_number(self):
         # Generate a unique bill number, e.g., "BILL-2023-10-0001"
@@ -1236,19 +1279,72 @@ class ServiceBill(models.Model):
     def calculate_totals(self):
         line_items = self.line_items.all()
         
-        # total_gross_wages is the sum of the amount of all line items
+        # Calculate total gross wages from line items
         self.total_gross_wages = sum(item.amount for item in line_items)
         
-        # For simplicity now, let's assume taxable_value and total_amount are the same as total_gross_wages
-        self.taxable_value = self.total_gross_wages
-        self.total_amount = self.total_gross_wages
-        self.cgst_amount = 0
-        self.sgst_amount = 0
-        self.igst_amount = 0
+        # Start with gross wages as base
+        taxable_amount = self.total_gross_wages
+        
+        # Apply ESI contribution if enabled in template
+        if self.template.apply_esi:
+            esi_contribution = (self.total_gross_wages * self.template.esi_rate) / 100
+            taxable_amount += esi_contribution
+        
+        # Apply service charge if enabled in template
+        if self.template.apply_service_charge:
+            service_charge = (self.total_gross_wages * self.template.service_charge_rate) / 100
+            taxable_amount += service_charge
+        
+        # Set taxable value
+        self.taxable_value = taxable_amount
+        
+        # Calculate taxes based on template settings
+        if self.template.apply_cgst_sgst:
+            self.cgst_amount = (self.taxable_value * self.template.cgst_rate) / 100
+            self.sgst_amount = (self.taxable_value * self.template.sgst_rate) / 100
+            self.igst_amount = 0
+        elif self.template.apply_igst:
+            self.igst_amount = (self.taxable_value * self.template.igst_rate) / 100
+            self.cgst_amount = 0
+            self.sgst_amount = 0
+        else:
+            self.cgst_amount = 0
+            self.sgst_amount = 0
+            self.igst_amount = 0
+        
+        # Calculate total amount
+        self.total_amount = self.taxable_value + self.cgst_amount + self.sgst_amount + self.igst_amount
+        
+        # Apply rounding if specified
+        if self.template.round_to_nearest > 0:
+            self.total_amount = round(self.total_amount / self.template.round_to_nearest) * self.template.round_to_nearest
 
     def get_amount_in_words(self):
-        # Placeholder for amount in words conversion
-        return "Amount in words not implemented"
+        return number_to_indian_words(float(self.total_amount))
+
+    @property
+    def total_esi_contribution(self):
+        if self.template and self.template.apply_esi:
+            return round(self.total_gross_wages * (Decimal(self.template.esi_rate) / Decimal('100')), 2)
+        return Decimal('0.00')
+
+    @property
+    def total_service_charge(self):
+        if self.template and self.template.apply_service_charge:
+            return round(self.total_gross_wages * (Decimal(self.template.service_charge_rate) / Decimal('100')), 2)
+        return Decimal('0.00')
+
+    @property
+    def rounding_difference(self):
+        if self.template and self.template.round_to_nearest and self.template.round_to_nearest > 0:
+            unrounded = self.taxable_value
+            if self.template.apply_cgst_sgst:
+                unrounded += self.cgst_amount + self.sgst_amount
+            elif self.template.apply_igst:
+                unrounded += self.igst_amount
+            rounded = round(unrounded / self.template.round_to_nearest) * float(self.template.round_to_nearest)
+            return Decimal(str(rounded)) - Decimal(str(unrounded))
+        return Decimal('0.00')
 
 class ServiceBillItem(models.Model):
     """

@@ -38,19 +38,16 @@
                         </div>
                     </div>
                     <div class="col-4 text-end">
-                        <div class="bill-info border p-3">
-                            <h3 class="h5 fw-bold mb-2">BILL</h3>
-                            <table class="table table-sm table-borderless">
-                                <tr>
-                                    <td><strong>Bill No</strong></td>
-                                    <td>{{ bill.bill_number }}</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Dated</strong></td>
-                                    <td>{{ bill.bill_date|date:"d-M-y" }}</td>
-                                </tr>
-                            </table>
-                        </div>
+                        <table style="width:100%; border:2px solid #222; border-collapse:collapse;">
+                            <tr>
+                                <th style="border:1px solid #222; padding:4px;">Bill No</th>
+                                <th style="border:1px solid #222; padding:4px;">Dated</th>
+                            </tr>
+                            <tr>
+                                <td style="border:1px solid #222; font-weight:bold; font-size:1.1em; padding:4px;">{{ bill.bill_number }}</td>
+                                <td style="border:1px solid #222; font-weight:bold; font-size:1.1em; padding:4px;">{{ bill.bill_date|date:"d-M-Y" }}</td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
 
@@ -72,29 +69,16 @@
                             {% endif %}
                         </div>
                     </div>
-                    <div class="col-6">
-                        <div class="border p-3">
-                            <h5 class="fw-bold mb-2">Service Period</h5>
-                            <p>From: {{ bill.service_period_from|date:"d M Y" }}</p>
-                            <p>To: {{ bill.service_period_to|date:"d M Y" }}</p>
-                            {% if bill.reference_document %}
-                            <p>Reference: {{ bill.reference_document }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
                 </div>
 
-                <!-- Description of Service -->
+                <!-- Description of Service Table -->
                 <div class="mb-4">
-                    <h5 class="fw-bold mb-3">Description of Service</h5>
                     <table class="table table-bordered">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 50%;">Description</th>
-                                <th style="width: 15%;">HSN CODE</th>
-                                <th style="width: 10%;">Qty</th>
-                                <th style="width: 15%;">Rate</th>
-                                <th style="width: 10%;">Amount</th>
+                                <th style="width: 60%;">Description of Services</th>
+                                <th style="width: 20%;">HSN CODE</th>
+                                <th style="width: 20%;">Amount</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -102,26 +86,12 @@
                             <tr>
                                 <td>{{ item.description }}</td>
                                 <td class="text-center">{{ item.hsn_code }}</td>
-                                <td class="text-center">{{ item.quantity }}</td>
-                                <td class="text-end">₹{{ item.unit_rate|floatformat:2 }}</td>
-                                <td class="text-end">₹{{ item.total_amount|floatformat:2 }}</td>
+                                <td class="text-end">₹{{ item.amount|floatformat:2 }}</td>
                             </tr>
                             {% endfor %}
-                            
-                            <!-- Empty rows for spacing (like in the original bill) -->
-                            {% for i in "12345" %}
-                            <tr>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
-                            </tr>
-                            {% endfor %}
-                            
                             <!-- Totals Section -->
                             <tr>
-                                <td colspan="4" class="text-end fw-bold">TOTAL GROSS WAGES</td>
+                                <td colspan="2" class="text-end fw-bold">TOTAL GROSS WAGES</td>
                                 <td class="text-end fw-bold">₹{{ bill.total_gross_wages|floatformat:2 }}</td>
                             </tr>
                         </tbody>
@@ -130,10 +100,14 @@
 
                 <!-- Calculation Section -->
                 <div class="row mb-4">
-                    <div class="col-6">
-                        <!-- Left side calculations -->
-                        <table class="table table-bordered">
+                    <div class="col-12">
+                        <table class="table table-bordered" style="border:2px solid #222;">
                             <tbody>
+                                <!-- Section: TOTAL GROSS WAGES -->
+                                <tr>
+                                    <td colspan="2" class="fw-bold" style="background:#f5f5f5;">TOTAL GROSS WAGES</td>
+                                    <td class="text-end fw-bold">₹{{ bill.total_gross_wages|floatformat:2 }}</td>
+                                </tr>
                                 {% if bill.template.apply_esi %}
                                 <tr>
                                     <td>ESI CONTRIBUTION @{{ bill.template.esi_rate }}%</td>
@@ -141,7 +115,6 @@
                                     <td class="text-end">₹{{ bill.total_esi_contribution|floatformat:2 }}</td>
                                 </tr>
                                 {% endif %}
-                                
                                 {% if bill.template.apply_service_charge %}
                                 <tr>
                                     <td>SERVICE CHARGE @ {{ bill.template.service_charge_rate }}%</td>
@@ -149,47 +122,47 @@
                                     <td class="text-end">₹{{ bill.total_service_charge|floatformat:2 }}</td>
                                 </tr>
                                 {% endif %}
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="col-6">
-                        <!-- Right side totals -->
-                        <table class="table table-bordered">
-                            <tbody>
+                                <!-- Section: Taxable Value -->
                                 <tr>
-                                    <td class="text-end fw-bold">Taxable Value</td>
+                                    <td colspan="2" class="fw-bold" style="background:#f5f5f5;">Taxable Value</td>
                                     <td class="text-end fw-bold">₹{{ bill.taxable_value|floatformat:2 }}</td>
                                 </tr>
-                                
                                 {% if bill.template.apply_cgst_sgst %}
                                 <tr>
                                     <td>CGST @ {{ bill.template.cgst_rate }}%</td>
+                                    <td></td>
                                     <td class="text-end">₹{{ bill.cgst_amount|floatformat:2 }}</td>
                                 </tr>
                                 <tr>
                                     <td>SGST @ {{ bill.template.sgst_rate }}%</td>
+                                    <td></td>
                                     <td class="text-end">₹{{ bill.sgst_amount|floatformat:2 }}</td>
                                 </tr>
                                 {% elif bill.template.apply_igst %}
                                 <tr>
                                     <td>IGST @ {{ bill.template.igst_rate }}%</td>
+                                    <td></td>
                                     <td class="text-end">₹{{ bill.igst_amount|floatformat:2 }}</td>
                                 </tr>
                                 {% endif %}
-                                
-                                <tr class="table-secondary">
-                                    <td class="text-end fw-bold">TOTAL</td>
+                                {% if bill.template.round_to_nearest and bill.template.round_to_nearest > 0 %}
+                                <tr>
+                                    <td>ROUND</td>
+                                    <td></td>
+                                    <td class="text-end">₹{{ bill.rounding_difference|floatformat:2 }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr style="background:#e5e5e5;">
+                                    <td colspan="2" class="fw-bold text-end">TOTAL</td>
                                     <td class="text-end fw-bold">₹{{ bill.total_amount|floatformat:2 }}</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-
                 <!-- Amount in Words -->
                 <div class="mb-4">
-                    <p><strong>Amount (in word):</strong> {{ bill.get_amount_in_words }}</p>
+                    <strong>Amount (in word):</strong> {{ bill.get_amount_in_words }}
                 </div>
 
                 <!-- Footer -->
