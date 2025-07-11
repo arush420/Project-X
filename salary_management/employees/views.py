@@ -396,19 +396,28 @@ def transfer_task(request, task_id):
 
 class EmployeeListView(ListView):
     model = Employee
-    template_name = 'employee_list.html'
+    template_name = 'employees/employee_list.html'
     context_object_name = 'employees'
     paginate_by = 10
 
     def get_queryset(self):
+        queryset = super().get_queryset()
+        site_id = self.request.GET.get('site')
         search_query = self.request.GET.get('search', '')
-        queryset = Employee.objects.all()
+
+        if site_id:
+            queryset = queryset.filter(site_id=site_id)
+        
         if search_query:
-            queryset = queryset.filter(Q(employee_code__icontains=search_query) | Q(name__icontains=search_query))
+            queryset = queryset.filter(
+                Q(employee_code__icontains=search_query) | Q(name__icontains=search_query)
+            )
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['sites'] = Site.objects.all()
+        context['selected_site_id'] = self.request.GET.get('site')
         context['search_query'] = self.request.GET.get('search', '')
         return context
 
@@ -453,28 +462,6 @@ class AddEmployeeAndUploadView(View):
                     messages.error(request, f"File upload failed: {', '.join(e.messages)}")
                 return redirect('employees:employee_list')
         return self.get(request)
-
-def download_template(request):
-    """
-    Generates and serves a downloadable Excel template for bulk employee uploads,
-    including all fields from the EmployeeForm.
-    """
-    form = EmployeeForm()
-    columns = list(form.fields.keys())
-    
-    # Exclude fields that are not relevant for bulk upload, if any
-    # For example, fields that are auto-generated or handled by the system
-    excluded_fields = [] 
-    columns = [col for col in columns if col not in excluded_fields]
-    
-    df = pd.DataFrame(columns=columns)
-    response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = 'attachment; filename=employee_upload_template.xlsx'
-    with pd.ExcelWriter(response, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False, sheet_name='EmployeeTemplate')
-    return response
 
 def handle_file_upload(file):
     errors = []
@@ -636,15 +623,22 @@ class GenerateSalaryView(PermissionRequiredMixin, View):
         return salary_data, totals
     
     def calculate_salary(self, employee, days_worked, days_in_month):
+        # Ensure all values are treated as Decimal, defaulting to 0
+        basic = Decimal(employee.basic or 0)
+        transport = Decimal(employee.transport or 0)
+        canteen = Decimal(employee.canteen or 0)
+
         # Example calculation logic
-        basic_salary = employee.basic / days_in_month * days_worked
-        transport = employee.transport / days_in_month * days_worked
-        canteen = employee.canteen / days_in_month * days_worked
-        gross_salary = basic_salary + transport - canteen
-        pf = gross_salary * Decimal(0.12)
-        esic = gross_salary * Decimal(0.0075)
-        net_salary = gross_salary - (pf + esic + canteen)
-        return gross_salary, net_salary, pf, esic, canteen
+        basic_salary = basic / days_in_month * days_worked
+        transport_allowance = transport / days_in_month * days_worked
+        canteen_deduction = canteen / days_in_month * days_worked
+        
+        gross_salary = basic_salary + transport_allowance - canteen_deduction
+        pf = gross_salary * Decimal('0.12')
+        esic = gross_salary * Decimal('0.0075')
+        net_salary = gross_salary - (pf + esic)
+        
+        return gross_salary, net_salary, pf, esic, canteen_deduction
 
 def download_salary_report(request, month, year):
     salaries = Salary.objects.filter(month=month, year=year)
@@ -672,17 +666,27 @@ def download_salary_report(request, month, year):
     return response
 
 
-def download_template(request):
-    # Define columns for the template
-    columns = ['employee_code', 'name', 'father_name', 'basic', 'transport', 'canteen', 'pf', 'esic', 'advance']
-    df = pd.DataFrame(columns=columns)
-
-    # Create a response object for downloading the Excel file
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=employee_upload_template.xlsx'
-
-    # Write the empty dataframe to Excel and serve as a download
-    df.to_excel(response, index=False)
+def download_template(request, site_id):
+    """
+    Generates and serves a downloadable Excel template for bulk employee uploads,
+    including all fields from the EmployeeForm and a pre-filled site column.
+    """
+    site = get_object_or_404(Site, id=site_id)
+    form = EmployeeForm()
+    columns = list(form.fields.keys())
+    
+    # Create a sample row with the site name
+    sample_data = {col: '' for col in columns}
+    sample_data['site'] = site.site_name
+    
+    df = pd.DataFrame([sample_data], columns=columns)
+    
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename=employee_upload_template_{site.site_code}.xlsx'
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='EmployeeTemplate')
     return response
 
 
@@ -804,19 +808,21 @@ def delete_multiple_employees(request):
 
 
 def salary_list(request):
-    # Get the selected month and year from the request
-    month = request.GET.get('month', '') # Default to ''(empty) for "All"
+    # Get the selected month, year, and site from the request
+    month = request.GET.get('month', '')
     year = request.GET.get('year', '')
+    site_id = request.GET.get('site', '')
 
-    # Filter salaries based on month and year
+    # Filter salaries based on month, year, and site
     salaries = Salary.objects.all()
-
+    if site_id:
+        salaries = salaries.filter(employee__site_id=site_id)
     if month:
         salaries = salaries.filter(month=month)
     if year:
         salaries = salaries.filter(year=year)
 
-    # Calculate total number of unique employees
+    # Calculate total number of unique employees for the filtered salaries
     total_employees = salaries.values('employee_id').distinct().count()
 
     # Calculate totals for each column
@@ -837,12 +843,15 @@ def salary_list(request):
         (5, 'May'), (6, 'June'), (7, 'July'), (8, 'August'),
         (9, 'September'), (10, 'October'), (11, 'November'), (12, 'December')
     ]
+    sites = Site.objects.all()
 
     context = {
         'salaries': salaries,
+        'sites': sites,
         'month_choices' : month_choices,
         'month': month,
         'year': year,
+        'selected_site_id': site_id,
         'total_employees': total_employees,
         'totals': totals
     }
@@ -1854,10 +1863,11 @@ def handle_employee_file_upload(file, site):
         form = EmployeeForm()
         all_columns = list(form.fields.keys())
         
-        # Define required columns, which must be present in the Excel file
+        # Exclude 'site' as it's provided by the context
+        all_columns.remove('site')
+
         required_columns = ['employee_code', 'name', 'basic']
 
-        # Check for required columns
         missing_cols = [col for col in required_columns if col not in df.columns]
         if missing_cols:
             raise ValidationError(f"Missing required columns in Excel file: {', '.join(missing_cols)}")
@@ -1865,7 +1875,6 @@ def handle_employee_file_upload(file, site):
         for _, row in df.iterrows():
             employee_code = str(row['employee_code']).strip()
             if Employee.objects.filter(employee_code=employee_code).exists():
-                # Skip existing employees or handle as needed
                 continue
 
             employee_data = {'site': site}
@@ -1873,7 +1882,6 @@ def handle_employee_file_upload(file, site):
                 if col in row and pd.notna(row[col]):
                     employee_data[col] = row[col]
             
-            # Create the employee with all available data
             Employee.objects.create(**employee_data)
 
     except Exception as e:
@@ -1909,10 +1917,11 @@ def duplicate_site_rules(request, site_id):
     return redirect('employees:site_list')
 
 @login_required
-def manage_site_employees(request, site_id):
+def manage_site_employee(request, site_id):
     site = get_object_or_404(Site, id=site_id)
     
     if request.method == 'POST':
+        # Handles the submission of the 'Add Employee' form
         if 'add_employee' in request.POST:
             add_employee_form = EmployeeForm(request.POST)
             if add_employee_form.is_valid():
@@ -1922,8 +1931,13 @@ def manage_site_employees(request, site_id):
                 messages.success(request, 'Employee added successfully!')
                 return redirect('employees:manage_site_employees', site_id=site_id)
             else:
+                # Iterate through form errors and display them
+                for field, errors in add_employee_form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"{field}: {error}")
                 messages.error(request, 'Failed to add employee. Please check the form.')
         
+        # Handles the submission of the 'Bulk Upload' form
         elif 'upload_employees' in request.POST:
             upload_form = ExcelUploadForm(request.POST, request.FILES)
             if upload_form.is_valid():
@@ -1936,7 +1950,7 @@ def manage_site_employees(request, site_id):
             else:
                 messages.error(request, 'Upload form is not valid.')
 
-    # For GET request or if forms are invalid
+    # For GET request or if forms were invalid on POST
     employees = Employee.objects.filter(site=site)
     add_employee_form = EmployeeForm(initial={'site': site})
     upload_form = ExcelUploadForm()

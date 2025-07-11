@@ -7,44 +7,25 @@
     <h1 class="mb-4">Employee List</h1>
 
     <!-- Filter and Sort form -->
-    <form method="get" class="form-inline mb-3">
-        <div class="form-group mr-3">
-            <label for="search" class="mr-2">Search:</label>
-            <input type="text" id="search" name="search" class="form-control" value="{{ search_query }}" placeholder="Employee code or name">
+    <form method="get" class="mb-4">
+        <div class="row">
+            <div class="col-md-3">
+                <input type="text" name="search" class="form-control" placeholder="Employee code or name" value="{{ search_query }}">
+            </div>
+            <div class="col-md-3">
+                <select name="site" class="form-control">
+                    <option value="">All Sites</option>
+                    {% for site in sites %}
+                        <option value="{{ site.id }}" {% if selected_site_id == site.id|stringformat:"s" %}selected{% endif %}>
+                            {{ site.site_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+            </div>
         </div>
-
-        <div class="form-group mr-3">
-            <label for="department" class="mr-2">Department:</label>
-            <select id="department" name="department" class="form-control">
-                <option value="">All</option>
-                {% for dept in departments %}
-                    <option value="{{ dept.id }}" {% if dept.id == department %}selected{% endif %}>{{ dept.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="form-group mr-3">
-            <label for="salary_range" class="mr-2">Salary Range:</label>
-            <select id="salary_range" name="salary_range" class="form-control">
-                <option value="">All</option>
-                <option value="1" {% if salary_range == '1' %}selected{% endif %}>Below 20,000</option>
-                <option value="2" {% if salary_range == '2' %}selected{% endif %}>20,000 - 50,000</option>
-                <option value="3" {% if salary_range == '3' %}selected{% endif %}>Above 50,000</option>
-            </select>
-        </div>
-
-        <div class="form-group mr-3">
-            <label for="sort" class="mr-2">Sort By:</label>
-            <select id="sort" name="sort" class="form-control">
-                <option value="">Default</option>
-                <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Name (A-Z)</option>
-                <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Name (Z-A)</option>
-                <option value="salary_asc" {% if sort == 'salary_asc' %}selected{% endif %}>Salary (Low to High)</option>
-                <option value="salary_desc" {% if sort == 'salary_desc' %}selected{% endif %}>Salary (High to Low)</option>
-            </select>
-        </div>
-
-        <button type="submit" class="btn btn-primary">Apply Filters</button>
     </form>
 
     <!-- Employee table -->

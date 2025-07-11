@@ -26,7 +26,6 @@ urlpatterns = [
     path('employee/<int:employee_id>/delete/', views.delete_employee, name='delete_employee'),  # Single delete
 
     # Download template to add bulk employees
-    path('download-template/', views.download_template, name='download_template'),
     path('employee_list/', views.EmployeeListView.as_view(), name='employee_list'),
     path('<int:pk>/edit/', EmployeeUpdateView.as_view(), name='edit_employee'),
     path('<int:id>/', employee_detail, name='employee_detail'),
@@ -68,7 +67,8 @@ urlpatterns = [
     path('site/<int:site_id>/update/', views.site_update, name='site_update'),
     path('site/<int:site_id>/delete/', views.delete_site, name='delete_site'),
     path('site/<int:site_id>/detail/', views.site_detail, name='site_detail'),
-    path('site/<int:site_id>/employees/', views.manage_site_employees, name='manage_site_employees'),
+    path('site/<int:site_id>/employees/', views.manage_site_employee, name='manage_site_employees'),
+    path('site/<int:site_id>/download-template/', views.download_template, name='download_template'),
     path('site/<int:site_id>/duplicate_rules/', views.duplicate_site_rules, name='duplicate_site_rules'),
 
 

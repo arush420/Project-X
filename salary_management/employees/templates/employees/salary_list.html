@@ -8,25 +8,35 @@
 
     <!-- Filter Form and Buttons in a Row -->
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-        <form method="GET" class="form-inline mb-2">
-            <div class="form-group mr-2">
-                <label for="month" class="mr-1">Month:</label>
-                <select name="month" id="month" class="form-control" required>
-                    <option value="">All</option>
-                    {% for month_num, month_name in month_choices %}
-                        <option value="{{ month_num }}" {% if month == month_num|stringformat:"s" %}selected{% endif %}>
-                            {{ month_name }}
-                        </option>
-                    {% endfor %}
-                </select>
+        <form method="get" class="mb-4">
+            <div class="row">
+                <div class="col-md-3">
+                    <select name="site" class="form-control">
+                        <option value="">All Sites</option>
+                        {% for site in sites %}
+                            <option value="{{ site.id }}" {% if selected_site_id == site.id|stringformat:"s" %}selected{% endif %}>
+                                {{ site.site_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="month" class="form-control">
+                        <option value="">All Months</option>
+                        {% for value, name in month_choices %}
+                            <option value="{{ value }}" {% if month == value|stringformat:"s" %}selected{% endif %}>
+                                {{ name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" name="year" class="form-control" placeholder="Year" value="{{ year }}">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary">View Report</button>
+                </div>
             </div>
-
-            <div class="form-group mr-2">
-                <label for="year" class="mr-1">Year:</label>
-                <input type="number" name="year" class="form-control" value="{{ year|default_if_none:'' }}" placeholder="Year" required>
-            </div>
-
-            <button type="submit" class="btn btn-primary">View Report</button>
         </form>
 
         {% if salaries %}
