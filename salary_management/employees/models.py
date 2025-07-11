@@ -356,7 +356,7 @@ class Employee(models.Model):
     esi_no = models.CharField(max_length=20, blank=True, null=True)
     uan = models.CharField(max_length=20, blank=True, null=True)
     pan = models.CharField(max_length=20, blank=True, null=True)
-    company = models.CharField(max_length=100, blank=True, null=True)
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, related_name='employees', null=True, blank=True)
     department = models.CharField(max_length=50, blank=True, null=True)
     designation = models.CharField(max_length=50, blank=True, null=True)
     doj = models.DateField("Date of Joining", blank=True, null=True)
@@ -402,19 +402,19 @@ class Employee(models.Model):
         return f'{self.name} ({self.employee_code})'
 
 class EmployeesAttendance(models.Model):
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="attendance_records")
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="attendance_records")
     year = models.PositiveIntegerField()
     month = models.PositiveIntegerField(choices=MONTH_CHOICES)
     days_worked = models.PositiveIntegerField()
 
     class Meta:
-        unique_together = ('company', 'employee', 'year', 'month')
+        unique_together = ('employee', 'year', 'month')
         verbose_name = "Employee Attendance"
         verbose_name_plural = "Employee Attendance Records"
 
     def __str__(self):
-        return f"{self.employee.name} - {self.company.company_name} ({self.month}/{self.year})"
+        site_name = self.employee.site.site_name if self.employee.site else "No Site"
+        return f"{self.employee.name} - {site_name} ({self.month}/{self.year})"
 
 # Employee Aadhar and Bank account verification
 class VerificationRequest(models.Model):

@@ -31,21 +31,14 @@ import csv
 import logging
 from django.utils.timezone import now
 from openpyxl.utils.datetime import days_to_time
+from .models import Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company, StaffSalary, AdvanceTransaction, SalaryRule, SalaryOtherField, SalaryTotals, VerificationRequest, EInvoice, EInvoiceLineItem, BillTemplate, ServiceBill, ServiceBillItem, Purchase, PurchaseLineItem, Site
+from .forms import EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm, CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm, AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, SalaryOtherFieldFormSet, UploadForm, ReportForm, VerificationRequestForm, EInvoiceForm, EInvoiceLineItemFormSet, BillTemplateForm, ServiceBillForm, ServiceBillItemForm, ServiceBillItemFormSet, PurchaseForm, PurchaseLineItemFormSet, PurchaseItemFormSet, SiteForm
+from django.views.generic import TemplateView
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
 # Import your models and forms
-from .models import (Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company,
-                     StaffSalary, AdvanceTransaction, SalaryRule, SalaryOtherField, SalaryTotals, VerificationRequest,
-                     VendorInformation, EInvoice, EInvoiceLineItem, BillTemplate, ServiceBill, ServiceBillItem,
-                     Purchase, PurchaseLineItem, Site)
-from .forms import (EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm,
-                    CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm,
-                    AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, SalaryOtherFieldFormSet,
-                    UploadForm, ReportForm, VerificationRequestForm, EInvoiceForm, EInvoiceLineItemFormSet,
-                    BillTemplateForm, ServiceBillForm, ServiceBillItemForm, ServiceBillItemFormSet)
-
 
 def get_user_role_flags(user):
     """
@@ -462,15 +455,22 @@ class AddEmployeeAndUploadView(View):
         return self.get(request)
 
 def download_template(request):
-    columns = [
-        'employee_code', 'name', 'father_name', 'mother_name', 'gender', 'dob', 'marital_status', 'spouse_name',
-        'mobile', 'email', 'address', 'district', 'state', 'pincode', 'pf_no', 'esi_no', 'uan', 'pan',
-        'company', 'department', 'designation', 'doj', 'doe', 'pay_mode', 'employer_account',
-        'employee_account', 'ifsc', 'kyc_status', 'handicap', 'remarks', 'basic', 'transport',
-        'canteen', 'pf_contribution', 'esic_contribution', 'advance'
-    ]
+    """
+    Generates and serves a downloadable Excel template for bulk employee uploads,
+    including all fields from the EmployeeForm.
+    """
+    form = EmployeeForm()
+    columns = list(form.fields.keys())
+    
+    # Exclude fields that are not relevant for bulk upload, if any
+    # For example, fields that are auto-generated or handled by the system
+    excluded_fields = [] 
+    columns = [col for col in columns if col not in excluded_fields]
+    
     df = pd.DataFrame(columns=columns)
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
     response['Content-Disposition'] = 'attachment; filename=employee_upload_template.xlsx'
     with pd.ExcelWriter(response, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='EmployeeTemplate')
@@ -519,20 +519,38 @@ def handle_file_upload(file):
 
 class GenerateSalaryView(PermissionRequiredMixin, View):
     permission_required = 'employees.can_generate_payroll'
+    template_name = 'employees/generate_salary.html'
+
+    def get(self, request, *args, **kwargs):
+        site_id = request.GET.get('site')
+        sites = Site.objects.all()
+        employees = Employee.objects.filter(site_id=site_id) if site_id else Employee.objects.none()
+        
+        context = {
+            'sites': sites,
+            'selected_site_id': site_id,
+            'employees': employees,
+            'months': [(i, datetime(2000, i, 1).strftime('%B')) for i in range(1, 13)],
+            'current_year': now().year
+        }
+        return render(request, self.template_name, context)
 
     @transaction.atomic
-    def post(self, request):
-        month, year, days_in_month = self.get_salary_params(request)
-        if not month or not year or not days_in_month:
-            messages.error(request, 'Please provide all inputs.')
+    def post(self, request, *args, **kwargs):
+        site_id = request.POST.get('site')
+        if not site_id:
+            messages.error(request, 'Please select a site.')
             return redirect('employees:generate_salary')
+        
+        site = get_object_or_404(Site, id=site_id)
+        month, year, days_in_month = self.get_salary_params(request)
+        if not all([month, year, days_in_month]):
+            messages.error(request, 'Please provide all inputs.')
+            return redirect(f"{reverse('employees:generate_salary')}?site={site_id}")
 
-        employees = Employee.objects.all().prefetch_related('salaries')  # Efficiently fetch related data
+        employees = Employee.objects.filter(site=site)
         salary_data, totals = self.calculate_salaries(request, employees, int(days_in_month), int(month), int(year))
 
-        totals = self.calculate_salaries(request, employees, int(days_in_month), int(month), int(year))
-
-        # Save totals to SalaryTotals
         SalaryTotals.objects.update_or_create(
             month=month, year=year,
             defaults={
@@ -550,17 +568,17 @@ class GenerateSalaryView(PermissionRequiredMixin, View):
             'salary_data': salary_data,
             'totals': totals,
             'month': month,
-            'year': year
+            'year': year,
+            'site': site
         })
-
-
+    
     def get_salary_params(self, request):
         month = request.POST.get('month')
         year = request.POST.get('year')
-        days_in_month =request.POST.get('days_in_month')
+        days_in_month = request.POST.get('days_in_month')
 
         if not month or not year or not days_in_month:
-            return None, None, None # This will trigger an error message
+            return None, None, None
         return month, year, days_in_month
 
     def calculate_salaries(self, request, employees, days_in_month, month, year):
@@ -578,12 +596,9 @@ class GenerateSalaryView(PermissionRequiredMixin, View):
             try:
                 days_worked = int(request.POST.get(f'days_worked_{employee.id}', 0))
                 advance = Decimal(request.POST.get(f'advance_{employee.id}', 0))
-
-                # calculate gross salary, net salary, pf, esic, and canteen
                 gross_salary, net_salary, pf, esic, canteen = self.calculate_salary(employee, days_worked, days_in_month)
                 net_salary -= advance
 
-                # Update or create salary record
                 Salary.objects.update_or_create(
                     employee=employee, month=month, year=year,
                     defaults={
@@ -596,7 +611,6 @@ class GenerateSalaryView(PermissionRequiredMixin, View):
                     }
                 )
 
-                # Append salary data for each employee
                 salary_data.append({
                     'employee_code': employee.employee_code,
                     'name': employee.name,
@@ -608,7 +622,6 @@ class GenerateSalaryView(PermissionRequiredMixin, View):
                     'net_salary': net_salary
                 })
 
-                # Calculate totals for each column
                 totals['total_gross_salary'] += gross_salary
                 totals['total_pf'] += pf
                 totals['total_esic'] += esic
@@ -617,12 +630,11 @@ class GenerateSalaryView(PermissionRequiredMixin, View):
                 totals['total_net_salary'] += net_salary
 
             except Exception as e:
-                # Log the error for debugging
                 logger.error(f"Error calculating salary for {employee.name}: {e}")
                 messages.error(request, f"Error calculating salary for {employee.name}. Please check the input values.")
 
         return salary_data, totals
-
+    
     def calculate_salary(self, employee, days_worked, days_in_month):
         # Example calculation logic
         basic_salary = employee.basic / days_in_month * days_worked
@@ -632,7 +644,6 @@ class GenerateSalaryView(PermissionRequiredMixin, View):
         pf = gross_salary * Decimal(0.12)
         esic = gross_salary * Decimal(0.0075)
         net_salary = gross_salary - (pf + esic + canteen)
-
         return gross_salary, net_salary, pf, esic, canteen
 
 def download_salary_report(request, month, year):
@@ -1832,3 +1843,108 @@ def purchase_tabular_list(request):
     }
     
     return render(request, 'employees/purchase_tabular_list.html', context)
+
+
+def handle_employee_file_upload(file, site):
+    """
+    Handles the file upload for employees and associates them with a specific site.
+    """
+    try:
+        df = pd.read_excel(file)
+        form = EmployeeForm()
+        all_columns = list(form.fields.keys())
+        
+        # Define required columns, which must be present in the Excel file
+        required_columns = ['employee_code', 'name', 'basic']
+
+        # Check for required columns
+        missing_cols = [col for col in required_columns if col not in df.columns]
+        if missing_cols:
+            raise ValidationError(f"Missing required columns in Excel file: {', '.join(missing_cols)}")
+
+        for _, row in df.iterrows():
+            employee_code = str(row['employee_code']).strip()
+            if Employee.objects.filter(employee_code=employee_code).exists():
+                # Skip existing employees or handle as needed
+                continue
+
+            employee_data = {'site': site}
+            for col in all_columns:
+                if col in row and pd.notna(row[col]):
+                    employee_data[col] = row[col]
+            
+            # Create the employee with all available data
+            Employee.objects.create(**employee_data)
+
+    except Exception as e:
+        raise ValidationError(f"Error processing file: {e}")
+
+@login_required
+def duplicate_site_rules(request, site_id):
+    if request.method == 'POST':
+        source_site = get_object_or_404(Site, id=site_id)
+        target_site_id = request.POST.get('target_site')
+        if not target_site_id:
+            messages.error(request, "No target site selected.")
+            return redirect('employees:site_detail', site_id=site_id)
+        
+        target_site = get_object_or_404(Site, id=target_site_id)
+
+        # Duplicate SalaryRule
+        for rule in source_site.salary_rules.all():
+            rule.pk = None  # This creates a new object
+            rule.site = target_site
+            rule.save()
+
+        # Duplicate SalaryOtherField
+        for field in source_site.salary_other_fields.all():
+            field.pk = None # This creates a new object
+            field.site = target_site
+            field.save()
+
+        messages.success(request, f"Rules from {source_site.site_name} duplicated to {target_site.site_name}.")
+        return redirect('employees:site_detail', site_id=target_site_id)
+    
+    # Redirect if not a POST request
+    return redirect('employees:site_list')
+
+@login_required
+def manage_site_employees(request, site_id):
+    site = get_object_or_404(Site, id=site_id)
+    
+    if request.method == 'POST':
+        if 'add_employee' in request.POST:
+            add_employee_form = EmployeeForm(request.POST)
+            if add_employee_form.is_valid():
+                employee = add_employee_form.save(commit=False)
+                employee.site = site
+                employee.save()
+                messages.success(request, 'Employee added successfully!')
+                return redirect('employees:manage_site_employees', site_id=site_id)
+            else:
+                messages.error(request, 'Failed to add employee. Please check the form.')
+        
+        elif 'upload_employees' in request.POST:
+            upload_form = ExcelUploadForm(request.POST, request.FILES)
+            if upload_form.is_valid():
+                try:
+                    handle_employee_file_upload(request.FILES['file'], site)
+                    messages.success(request, 'Employees uploaded successfully!')
+                except ValidationError as e:
+                    messages.error(request, f"File upload failed: {e}")
+                return redirect('employees:manage_site_employees', site_id=site_id)
+            else:
+                messages.error(request, 'Upload form is not valid.')
+
+    # For GET request or if forms are invalid
+    employees = Employee.objects.filter(site=site)
+    add_employee_form = EmployeeForm(initial={'site': site})
+    upload_form = ExcelUploadForm()
+
+    context = {
+        'site': site,
+        'employees': employees,
+        'add_employee_form': add_employee_form,
+        'upload_form': upload_form,
+    }
+    return render(request, 'employees/site_employees.html', context)

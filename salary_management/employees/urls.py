@@ -68,6 +68,8 @@ urlpatterns = [
     path('site/<int:site_id>/update/', views.site_update, name='site_update'),
     path('site/<int:site_id>/delete/', views.delete_site, name='delete_site'),
     path('site/<int:site_id>/detail/', views.site_detail, name='site_detail'),
+    path('site/<int:site_id>/employees/', views.manage_site_employees, name='manage_site_employees'),
+    path('site/<int:site_id>/duplicate_rules/', views.duplicate_site_rules, name='duplicate_site_rules'),
 
 
     # advance and attendance upload form

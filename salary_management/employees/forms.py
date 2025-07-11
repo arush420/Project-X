@@ -106,7 +106,7 @@ class EmployeeForm(forms.ModelForm):
             'mobile', 'email', 'address', 'district', 'state', 'pincode',
 
             # Professional Details
-            'pf_no', 'esi_no', 'uan', 'pan', 'company', 'department', 'designation', 'doj', 'doe',
+            'pf_no', 'esi_no', 'uan', 'pan', 'site', 'department', 'designation', 'doj', 'doe',
 
             # Account Details
             'pay_mode', 'employer_account', 'employee_account', 'ifsc', 'kyc_status', 'handicap', 'remarks',
@@ -125,6 +125,7 @@ class EmployeeForm(forms.ModelForm):
             'dob': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'doj': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'doe': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'site': forms.Select(attrs={'class': 'form-control'}),
             'employee_status': forms.Select(attrs={'class': 'form-control'}),
             'performance_color': forms.Select(attrs={'class': 'form-control'}),
             'basic': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -140,6 +141,10 @@ class EmployeeForm(forms.ModelForm):
             # Add more widgets as needed
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'site' in self.initial:
+            self.fields['site'].widget = forms.HiddenInput()
 
 
 # Excel upload form

@@ -6,133 +6,78 @@
 <div class="container mt-5">
     <h1 class="mb-4 text-center">Generate Salary</h1>
 
-    <!-- Displaying messages -->
-    {% if messages %}
-    <div class="alert alert-info">
-        <ul class="list-unstyled">
-            {% for message in messages %}
-            <li{% if message.tags %} class="alert-{{ message.tags }}"{% endif %}>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
-
-    <!-- Salary Generation Form -->
-    <form method="POST" id="salaryForm" class="shadow-sm p-4 rounded">
-        {% csrf_token %}
-
-        <!-- Month Selection -->
+    <!-- Site Selection Form -->
+    <form method="GET" class="mb-4">
         <div class="form-group">
-            <label for="month">Select Month:</label>
-            <select name="month" id="month" class="form-control" required>
-                <option value="">Select Month</option>
-                {% for value, name in months %}
-                <option value="{{ value }}">{{ name }}</option>
+            <label for="site">Select Site:</label>
+            <select name="site" id="site" class="form-control" onchange="this.form.submit()">
+                <option value="">-- Select a Site --</option>
+                {% for site in sites %}
+                    <option value="{{ site.id }}" {% if selected_site_id == site.id|stringformat:"s" %}selected{% endif %}>
+                        {{ site.site_name }}
+                    </option>
                 {% endfor %}
             </select>
         </div>
-
-        <!-- Year Selection -->
-        <div class="form-group">
-            <label for="year">Select Year:</label>
-            <input type="number" name="year" id="year" class="form-control" value="{{ current_year }}" required>
-        </div>
-
-        <!-- Number of Days in Month -->
-        <div class="form-group">
-            <label for="days_in_month">Number of Days in Month:</label>
-            <input type="number" name="days_in_month" id="days_in_month" class="form-control" min="1" max="31" required>
-        </div>
-
-        <!-- Employees Table -->
-        <div class="table-responsive mt-4">
-            <table class="table table-bordered table-hover">
-                <thead class="thead-dark">
-                    <tr>
-                        <th>Employee Code</th>
-                        <th>Employee Name</th>
-                        <th>Days Worked</th>
-                        <th>Advance Deduction</th>
-                        <th>Gross Salary</th>
-                        <th>Net Salary</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for employee in employees %}
-                    <tr>
-                        <td>{{ employee.employee_code }}</td>
-                        <td>{{ employee.name }}</td>
-                        <td>
-                            <input type="number" name="days_worked_{{ employee.id }}" class="form-control days-worked"
-                                value="0" min="0" max="{{ days_in_month }}" required>
-                        </td>
-                        <td>
-                            <input type="number" name="advance_{{ employee.id }}" class="form-control advance"
-                                value="0" min="0">
-                        </td>
-                        <td class="gross-salary">0.00</td>
-                        <td class="net-salary">0.00</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Summary Section -->
-        <div class="mt-4">
-            <h4>Summary</h4>
-            <p>Total Gross Salary: <span id="totalGrossSalary">0.00</span></p>
-            <p>Total Deductions: <span id="totalDeductions">0.00</span></p>
-            <p>Total Net Salary: <span id="totalNetSalary">0.00</span></p>
-        </div>
-
-        <!-- Submit and Reset Buttons -->
-        <div class="text-center mt-4">
-            <button type="submit" class="btn btn-primary w-100">Generate Salary</button>
-            <button type="reset" class="btn btn-secondary w-100 mt-2">Clear All</button>
-        </div>
     </form>
+
+    {% if selected_site_id %}
+        <!-- Salary Generation Form -->
+        <form method="POST" id="salaryForm" class="shadow-sm p-4 rounded">
+            {% csrf_token %}
+            <input type="hidden" name="site" value="{{ selected_site_id }}">
+            
+            <!-- Month and Year Selection -->
+            <div class="form-group">
+                <label for="month">Select Month:</label>
+                <select name="month" id="month" class="form-control" required>
+                    <option value="">Select Month</option>
+                    {% for value, name in months %}
+                    <option value="{{ value }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="year">Select Year:</label>
+                <input type="number" name="year" id="year" class="form-control" value="{{ current_year }}" required>
+            </div>
+            <div class="form-group">
+                <label for="days_in_month">Number of Days in Month:</label>
+                <input type="number" name="days_in_month" id="days_in_month" class="form-control" min="1" max="31" required>
+            </div>
+
+            <!-- Employees Table -->
+            <div class="table-responsive mt-4">
+                <table class="table table-bordered table-hover">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Employee Code</th>
+                            <th>Employee Name</th>
+                            <th>Days Worked</th>
+                            <th>Advance Deduction</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in employees %}
+                        <tr>
+                            <td>{{ employee.employee_code }}</td>
+                            <td>{{ employee.name }}</td>
+                            <td>
+                                <input type="number" name="days_worked_{{ employee.id }}" class="form-control" value="0" min="0" required>
+                            </td>
+                            <td>
+                                <input type="number" name="advance_{{ employee.id }}" class="form-control" value="0" min="0">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-primary w-100">Generate Salary</button>
+            </div>
+        </form>
+    {% endif %}
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const form = document.getElementById('salaryForm');
-        const grossSalaryElements = document.querySelectorAll('.gross-salary');
-        const netSalaryElements = document.querySelectorAll('.net-salary');
-        const daysWorkedInputs = document.querySelectorAll('.days-worked');
-        const advanceInputs = document.querySelectorAll('.advance');
-        const totalGrossSalaryElement = document.getElementById('totalGrossSalary');
-        const totalDeductionsElement = document.getElementById('totalDeductions');
-        const totalNetSalaryElement = document.getElementById('totalNetSalary');
-
-        function updateSalaries() {
-            let totalGross = 0, totalDeductions = 0, totalNet = 0;
-
-            daysWorkedInputs.forEach((input, index) => {
-                const daysWorked = parseFloat(input.value) || 0;
-                const advance = parseFloat(advanceInputs[index].value) || 0;
-                const grossSalary = daysWorked * 100; // Replace with actual formula
-                const netSalary = grossSalary - advance;
-
-                grossSalaryElements[index].textContent = grossSalary.toFixed(2);
-                netSalaryElements[index].textContent = netSalary.toFixed(2);
-
-                totalGross += grossSalary;
-                totalDeductions += advance;
-                totalNet += netSalary;
-            });
-
-            totalGrossSalaryElement.textContent = totalGross.toFixed(2);
-            totalDeductionsElement.textContent = totalDeductions.toFixed(2);
-            totalNetSalaryElement.textContent = totalNet.toFixed(2);
-        }
-
-        daysWorkedInputs.forEach(input => input.addEventListener('input', updateSalaries));
-        advanceInputs.forEach(input => input.addEventListener('input', updateSalaries));
-
-        form.addEventListener('reset', () => {
-            setTimeout(updateSalaries, 0); // Update after reset clears values
-        });
-    });
-</script>
 {% endblock %}
