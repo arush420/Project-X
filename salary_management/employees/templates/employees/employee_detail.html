@@ -1,85 +1,103 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Employee Profile{% endblock %}
 
 {% block content %}
-<!-- employee_profile.html -->
-
-<form method="GET" action="{% url 'employees:employee_detail' %}">
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Search</button>
-</form>
-
-{% if not_found %}
-    <div class="alert alert-danger">
-        Details not found, such a record does not exist.
+<div class="container mt-4">
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Search for Employee</h4>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{% url 'employees:employee_detail' %}" class="form-inline">
+                <div class="form-group mb-2 mr-sm-2">
+                    {{ form.employee_code_or_name.label_tag }}
+                    {{ form.employee_code_or_name }}
+                </div>
+                <button type="submit" class="btn btn-primary mb-2">Search</button>
+            </form>
+        </div>
     </div>
-{% endif %}
 
-{% if employee %}
-    <h2>Employee Details</h2>
-    <p><strong>Employee Code:</strong> {{ employee.employee_code }}</p>
-    <p><strong>Name:</strong> {{ employee.name }}</p>
-    <p><strong>Father's Name:</strong> {{ employee.father_name }}</p>
-
-    <h3>Salary History</h3>
-    {% if salaries.exists %}
-    <p>Salary records found: {{ salaries.count }}</p>
-    <table class="table table-bordered table-striped">
-        <thead class="thead-dark">
-            <tr>
-                <th>Month</th>
-                <th>Year</th>
-                <th>Basic Salary</th>
-                <th>Transport</th>
-                <th>Canteen</th>
-                <th>PF</th>
-                <th>ESIC</th>
-                <th>Advance Deduction</th>
-                <th>Gross Salary</th>
-                <th>Net Salary</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for salary in salaries %}
-            <tr>
-                <td>{{ salary.get_month_display }}</td>
-                <td>{{ salary.year }}</td>
-                <td>{{ salary.basic_salary }}</td>
-                <td>{{ salary.transport }}</td>
-                <td>{{ salary.canteen }}</td>
-                <td>{{ salary.pf }}</td>
-                <td>{{ salary.esic }}</td>
-                <td>{{ salary.advance_deduction }}</td>
-                <td>{{ salary.gross_salary }}</td>
-                <td>{{ salary.net_salary }}</td>
-            </tr>
-            {% endfor %}
-
-        <!-- Add the delete button in the employee details section -->
-        {% if employee %}
-            <h2>Employee Details</h2>
-            <p><strong>Employee Code:</strong> {{ employee.employee_code }}</p>
-            <p><strong>Name:</strong> {{ employee.name }}</p>
-            <p><strong>Father's Name:</strong> {{ employee.father_name }}</p>
-
-            <!-- Delete button -->
-            <a href="{% url 'employees:delete_employee' employee.id %}" class="btn btn-danger">Delete Employee</a>
-
-            <h3>Salary History</h3>
-            <!-- Salary history table as before -->
-        {% endif %}
-``
-        </tbody>
-    </table>
-    {% else %}
-    <p>No salary history found for this employee.</p>
+    {% if not_found %}
+        <div class="alert alert-danger">
+            Details not found, such a record does not exist.
+        </div>
     {% endif %}
-{% else %}
-    <p>Enter an employee code or name to search for their profile.</p>
-{% endif %}
 
-<!-- Back button -->
-<a href="{% url 'employees:employee_list' %}" class="btn btn-primary mt-3">Back to Employee List</a>
+    {% if employee %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h4 class="mb-0">Employee Details</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Employee Code:</strong> {{ employee.employee_code }}</p>
+                        <p><strong>Name:</strong> {{ employee.name }}</p>
+                        <p><strong>Father's Name:</strong> {{ employee.father_name }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <!-- Add more employee details here if you want -->
+                    </div>
+                </div>
+                <a href="{% url 'employees:delete_employee' employee.id %}" class="btn btn-danger mt-3">Delete Employee</a>
+            </div>
+        </div>
 
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0">Salary History</h4>
+            </div>
+            <div class="card-body">
+                {% if salaries.exists %}
+                    <p>Salary records found: {{ salaries.count }}</p>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Month</th>
+                                    <th>Year</th>
+                                    <th>Basic Salary</th>
+                                    <th>Transport</th>
+                                    <th>Canteen</th>
+                                    <th>PF</th>
+                                    <th>ESIC</th>
+                                    <th>Advance Deduction</th>
+                                    <th>Gross Salary</th>
+                                    <th>Net Salary</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for salary in salaries %}
+                                <tr>
+                                    <td>{{ salary.get_month_display }}</td>
+                                    <td>{{ salary.year }}</td>
+                                    <td>{{ salary.basic_salary|floatformat:2 }}</td>
+                                    <td>{{ salary.transport|floatformat:2 }}</td>
+                                    <td>{{ salary.canteen|floatformat:2 }}</td>
+                                    <td>{{ salary.pf|floatformat:2 }}</td>
+                                    <td>{{ salary.esic|floatformat:2 }}</td>
+                                    <td>{{ salary.advance_deduction|floatformat:2 }}</td>
+                                    <td>{{ salary.gross_salary|floatformat:2 }}</td>
+                                    <td>{{ salary.net_salary|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>No salary history found for this employee.</p>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <p>Enter an employee code or name to search for their profile.</p>
+        </div>
+    {% endif %}
+
+    <a href="{% url 'employees:employee_list' %}" class="btn btn-secondary mt-3">Back to Employee List</a>
+</div>
 {% endblock %}

@@ -1,52 +1,190 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Manage Employees{% endblock %}
+{% block title %}Add Employee{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <!-- Page Heading -->
-    <div class="row">
-        <div class="col-12 text-center mb-4">
-            <h2 class="text-primary font-weight-bold">Manage Employees</h2>
-            <p class="text-muted">Easily add or upload employee details below.</p>
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Add New Employee</h4>
+        </div>
+        <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message|safe }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <div class="row">
+                    <!-- Personal Details -->
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Personal Details</h5>
+                        {% for field in add_employee_form %}
+                            {% if field.name in 'employee_code,name,father_name,mother_name,gender,dob,marital_status,spouse_name,mobile,email,address,district,state,pincode' %}
+                                <div class="form-group">
+                                    {{ field.label_tag }}
+                                    {{ field }}
+                                    {{ field.errors }}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <!-- Professional Details -->
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Professional Details</h5>
+                        {% for field in add_employee_form %}
+                            {% if field.name in 'pf_no,esi_no,uan,pan,site,department,designation,doj,doe' %}
+                                <div class="form-group">
+                                    {{ field.label_tag }}
+                                    {{ field }}
+                                    {{ field.errors }}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <!-- Salary Details -->
+                    <div class="col-12">
+                        <h5 class="mb-3">Salary Details</h5>
+                    </div>
+                    {% for field in add_employee_form %}
+                        {% if field.name in 'basic,sr_allowance,da,hra,travel_allowance,medical,conveyance,wash_allowance,efficiency,other_payable' %}
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ field.label_tag }}
+                                    {{ field }}
+                                    {{ field.errors }}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <div class="row mt-4">
+                    <!-- Other Details -->
+                    <div class="col-12">
+                        <h5 class="mb-3">Other Details</h5>
+                    </div>
+                    {% for field in add_employee_form %}
+                        {% if field.name in 'pay_mode,employer_account,employee_account,ifsc,kyc_status,handicap,remarks,employee_status,performance_color' %}
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ field.label_tag }}
+                                    {{ field }}
+                                    {{ field.errors }}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" name="submit_type" value="add_employee" class="btn btn-primary">Add Employee</button>
+                    <a href="{% url 'employees:employee_list' %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
         </div>
     </div>
 
-    <div class="row">
-        <!-- Add Employee Section -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">Add Employee</h5>
-                </div>
-                <div class="card-body">
-                    <form method="post" class="needs-validation" novalidate>
-                        {% csrf_token %}
-                        {{ add_employee_form.as_p }}
-                        <button type="submit" name="submit_type" value="add_employee" class="btn btn-success btn-block mt-3">Add Employee</button>
-                    </form>
-                </div>
-            </div>
+    <!-- Bulk Upload Section -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-success text-white">
+            <h4 class="mb-0">Bulk Upload Employees</h4>
         </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="fileInput">File <span style="color:red">*</span></label>
+                    <input type="file" name="file" id="fileInput" class="form-control" aria-label="Employee Excel File" required>
+                </div>
+                <div class="form-group">
+                    <label for="siteSelect">Select Site for Template <span style="color:red">*</span></label>
+                    <select id="siteSelect" class="form-control" name="site" aria-label="Select Site" required>
+                        <option value="">--Select a Site--</option>
+                        {% for site in sites %}
+                        <option value="{{ site.id }}">{{ site.site_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="d-flex align-items-center mt-3">
+                    <button id="uploadBtn" type="submit" name="submit_type" value="upload_employees" class="btn btn-primary mr-2" disabled>Upload</button>
+                    <a id="downloadLink" href="#" class="btn btn-outline-secondary disabled">Download Template</a>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        <!-- Upload Employees via Excel Section -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Upload Employees via Excel</h5>
-                </div>
-                <div class="card-body">
-                    <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
-                        {% csrf_token %}
-                        {{ upload_form.as_p }}
-                        <div class="d-flex align-items-center mt-3">
-                            <button type="submit" name="submit_type" value="upload_employees" class="btn btn-primary mr-2">Upload</button>
-                            <a href="{% url 'employees:download_template' %}" class="btn btn-outline-secondary">Download Template</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
+    <!-- Recently Added Employees -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-secondary text-white">
+            <h4 class="mb-0">Recently Added Employees</h4>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Employee Code</th>
+                        <th>Name</th>
+                        <th>Site</th>
+                        <th>Date of Joining</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in recent_employees %}
+                    <tr>
+                        <td>{{ employee.employee_code }}</td>
+                        <td>{{ employee.name }}</td>
+                        <td>{{ employee.site.site_name }}</td>
+                        <td>{{ employee.doj }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No recent employees found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function checkBulkUploadFields() {
+    var fileInput = document.getElementById('fileInput');
+    var siteSelect = document.getElementById('siteSelect');
+    var uploadBtn = document.getElementById('uploadBtn');
+    uploadBtn.disabled = !(fileInput.files.length > 0 && siteSelect.value);
+}
+
+document.getElementById('fileInput').addEventListener('change', checkBulkUploadFields);
+document.getElementById('siteSelect').addEventListener('change', function() {
+    // Enable/disable Download Template button
+    var siteId = this.value;
+    var downloadLink = document.getElementById('downloadLink');
+    if (siteId) {
+        var url = "{% url 'employees:download_template' 0 %}".replace('0', siteId);
+        downloadLink.href = url;
+        downloadLink.classList.remove('disabled');
+    } else {
+        downloadLink.href = '#';
+        downloadLink.classList.add('disabled');
+    }
+    checkBulkUploadFields();
+});
+</script>
 {% endblock %}

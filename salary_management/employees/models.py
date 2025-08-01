@@ -113,7 +113,7 @@ class Site(models.Model):
 
 
 class SalaryRule(models.Model):
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='salary_rules')
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, related_name='salary_rules', null=True, blank=True)
 
     RATE_TYPE_CHOICES = [
         ('Per Month', 'Per Month'),
@@ -173,7 +173,7 @@ class SalaryRule(models.Model):
 
 
 class SalaryOtherField(models.Model):
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='salary_other_fields')
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, related_name='salary_other_fields', null=True, blank=True)
 
     RATE_TYPE_CHOICES = [
         ('Per Month', 'Per Month'),
@@ -233,7 +233,7 @@ class SalaryOtherField(models.Model):
 
 
 class CompanyAdvanceTransaction(models.Model):
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, null=True, blank=True)
     employee_id = models.CharField(max_length=50)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     month = models.IntegerField()
@@ -244,7 +244,7 @@ class CompanyAdvanceTransaction(models.Model):
 
 
 class Arrear(models.Model):
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, null=True, blank=True)
     employee_id = models.CharField(max_length=50)
     month = models.IntegerField()
     year = models.IntegerField()
@@ -376,7 +376,8 @@ class Employee(models.Model):
     sr_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     da = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     hra = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
-    travel_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    transport = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    canteen = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     medical = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     conveyance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     wash_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
@@ -493,7 +494,7 @@ class Salary(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='salaries')
     month = models.PositiveSmallIntegerField(choices=MONTH_CHOICES)
     year = models.PositiveIntegerField()
-    advance = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES, default=0)
+
     basic_salary = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES, default=0)
     transport = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES, default=0)
     canteen = models.DecimalField(max_digits=CURRENCY_MAX_DIGITS, decimal_places=CURRENCY_DECIMAL_PLACES, default=0)
@@ -645,7 +646,7 @@ REPORT_TYPE_CHOICES = [
 ]
 
 class Report(models.Model):
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="reports")
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, related_name="reports", null=True, blank=True)
     report_type = models.CharField(max_length=20, choices=REPORT_TYPE_CHOICES)
     from_date = models.DateField()
     to_date = models.DateField()
@@ -661,7 +662,7 @@ class Report(models.Model):
     def generate_report_data(self):
         """Generate data for the report based on the selected report type and date range."""
         filters = {
-            'employee__company': self.company,
+            'employee__site': self.site,
             'year__gte': self.from_date.year,
             'year__lte': self.to_date.year,
             'month__gte': self.from_date.month,
@@ -671,16 +672,17 @@ class Report(models.Model):
         if self.report_type == 'Salary':
             return Salary.objects.filter(**filters)
         elif self.report_type == 'Attendance':
-            return EmployeesAttendance.objects.filter(company=self.company, **filters)
+            # Attendance is linked via employee, so we can use the same filters
+            return EmployeesAttendance.objects.filter(**filters)
         elif self.report_type == 'Arrear':
-            return Arrear.objects.filter(company=self.company, **filters)
+            return Arrear.objects.filter(employee__site=self.site, year=self.from_date.year, month=self.from_date.month)
         elif self.report_type == 'Advance':
-            return CompanyAdvanceTransaction.objects.filter(company=self.company, **filters)
+            return CompanyAdvanceTransaction.objects.filter(employee__site=self.site, year=self.from_date.year, month=self.from_date.month)
         elif self.report_type == 'PF':
-            return Salary.objects.filter(employee__company=self.company, year__gte=self.from_date.year,
+            return Salary.objects.filter(employee__site=self.site, year__gte=self.from_date.year,
                                          year__lte=self.to_date.year).values('pf')
         elif self.report_type == 'ESIC':
-            return Salary.objects.filter(employee__company=self.company, year__gte=self.from_date.year,
+            return Salary.objects.filter(employee__site=self.site, year__gte=self.from_date.year,
                                          year__lte=self.to_date.year).values('esic')
         return None
 
@@ -1114,7 +1116,7 @@ class BillTemplate(models.Model):
     """
     Template for reusable bill calculation rules and configurations
     """
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='bill_templates')
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, related_name='bill_templates', null=True, blank=True)
     template_name = models.CharField(max_length=100, help_text="Name for this template (e.g., 'Monthly Manpower Service')")
     description = models.TextField(blank=True, help_text="Description of when to use this template")
     
@@ -1146,7 +1148,7 @@ class BillTemplate(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        unique_together = ['company', 'template_name']
+        unique_together = ['site', 'template_name']
         ordering = ['-created_at']
         verbose_name = "Bill Template"
         verbose_name_plural = "Bill Templates"
@@ -1205,7 +1207,7 @@ class ServiceBill(models.Model):
     # Bill Information
     bill_number = models.CharField(max_length=50, unique=True, blank=True)
     bill_date = models.DateField(default=timezone.now)
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='service_bills')
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, related_name='service_bills', null=True, blank=True)
     template = models.ForeignKey(BillTemplate, on_delete=models.PROTECT, related_name='bills')
     
     # Client Information (Bill To)

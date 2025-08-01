@@ -48,7 +48,7 @@ class CustomUserCreationForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ('username', 'password1', 'password2', 'first_name', 'last_name', 'user_type', 'company_name')
+        fields = ('username', 'password2', 'password2', 'first_name', 'last_name', 'user_type', 'company_name')
 
     def clean(self):
         cleaned_data = super().clean()
@@ -100,25 +100,11 @@ class LoginForm(AuthenticationForm):
 class EmployeeForm(forms.ModelForm):
     class Meta:
         model = Employee
-        fields = [
-            # Personal Details
-            'employee_code', 'name', 'father_name', 'mother_name', 'gender', 'dob', 'marital_status', 'spouse_name',
-            'mobile', 'email', 'address', 'district', 'state', 'pincode',
-
-            # Professional Details
-            'pf_no', 'esi_no', 'uan', 'pan', 'site', 'department', 'designation', 'doj', 'doe',
-
-            # Account Details
-            'pay_mode', 'employer_account', 'employee_account', 'ifsc', 'kyc_status', 'handicap', 'remarks',
-
-            # Salary Details
-            'basic', 'sr_allowance', 'da', 'hra', 'travel_allowance', 'medical', 'conveyance',
-            'wash_allowance', 'efficiency', 'other_payable', 'employee_status', 'performance_color'
-        ]
+        fields = '__all__'
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Employee Name'}),
-            'father_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Father\'s Name'}),
-            'mother_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Mother\'s Name'}),
+            'father_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Father's Name"}),
+            'mother_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Mother's Name"}),
             'mobile': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Mobile Number'}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Address'}),
             'remarks': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Remarks'}),
@@ -138,13 +124,21 @@ class EmployeeForm(forms.ModelForm):
             'wash_allowance': forms.NumberInput(attrs={'class': 'form-control'}),
             'efficiency': forms.NumberInput(attrs={'class': 'form-control'}),
             'other_payable': forms.NumberInput(attrs={'class': 'form-control'}),
-            # Add more widgets as needed
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if 'site' in self.initial:
-            self.fields['site'].widget = forms.HiddenInput()
+        for field_name, field in self.fields.items():
+            if field.required:
+                field.label = f"{field.label} *"
+    
+    def clean_mobile(self):
+        mobile = self.cleaned_data.get('mobile')
+        if mobile and not mobile.isdigit():
+            raise forms.ValidationError("Mobile number must contain only digits.")
+        if mobile and len(mobile) != 10:
+            raise forms.ValidationError("Mobile number must be exactly 10 digits long.")
+        return mobile
 
 
 # Excel upload form
@@ -703,7 +697,7 @@ EInvoiceLineItemFormSet = modelformset_factory(
 class ReportForm(forms.ModelForm):
     class Meta:
         model = Report
-        fields = ['company', 'report_type', 'from_date', 'to_date']
+        fields = ['site', 'report_type', 'from_date', 'to_date']
         widgets = {
             'from_date': forms.DateInput(attrs={'type': 'date'}),
             'to_date': forms.DateInput(attrs={'type': 'date'}),
@@ -726,7 +720,7 @@ class BillTemplateForm(forms.ModelForm):
             'template_name', 'description', 'default_hsn_code',
             'esi_rate', 'service_charge_rate', 'cgst_rate', 'sgst_rate', 'igst_rate',
             'apply_esi', 'apply_service_charge', 'apply_cgst_sgst', 'apply_igst',
-            'round_to_nearest', 'is_default', 'is_active'
+            'round_to_nearest', 'is_default', 'is_active', 'site'
         ]
         widgets = {
             'template_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Monthly Manpower Service'}),
@@ -769,7 +763,7 @@ class ServiceBillForm(forms.ModelForm):
         model = ServiceBill
         fields = [
             'bill_number', 'bill_date', 'template', 'client_name', 'client_address',
-            'client_gst_number', 'status'
+            'client_gst_number', 'status', 'site'
         ]
         widgets = {
             'bill_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Auto-generated if blank'}),
@@ -779,28 +773,25 @@ class ServiceBillForm(forms.ModelForm):
             'client_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Enter client address'}),
             'client_gst_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '22AAAAA0000A1Z5', 'maxlength': '15'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
+            'site': forms.Select(attrs={'class': 'form-select'}),
         }
 
     def __init__(self, *args, **kwargs):
-        company = kwargs.pop('company', None)
+        site = kwargs.pop('site', None)
         super().__init__(*args, **kwargs)
         
-        # Set default status to 'draft' if not provided
-        if not self.instance.pk:  # Only for new instances
+        if not self.instance.pk:
             self.fields['status'].initial = 'draft'
         
-        # Make status field not required since it has a default
         self.fields['status'].required = False
         
-        # Filter templates by company if provided
-        if company:
-            self.fields['template'].queryset = BillTemplate.objects.filter(company=company, is_active=True)
+        if site:
+            self.fields['template'].queryset = BillTemplate.objects.filter(site=site, is_active=True)
         else:
             self.fields['template'].queryset = BillTemplate.objects.filter(is_active=True)
         
         self.fields['template'].empty_label = "Select Template"
         
-        # Add data attributes to options
         choices = []
         for template in self.fields['template'].queryset:
             choices.append((template.pk, {
@@ -816,7 +807,6 @@ class ServiceBillForm(forms.ModelForm):
             (pk, attrs['label']) for pk, attrs in choices
         ]
         
-        # This is a bit of a hack to get the data attributes into the rendered HTML
         self.fields['template'].widget.choices = self.fields['template'].choices
         self.fields['template'].widget.attrs.update({
             'data-options': json.dumps({pk: attrs for pk, attrs in choices})

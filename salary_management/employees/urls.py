@@ -8,6 +8,7 @@ from .views import ReportView, EmployeeUpdateView, employee_detail
 urlpatterns = [
     path('', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    path('forgot_password/', views.forgot_password, name='forgot_password'),
     # path('dashboard/', views.dashboard_view, name='dashboard'),
     path('register/', views.register_view, name='register'),
     path('home/', views.home, name='home'),
@@ -74,7 +75,7 @@ urlpatterns = [
 
     # advance and attendance upload form
     path('upload/', views.employees_upload_details, name='employees_upload_details'),
-    path('sample-download/', views.sample_download, name='sample_download'),
+    path('sample-download/<int:site_id>/<int:month>/<int:year>/', views.sample_download, name='sample_download'),
 
     path('salaries/', views.staff_salary_list, name='staff_salary_list'),
     path('salaries/new/', views.staff_salary_create, name='staff_salary_create'),

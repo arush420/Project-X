@@ -1,14 +1,59 @@
 {% extends 'base.html' %}
-{% block title %}Upload Employee Details{% endblock %}
+{% block title %}Upload Monthly Data{% endblock %}
 {% block content %}
 <div class="container mt-5">
-    <h2>Upload Employee Details</h2>
+    <h2>Upload Monthly Data</h2>
+    <p>Upload attendance, advance, and arrears for a specific site and month.</p>
     
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        {{ form.as_p }}
+        <div class="form-group">
+            <label for="{{ form.site.id_for_label }}">Select Site:</label>
+            {{ form.site }}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.month.id_for_label }}">Select Month:</label>
+            {{ form.month }}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.year.id_for_label }}">Select Year:</label>
+            {{ form.year }}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.upload_file.id_for_label }}">Upload File:</label>
+            {{ form.upload_file }}
+        </div>
         <button type="submit" class="btn btn-primary">Upload</button>
-        <a href="{% url 'employees:sample_download' %}" class="btn btn-info ml-2">Download Sample Template</a>
+        <a id="download-link" href="#" class="btn btn-info ml-2">Download Template</a>
     </form>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const site = document.getElementById('{{ form.site.id_for_label }}');
+        const month = document.getElementById('{{ form.month.id_for_label }}');
+        const year = document.getElementById('{{ form.year.id_for_label }}');
+        const downloadLink = document.getElementById('download-link');
+
+        function updateDownloadLink() {
+            const siteId = site.value;
+            const monthVal = month.value;
+            const yearVal = year.value;
+
+            if (siteId && monthVal && yearVal) {
+                const url = `{% url 'employees:sample_download' 0 0 0 %}`.replace('0', siteId).replace('0', monthVal).replace('0', yearVal);
+                downloadLink.href = url;
+            } else {
+                downloadLink.href = '#';
+            }
+        }
+
+        site.addEventListener('change', updateDownloadLink);
+        month.addEventListener('change', updateDownloadLink);
+        year.addEventListener('input', updateDownloadLink);
+
+        // Initial call
+        updateDownloadLink();
+    });
+</script>
 {% endblock %}

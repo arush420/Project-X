@@ -1,4 +1,5 @@
 from decimal import Decimal
+import decimal
 from sqlite3 import IntegrityError
 from sys import prefix
 
@@ -272,6 +273,22 @@ def logout_view(request):
     logout(request)
     return redirect('employees:login')
 
+def forgot_password(request):
+    password_info = None
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        try:
+            user = User.objects.get(username=username)
+            # This is insecure. In a real application, implement a secure password reset.
+            new_password = username  # Set the new password to the username
+            user.set_password(new_password)
+            user.save()
+            password_info = f"Password for {username} has been reset to: {new_password}"
+            messages.success(request, password_info)
+        except User.DoesNotExist:
+            messages.error(request, "User not found.")
+    return render(request, 'employees/forgot_password.html')
+
 @login_required
 def user_profile_detail(request):
     user = request.user
@@ -436,9 +453,13 @@ class EmployeeUpdateView(UpdateView):
 
 class AddEmployeeAndUploadView(View):
     def get(self, request):
+        sites = Site.objects.all()
+        recent_employees = Employee.objects.order_by('-doj')[:5]
         return render(request, 'employees/add_employee.html', {
             'add_employee_form': EmployeeForm(),
             'upload_form': ExcelUploadForm(),
+            'sites': sites,
+            'recent_employees': recent_employees
         })
 
     def post(self, request):
@@ -449,59 +470,119 @@ class AddEmployeeAndUploadView(View):
                 messages.success(request, 'Employee added successfully!')
                 return redirect('employees:employee_list')
             else:
-                messages.error(request, 'Failed to add employee. Please check the form.')
-            return render(request, 'employees/add_employee.html', {'add_employee_form': form, 'upload_form': ExcelUploadForm()})
+                error_list = []
+                for field, errors in form.errors.items():
+                    error_list.append(f"<strong>{field}:</strong> {', '.join(errors)}")
+                error_string = "; ".join(error_list)
+                messages.error(request, f'Failed to add employee. Please check the form. Details: {error_string}')
+            
+            sites = Site.objects.all()
+            return render(request, 'employees/add_employee.html', {
+                'add_employee_form': form,
+                'upload_form': ExcelUploadForm(),
+                'sites': sites
+            })
 
         elif request.POST.get('submit_type') == 'upload_employees':
             form = ExcelUploadForm(request.POST, request.FILES)
             if form.is_valid():
+                site_id = request.POST.get('site')
+                if not site_id:
+                    messages.error(request, 'Please select a site.')
+                    return redirect('employees:add_employee')
+                
                 try:
-                    handle_file_upload(request.FILES['file'])
+                    site = Site.objects.get(id=site_id)
+                    handle_file_upload(request.FILES['file'], site)
                     messages.success(request, 'Employees uploaded successfully!')
+                except Site.DoesNotExist:
+                    messages.error(request, 'Invalid site selected.')
                 except ValidationError as e:
-                    messages.error(request, f"File upload failed: {', '.join(e.messages)}")
+                    messages.error(request, f"File upload failed: {e}")
                 return redirect('employees:employee_list')
         return self.get(request)
 
-def handle_file_upload(file):
+def handle_file_upload(file, site):
     errors = []
     try:
         df = pd.read_excel(file)
-        required_columns = ['employee_code', 'name', 'father_name', 'basic', 'transport', 'canteen', 'pf', 'esic', 'advance']
+        required_columns = ['employee_code', 'name', 'father_name', 'basic']
         missing_cols = [col for col in required_columns if col not in df.columns]
         if missing_cols:
             raise ValidationError(f"Missing required columns: {', '.join(missing_cols)}")
 
-        for _, row in df.iterrows():
-            employee_code = str(row['employee_code']).strip()
-            name = str(row['name']).strip()
-            father_name = str(row['father_name']).strip()
-            basic = Decimal(row['basic']) if pd.notnull(row['basic']) else Decimal('0.00')
-            transport = Decimal(row.get('transport', 0))
-            canteen = Decimal(row.get('canteen', 0))
-            pf = Decimal(row.get('pf', 0))
-            esic = Decimal(row.get('esic', 0))
-            advance = Decimal(row.get('advance', 0))
+        for idx, row in df.iterrows():
+            try:
+                # Handle required fields
+                employee_code = str(row['employee_code']).strip() if pd.notna(row['employee_code']) else ''
+                name = str(row['name']).strip() if pd.notna(row['name']) else ''
+                father_name = str(row['father_name']).strip() if pd.notna(row['father_name']) else ''
+                
+                if not employee_code or not name:
+                    errors.append(f"Row {idx+2}: Employee code and name are required.")
+                    continue
 
-            if Employee.objects.filter(employee_code=employee_code).exists():
-                errors.append(f"Employee with code {employee_code} already exists.")
+                if Employee.objects.filter(employee_code=employee_code).exists():
+                    errors.append(f"Row {idx+2}: Employee with code {employee_code} already exists.")
+                    continue
+
+                # Helper function to safely convert to Decimal
+                def safe_decimal(value, default='0.00'):
+                    if pd.isna(value) or value == '' or value is None:
+                        return Decimal(default)
+                    try:
+                        # Convert to string first to handle various number formats
+                        return Decimal(str(value).strip())
+                    except (ValueError, TypeError, decimal.InvalidOperation):
+                        return Decimal(default)
+
+                # Create employee with all available fields
+                employee_data = {
+                    'site': site,
+                    'employee_code': employee_code,
+                    'name': name,
+                    'father_name': father_name,
+                    'basic': safe_decimal(row.get('basic', 0)),
+                    'transport': safe_decimal(row.get('transport', 0)),
+                    'canteen': safe_decimal(row.get('canteen', 0)),
+                    'sr_allowance': safe_decimal(row.get('sr_allowance', 0)),
+                    'da': safe_decimal(row.get('da', 0)),
+                    'hra': safe_decimal(row.get('hra', 0)),
+                    'medical': safe_decimal(row.get('medical', 0)),
+                    'conveyance': safe_decimal(row.get('conveyance', 0)),
+                    'wash_allowance': safe_decimal(row.get('wash_allowance', 0)),
+                    'efficiency': safe_decimal(row.get('efficiency', 0)),
+                    'other_payable': safe_decimal(row.get('other_payable', 0)),
+                }
+
+                # Handle string fields
+                string_fields = ['pf_no', 'esi_no', 'uan', 'account_number', 'ifsc', 'mobile', 'email', 'address']
+                for field in string_fields:
+                    if field in row and pd.notna(row[field]):
+                        employee_data[field] = str(row[field]).strip()
+
+                # Handle date fields
+                if 'date_of_joining' in row and pd.notna(row['date_of_joining']):
+                    try:
+                        employee_data['date_of_joining'] = pd.to_datetime(row['date_of_joining']).date()
+                    except:
+                        pass
+
+                Employee.objects.create(**employee_data)
+                
+            except Exception as e:
+                errors.append(f"Row {idx+2}: Error - {str(e)}")
                 continue
 
-            Employee.objects.create(
-                employee_code=employee_code,
-                name=name,
-                father_name=father_name,
-                basic=basic,
-                transport=transport,
-                canteen=canteen,
-                pf_contribution=pf,
-                esic_contribution=esic,
-                advance=advance
-            )
     except Exception as e:
-        raise ValidationError(f"Error processing file: {e}")
+        raise ValidationError(f"Error processing file: {str(e)}")
+    
     if errors:
-        raise ValidationError(errors)
+        # Join all errors and raise as a single message
+        error_message = "; ".join(errors[:5])  # Show first 5 errors
+        if len(errors) > 5:
+            error_message += f" ... and {len(errors) - 5} more errors."
+        raise ValidationError(error_message)
 
 
 class GenerateSalaryView(PermissionRequiredMixin, View):
@@ -591,7 +672,7 @@ class GenerateSalaryView(PermissionRequiredMixin, View):
                     defaults={
                         'gross_salary': gross_salary,
                         'net_salary': net_salary,
-                        'advance': advance,
+                        'advance_deduction': advance,
                         'pf': pf,
                         'esic': esic,
                         'canteen': canteen
@@ -605,7 +686,7 @@ class GenerateSalaryView(PermissionRequiredMixin, View):
                     'pf': pf,
                     'esic': esic,
                     'canteen': canteen,
-                    'advance': advance,
+                    'advance_deduction': advance,
                     'net_salary': net_salary
                 })
 
@@ -669,11 +750,12 @@ def download_salary_report(request, month, year):
 def download_template(request, site_id):
     """
     Generates and serves a downloadable Excel template for bulk employee uploads,
-    including all fields from the EmployeeForm and a pre-filled site column.
+    including all fields from the Employee model and a pre-filled site column.
     """
     site = get_object_or_404(Site, id=site_id)
-    form = EmployeeForm()
-    columns = list(form.fields.keys())
+    
+    # Get all field names from the Employee model
+    columns = [f.name for f in Employee._meta.get_fields() if not f.is_relation]
     
     # Create a sample row with the site name
     sample_data = {col: '' for col in columns}
@@ -1237,40 +1319,128 @@ def delete_site(request, site_id):
 
 
 # Upload view for attendance, advance, and arrears files
+def sample_download(request, site_id, month, year):
+    """
+    Generates a sample Excel template with data from the previous month.
+    """
+    try:
+        site = Site.objects.get(id=site_id)
+    except Site.DoesNotExist:
+        return HttpResponse("Site not found.", status=404)
+
+    # Calculate previous month and year
+    prev_month = month - 1
+    prev_year = year
+    if prev_month == 0:
+        prev_month = 12
+        prev_year = year - 1
+
+    # Get all employees for the site
+    employees = Employee.objects.filter(site=site)
+    
+    # Get previous month's data
+    previous_attendance = EmployeesAttendance.objects.filter(
+        employee__site=site, month=prev_month, year=prev_year
+    ).values('employee__employee_code', 'days_worked')
+    
+    previous_advances = CompanyAdvanceTransaction.objects.filter(
+        site=site, month=prev_month, year=prev_year
+    ).values('employee_id', 'amount')
+
+    previous_arrears = Arrear.objects.filter(
+        site=site, month=prev_month, year=prev_year
+    ).values('employee_id', 'basic_salary_arrears') # Assuming this is the main arrears field
+
+    # Create DataFrames
+    attendance_df = pd.DataFrame(list(previous_attendance)).rename(columns={'employee__employee_code': 'employee_code', 'days_worked': 'last_month_days_worked'})
+    advances_df = pd.DataFrame(list(previous_advances)).rename(columns={'employee_id': 'employee_code', 'amount': 'last_month_advance'})
+    arrears_df = pd.DataFrame(list(previous_arrears)).rename(columns={'employee_id': 'employee_code', 'basic_salary_arrears': 'last_month_arrears'})
+
+    # Employee data
+    employee_data = employees.values('employee_code', 'name')
+    df = pd.DataFrame(list(employee_data))
+
+    # Merge with previous month's data
+    if not attendance_df.empty:
+        df = pd.merge(df, attendance_df, on='employee_code', how='left')
+    if not advances_df.empty:
+        df = pd.merge(df, advances_df, on='employee_code', how='left')
+    if not arrears_df.empty:
+        df = pd.merge(df, arrears_df, on='employee_code', how='left')
+    
+    # Add columns for new data
+    df['days_worked'] = ''
+    df['advance_amount'] = ''
+    df['arrears_amount'] = ''
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="monthly_data_{site.site_name}_{month}_{year}.xlsx"'
+
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='MonthlyData')
+        
+    return response
+
 def employees_upload_details(request):
-    form = UploadForm()
+    form = UploadForm(request.POST or None, request.FILES or None)
 
-    if request.method == 'POST':
-        form = UploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            company = form.cleaned_data['company']
-            month = form.cleaned_data['month']
-            year = form.cleaned_data['year']
-            upload_type = form.cleaned_data['upload_type']
-            upload_file = form.cleaned_data['upload_file']
+    if request.method == 'POST' and form.is_valid():
+        site = form.cleaned_data['site']
+        month = form.cleaned_data['month']
+        year = form.cleaned_data['year']
+        upload_file = form.cleaned_data['upload_file']
 
-            if upload_type == 'attendance':
-                # Process attendance file data here
-                pass
-            elif upload_type == 'advance':
-                # Process advance file data here
-                pass
-            elif upload_type == 'arrears':
-                # Process arrears file data here, saving data to Arrear model
-                pass
+        try:
+            df = pd.read_excel(upload_file)
+            errors = []
+            
+            for index, row in df.iterrows():
+                employee_code = row.get('employee_code')
+                if not employee_code:
+                    continue
 
+                try:
+                    employee = Employee.objects.get(employee_code=str(employee_code), site=site)
+                except Employee.DoesNotExist:
+                    errors.append(f"Row {index + 2}: Employee '{employee_code}' not found in site '{site.site_name}'.")
+                    continue
+
+                # Update attendance if present
+                if 'days_worked' in df.columns and pd.notna(row.get('days_worked')):
+                    days_worked = int(row['days_worked'])
+                    EmployeesAttendance.objects.update_or_create(
+                        employee=employee, year=year, month=month,
+                        defaults={'days_worked': days_worked}
+                    )
+                
+                # Update advance if present
+                if 'advance_amount' in df.columns and pd.notna(row.get('advance_amount')):
+                    advance = Decimal(row['advance_amount'])
+                    CompanyAdvanceTransaction.objects.update_or_create(
+                        site=site, employee_id=employee_code, month=month, year=year,
+                        defaults={'amount': advance}
+                    )
+
+                # Update arrears if present
+                if 'arrears_amount' in df.columns and pd.notna(row.get('arrears_amount')):
+                    arrears = Decimal(row['arrears_amount'])
+                    Arrear.objects.update_or_create(
+                        site=site, employee_id=employee_code, month=month, year=year,
+                        defaults={'basic_salary_arrears': arrears}
+                    )
+
+            if errors:
+                messages.error(request, "Upload failed with errors: " + "; ".join(errors))
+            else:
+                messages.success(request, "Monthly data uploaded successfully!")
+            
             return redirect('employees:employees_upload_details')
 
-    return render(request, 'employees/employees_upload_details.html', {
-        'form': form
-    })
+        except Exception as e:
+            messages.error(request, f"An error occurred during upload: {e}")
 
-# Sample template download view for file upload
-def sample_download(request):
-    response = HttpResponse(content_type='application/vnd.ms-excel')
-    response['Content-Disposition'] = 'attachment; filename="sample_template.xlsx"'
-    # Here you can create a sample file or provide existing content
-    return response
+    return render(request, 'employees/employees_upload_details.html', {'form': form})
+
 
 
 # Staff Salary view
@@ -1441,10 +1611,10 @@ def e_invoice_delete(request, pk):
 # Bill Template Management Views
 @login_required
 def bill_template_list(request):
-    """List all bill templates for the user's company"""
-    user_company = getattr(request.user.profile, 'company', None)
-    if user_company:
-        templates = BillTemplate.objects.filter(company=user_company)
+    """List all bill templates for the user's site"""
+    user_site = getattr(request.user.profile, 'site', None)
+    if user_site:
+        templates = BillTemplate.objects.filter(site=user_site)
     else:
         templates = BillTemplate.objects.all()
     
@@ -1458,13 +1628,13 @@ def bill_template_create(request):
         form = BillTemplateForm(request.POST)
         if form.is_valid():
             template = form.save(commit=False)
-            # Set the company to user's company if available
-            user_company = getattr(request.user.profile, 'company', None)
-            if user_company:
-                template.company = user_company
+            # Set the site to user's site if available
+            user_site = getattr(request.user.profile, 'site', None)
+            if user_site:
+                template.site = user_site
             else:
-                # If no user company, require company selection or use first available
-                template.company = Company.objects.first()
+                # If no user site, require site selection or use first available
+                template.site = Site.objects.first()
             template.save()
             messages.success(request, 'Bill template created successfully!')
             return redirect('employees:bill_template_list')
@@ -1515,10 +1685,10 @@ def bill_template_delete(request, pk):
 # Service Bill Management Views
 @login_required
 def service_bill_list(request):
-    """List all service bills for the user's company"""
-    user_company = getattr(request.user.profile, 'company', None)
-    if user_company:
-        bills = ServiceBill.objects.filter(company=user_company).order_by('-created_at')
+    """List all service bills for the user's site"""
+    user_site = getattr(request.user.profile, 'site', None)
+    if user_site:
+        bills = ServiceBill.objects.filter(site=user_site).order_by('-created_at')
     else:
         bills = ServiceBill.objects.all().order_by('-created_at')
 
@@ -1544,13 +1714,13 @@ def service_bill_list(request):
 @login_required
 def service_bill_create(request):
     """Create a new service bill with line items"""
-    user_company = getattr(request.user.profile, 'company', None)
+    user_site = getattr(request.user.profile, 'site', None)
     sites = Site.objects.all()
     
     if request.method == 'POST':
         logger.debug(f"POST data received: {request.POST}")
         
-        form = ServiceBillForm(request.POST, company=user_company)
+        form = ServiceBillForm(request.POST, site=user_site)
         formset = ServiceBillItemFormSet(request.POST)
         
         logger.debug(f"Form is_valid: {form.is_valid()}")
@@ -1568,12 +1738,12 @@ def service_bill_create(request):
             try:
                 # Save the bill first
                 bill = form.save(commit=False)
-                if user_company:
-                    bill.company = user_company
+                if user_site:
+                    bill.site = user_site
                 else:
-                    bill.company = Company.objects.first()
+                    bill.site = Site.objects.first()
                 
-                logger.debug(f"About to save bill with company: {bill.company}")
+                logger.debug(f"About to save bill with site: {bill.site}")
                 bill.save()
                 logger.debug(f"Bill saved successfully with ID: {bill.pk}")
                 
@@ -1601,11 +1771,11 @@ def service_bill_create(request):
                         invoice_type='B2B',
                         document_type='INV',
                         reverse_charge=False,
-                        supplier_gstin=bill.company.company_gst_number,
-                        supplier_legal_name=bill.company.company_name,
-                        supplier_address=bill.company.company_address,
-                        supplier_place_of_supply=bill.company.company_address,
-                        supplier_state_code=get_state_code(bill.company.company_address),
+                        supplier_gstin=bill.site.company.company_gst_number,
+                        supplier_legal_name=bill.site.company.company_name,
+                        supplier_address=bill.site.company.company_address,
+                        supplier_place_of_supply=bill.site.company.company_address,
+                        supplier_state_code=get_state_code(bill.site.company.company_address),
                         buyer_gstin=bill.client_gst_number or '',
                         buyer_legal_name=bill.client_name,
                         buyer_address=bill.client_address,
@@ -1656,7 +1826,7 @@ def service_bill_create(request):
             else:
                 messages.error(request, 'Please check the form and try again.')
     else:
-        form = ServiceBillForm(company=user_company)
+        form = ServiceBillForm(site=user_site)
         formset = ServiceBillItemFormSet(queryset=ServiceBillItem.objects.none())
     
     return render(request, 'employees/service_bill_form.html', {
@@ -1670,11 +1840,11 @@ def service_bill_create(request):
 def service_bill_update(request, pk):
     """Update an existing service bill"""
     bill = get_object_or_404(ServiceBill, pk=pk)
-    user_company = getattr(request.user.profile, 'company', None)
+    user_site = getattr(request.user.profile, 'site', None)
     sites = Site.objects.all()
     
     if request.method == 'POST':
-        form = ServiceBillForm(request.POST, instance=bill, company=user_company)
+        form = ServiceBillForm(request.POST, instance=bill, site=user_site)
         formset = ServiceBillItemFormSet(request.POST, queryset=bill.line_items.all())
         
         if form.is_valid() and formset.is_valid():
@@ -1698,7 +1868,7 @@ def service_bill_update(request, pk):
             messages.success(request, 'Service bill updated successfully!')
             return redirect('employees:service_bill_detail', pk=bill.pk)
     else:
-        form = ServiceBillForm(instance=bill, company=user_company)
+        form = ServiceBillForm(instance=bill, site=user_site)
         formset = ServiceBillItemFormSet(queryset=bill.line_items.all())
     
     return render(request, 'employees/service_bill_form.html', {
