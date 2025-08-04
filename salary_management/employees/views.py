@@ -32,7 +32,13 @@ import csv
 import logging
 from django.utils.timezone import now
 from openpyxl.utils.datetime import days_to_time
-from .models import Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, Company, StaffSalary, AdvanceTransaction, SalaryRule, SalaryOtherField, SalaryTotals, VerificationRequest, EInvoice, EInvoiceLineItem, BillTemplate, ServiceBill, ServiceBillItem, Purchase, PurchaseLineItem, Site
+from .models import (
+    Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, 
+    Company, StaffSalary, AdvanceTransaction, SalaryRule, SalaryOtherField, 
+    SalaryTotals, VerificationRequest, EInvoice, EInvoiceLineItem, BillTemplate, 
+    ServiceBill, ServiceBillItem, Purchase, PurchaseLineItem, Site, 
+    EmployeesAttendance, CompanyAdvanceTransaction, Arrear, MONTH_CHOICES
+)
 from .forms import EmployeeForm, TaskForm, ExcelUploadForm, PaymentForm, PurchaseItemForm, VendorInformationForm, CompanyForm, AddCompanyForm, EmployeeSearchForm, CustomUserCreationForm, StaffSalaryForm, AdvanceTransactionForm, ProfileEditForm, LoginForm, SalaryRuleFormSet, SalaryOtherFieldFormSet, UploadForm, ReportForm, VerificationRequestForm, EInvoiceForm, EInvoiceLineItemFormSet, BillTemplateForm, ServiceBillForm, ServiceBillItemForm, ServiceBillItemFormSet, PurchaseForm, PurchaseLineItemFormSet, PurchaseItemFormSet, SiteForm
 from django.views.generic import TemplateView
 
@@ -1382,64 +1388,193 @@ def sample_download(request, site_id, month, year):
     return response
 
 def employees_upload_details(request):
-    form = UploadForm(request.POST or None, request.FILES or None)
+    sites = Site.objects.all()
+    months = MONTH_CHOICES
 
-    if request.method == 'POST' and form.is_valid():
-        site = form.cleaned_data['site']
-        month = form.cleaned_data['month']
-        year = form.cleaned_data['year']
-        upload_file = form.cleaned_data['upload_file']
+    if request.method == 'POST':
+        form_type = request.POST.get('form_type')
+        site_id = request.POST.get('site')  # Changed from site_id to site to match form
+        month = request.POST.get('month')
+        year = request.POST.get('year')
+        
+        # Validate required fields
+        if not all([site_id, month, year]):
+            messages.error(request, "Please select site, month and year")
+            return redirect('employees:employees_upload_details')
+            
+        try:
+            month = int(month)
+            year = int(year)
+        except (TypeError, ValueError):
+            messages.error(request, "Invalid month or year value")
+            return redirect('employees:employees_upload_details')
+            
+        employee_code = request.POST.get('employee_code')
 
         try:
-            df = pd.read_excel(upload_file)
-            errors = []
-            
-            for index, row in df.iterrows():
-                employee_code = row.get('employee_code')
-                if not employee_code:
-                    continue
+            site = Site.objects.get(id=site_id)
 
-                try:
-                    employee = Employee.objects.get(employee_code=str(employee_code), site=site)
-                except Employee.DoesNotExist:
-                    errors.append(f"Row {index + 2}: Employee '{employee_code}' not found in site '{site.site_name}'.")
-                    continue
-
-                # Update attendance if present
-                if 'days_worked' in df.columns and pd.notna(row.get('days_worked')):
-                    days_worked = int(row['days_worked'])
-                    EmployeesAttendance.objects.update_or_create(
-                        employee=employee, year=year, month=month,
-                        defaults={'days_worked': days_worked}
-                    )
+            if form_type == 'bulk_upload':
+                upload_file = request.FILES.get('upload_file')
+                upload_type = request.POST.get('upload_type')
                 
-                # Update advance if present
-                if 'advance_amount' in df.columns and pd.notna(row.get('advance_amount')):
-                    advance = Decimal(row['advance_amount'])
-                    CompanyAdvanceTransaction.objects.update_or_create(
-                        site=site, employee_id=employee_code, month=month, year=year,
-                        defaults={'amount': advance}
-                    )
+                df = pd.read_excel(upload_file)
+                errors = []
+                
+                for index, row in df.iterrows():
+                    emp_code = row.get('employee_code')
+                    if not emp_code:
+                        continue
 
-                # Update arrears if present
-                if 'arrears_amount' in df.columns and pd.notna(row.get('arrears_amount')):
-                    arrears = Decimal(row['arrears_amount'])
-                    Arrear.objects.update_or_create(
-                        site=site, employee_id=employee_code, month=month, year=year,
-                        defaults={'basic_salary_arrears': arrears}
-                    )
+                    emp = Employee.objects.filter(employee_code=str(emp_code), site=site).first()
+                    if not emp:
+                        errors.append(f"Row {index + 2}: Employee '{emp_code}' not found in site '{site.site_name}'.")
+                        continue
 
-            if errors:
-                messages.error(request, "Upload failed with errors: " + "; ".join(errors))
-            else:
-                messages.success(request, "Monthly data uploaded successfully!")
-            
-            return redirect('employees:employees_upload_details')
+                    # Update attendance if present
+                    if upload_type == 'attendance' and 'days_worked' in df.columns and pd.notna(row.get('days_worked')):
+                        days_worked = int(row['days_worked'])
+                        EmployeesAttendance.objects.update_or_create(
+                            employee=emp, year=year, month=month,
+                            defaults={'days_worked': days_worked}
+                        )
+                    
+                    # Update advance if present
+                    elif upload_type == 'advance' and 'advance_amount' in df.columns and pd.notna(row.get('advance_amount')):
+                        try:
+                            advance = Decimal(str(row['advance_amount']))
+                            CompanyAdvanceTransaction.objects.update_or_create(
+                                site=site, employee_id=emp_code, month=month, year=year,
+                                defaults={'amount': advance}
+                            )
+                        except (ValueError, decimal.InvalidOperation) as e:
+                            errors.append(f"Row {index + 2}: Invalid advance amount '{row.get('advance_amount')}' for employee '{emp_code}'.")
 
+                    # Update arrears if present
+                    elif upload_type == 'arrears' and 'arrears_amount' in df.columns and pd.notna(row.get('arrears_amount')):
+                        arrears = Decimal(row['arrears_amount'])
+                        Arrear.objects.update_or_create(
+                            site=site, employee_id=emp_code, month=month, year=year,
+                            defaults={'basic_salary_arrears': arrears}
+                        )
+
+                if errors:
+                    messages.error(request, "Upload failed with errors: " + "; ".join(errors))
+                else:
+                    messages.success(request, "Monthly data uploaded successfully!")
+
+            elif form_type == 'attendance':
+                employee_codes = request.POST.getlist('employee_code[]')
+                days_worked_list = request.POST.getlist('days_worked[]')
+                success_count = 0
+                
+                for emp_code, days in zip(employee_codes, days_worked_list):
+                    try:
+                        emp = Employee.objects.get(employee_code=emp_code, site=site)
+                        days_worked = int(days)
+                        EmployeesAttendance.objects.update_or_create(
+                            employee=emp, year=year, month=month,
+                            defaults={'days_worked': days_worked}
+                        )
+                        success_count += 1
+                    except Employee.DoesNotExist:
+                        messages.error(request, f"Employee {emp_code} not found")
+                    except ValueError:
+                        messages.error(request, f"Invalid days worked value for employee {emp_code}")
+                
+                if success_count > 0:
+                    messages.success(request, f"Attendance saved for {success_count} employees")
+
+            elif form_type == 'advance':
+                employee_codes = request.POST.getlist('employee_code[]')
+                advance_amounts = request.POST.getlist('advance_amount[]')
+                success_count = 0
+                
+                for emp_code, amount in zip(employee_codes, advance_amounts):
+                    try:
+                        emp = Employee.objects.get(employee_code=emp_code, site=site)
+                        advance_amount = Decimal(amount)
+                        CompanyAdvanceTransaction.objects.update_or_create(
+                            site=site, employee_id=emp_code, month=month, year=year,
+                            defaults={'amount': advance_amount}
+                        )
+                        success_count += 1
+                    except Employee.DoesNotExist:
+                        messages.error(request, f"Employee {emp_code} not found")
+                    except (ValueError, decimal.InvalidOperation):
+                        messages.error(request, f"Invalid advance amount for employee {emp_code}")
+                
+                if success_count > 0:
+                    messages.success(request, f"Advance saved for {success_count} employees")
+
+            elif form_type == 'arrear':
+                employee_codes = request.POST.getlist('employee_code[]')
+                arrear_amounts = request.POST.getlist('arrear_amount[]')
+                success_count = 0
+                
+                for emp_code, amount in zip(employee_codes, arrear_amounts):
+                    try:
+                        emp = Employee.objects.get(employee_code=emp_code, site=site)
+                        arrear_amount = Decimal(amount)
+                        Arrear.objects.update_or_create(
+                            site=site, employee_id=emp_code, month=month, year=year,
+                            defaults={'basic_salary_arrears': arrear_amount}
+                        )
+                        success_count += 1
+                    except Employee.DoesNotExist:
+                        messages.error(request, f"Employee {emp_code} not found")
+                    except (ValueError, decimal.InvalidOperation):
+                        messages.error(request, f"Invalid arrear amount for employee {emp_code}")
+                
+                if success_count > 0:
+                    messages.success(request, f"Arrear saved for {success_count} employees")
+
+        except Site.DoesNotExist:
+            messages.error(request, "Selected site not found")
+        except Employee.DoesNotExist:
+            messages.error(request, f"Employee with code {employee_code} not found in selected site")
         except Exception as e:
-            messages.error(request, f"An error occurred during upload: {e}")
+            messages.error(request, f"An error occurred: {str(e)}")
 
-    return render(request, 'employees/employees_upload_details.html', {'form': form})
+        return redirect('employees:employees_upload_details')
+
+    context = {
+        'sites': sites,
+        'months': months,
+    }
+    return render(request, 'employees/employees_upload_details.html', context)
+
+@login_required
+def search_employee(request):
+    site_id = request.GET.get('site_id')
+    employee_code = request.GET.get('employee_code')
+
+    if not site_id or not employee_code:
+        return JsonResponse({
+            'success': False,
+            'message': 'Site ID and Employee Code are required'
+        })
+
+    try:
+        employee = Employee.objects.get(site_id=site_id, employee_code=employee_code)
+        return JsonResponse({
+            'success': True,
+            'employee': {
+                'name': employee.name or '',
+                'bank_account': employee.employee_account or '',
+                'ifsc': employee.ifsc or ''
+            }
+        })
+    except Employee.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': f'Employee with code {employee_code} not found in selected site'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error searching for employee: {str(e)}'
+        })
 
 
 
@@ -1498,9 +1633,12 @@ class ReportView(View):
                     'message': 'No data found for the selected criteria.'
                 })
 
+            # report_data is already a list of dictionaries
+            data_list = report_data
+
             # Generate a downloadable report as Excel file
             if 'download' in request.POST:
-                df = pd.DataFrame(list(report_data.values()))
+                df = pd.DataFrame(data_list)
                 response = HttpResponse(
                     content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
                 response['Content-Disposition'] = f'attachment; filename={report.report_type}_report.xlsx'
@@ -1508,7 +1646,7 @@ class ReportView(View):
                     df.to_excel(writer, index=False, sheet_name='Report')
                 return response
 
-            return render(request, self.template_name, {'form': form, 'report_data': report_data})
+            return render(request, self.template_name, {'form': form, 'report_data': data_list})
         return render(request, self.template_name, {'form': form})
 
 # E-Invoice Views

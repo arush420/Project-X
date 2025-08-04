@@ -76,6 +76,7 @@ urlpatterns = [
     # advance and attendance upload form
     path('upload/', views.employees_upload_details, name='employees_upload_details'),
     path('sample-download/<int:site_id>/<int:month>/<int:year>/', views.sample_download, name='sample_download'),
+    path('search-employee/', views.search_employee, name='search_employee'),
 
     path('salaries/', views.staff_salary_list, name='staff_salary_list'),
     path('salaries/new/', views.staff_salary_create, name='staff_salary_create'),

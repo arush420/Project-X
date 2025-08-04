@@ -648,42 +648,146 @@ REPORT_TYPE_CHOICES = [
 class Report(models.Model):
     site = models.ForeignKey(Site, on_delete=models.CASCADE, related_name="reports", null=True, blank=True)
     report_type = models.CharField(max_length=20, choices=REPORT_TYPE_CHOICES)
-    from_date = models.DateField()
-    to_date = models.DateField()
+    month = models.PositiveSmallIntegerField(choices=MONTH_CHOICES)
+    year = models.PositiveIntegerField()
 
     def __str__(self):
-        return f"{self.report_type} Report for {self.company.company_name} ({self.from_date} to {self.to_date})"
+        return f"{self.report_type} Report for {self.site.site_name} ({self.get_month_display()}/{self.year})"
+
+    def get_month_display(self):
+        return dict(MONTH_CHOICES).get(self.month)
 
     def clean(self):
-        # Ensure from_date is not later than to_date
-        if self.from_date > self.to_date:
-            raise ValidationError("From Date cannot be later than To Date.")
+        pass
 
     def generate_report_data(self):
-        """Generate data for the report based on the selected report type and date range."""
-        filters = {
-            'employee__site': self.site,
-            'year__gte': self.from_date.year,
-            'year__lte': self.to_date.year,
-            'month__gte': self.from_date.month,
-            'month__lte': self.to_date.month,
+        """Generate data for the report based on the selected report type and month/year."""
+        base_filters = {
+            'year': self.year,
+            'month': self.month,
         }
 
         if self.report_type == 'Salary':
-            return Salary.objects.filter(**filters)
+            queryset = Salary.objects.filter(
+                employee__site=self.site,
+                **base_filters
+            ).select_related('employee')
+            
+            data = []
+            for salary in queryset:
+                data.append({
+                    'Employee Code': salary.employee.employee_code,
+                    'Employee Name': salary.employee.name,
+                    'Basic Salary': salary.basic_salary,
+                    'Transport': salary.transport,
+                    'Canteen': salary.canteen,
+                    'PF': salary.pf,
+                    'ESIC': salary.esic,
+                    'Advance Deduction': salary.advance_deduction,
+                    'Gross Salary': salary.gross_salary,
+                    'Net Salary': salary.net_salary,
+                    'Month': salary.get_month_display(),
+                    'Year': salary.year
+                })
+            return data
         elif self.report_type == 'Attendance':
-            # Attendance is linked via employee, so we can use the same filters
-            return EmployeesAttendance.objects.filter(**filters)
+            queryset = EmployeesAttendance.objects.filter(
+                site=self.site,
+                **base_filters
+            ).select_related('employee')
+            
+            data = []
+            for attendance in queryset:
+                data.append({
+                    'Employee Code': attendance.employee.employee_code,
+                    'Employee Name': attendance.employee.name,
+                    'Days Worked': attendance.days_worked,
+                    'Month': dict(MONTH_CHOICES).get(attendance.month),
+                    'Year': attendance.year
+                })
+            return data
+
         elif self.report_type == 'Arrear':
-            return Arrear.objects.filter(employee__site=self.site, year=self.from_date.year, month=self.from_date.month)
+            queryset = Arrear.objects.filter(
+                site=self.site,
+                **base_filters
+            ).select_related('employee')
+            
+            data = []
+            for arrear in queryset:
+                data.append({
+                    'Employee Code': arrear.employee_id,
+                    'Employee Name': Employee.objects.get(employee_code=arrear.employee_id).name,
+                    'Amount': arrear.amount,
+                    'Month': dict(MONTH_CHOICES).get(arrear.month),
+                    'Year': arrear.year
+                })
+            return data
+
         elif self.report_type == 'Advance':
-            return CompanyAdvanceTransaction.objects.filter(employee__site=self.site, year=self.from_date.year, month=self.from_date.month)
+            queryset = CompanyAdvanceTransaction.objects.filter(
+                site=self.site,
+                **base_filters
+            )
+            
+            data = []
+            for advance in queryset:
+                try:
+                    employee = Employee.objects.get(employee_code=advance.employee_id)
+                    data.append({
+                        'Employee Code': advance.employee_id,
+                        'Employee Name': employee.name,
+                        'Bank Account': employee.employee_account or '-',
+                        'IFSC Code': employee.ifsc or '-',
+                        'Amount': advance.amount,
+                        'Month': dict(MONTH_CHOICES).get(advance.month),
+                        'Year': advance.year
+                    })
+                except Employee.DoesNotExist:
+                    data.append({
+                        'Employee Code': advance.employee_id,
+                        'Employee Name': 'Not Found',
+                        'Bank Account': '-',
+                        'IFSC Code': '-',
+                        'Amount': advance.amount,
+                        'Month': dict(MONTH_CHOICES).get(advance.month),
+                        'Year': advance.year
+                    })
+            return data
+
         elif self.report_type == 'PF':
-            return Salary.objects.filter(employee__site=self.site, year__gte=self.from_date.year,
-                                         year__lte=self.to_date.year).values('pf')
+            queryset = Salary.objects.filter(
+                employee__site=self.site,
+                **base_filters
+            ).select_related('employee')
+            
+            data = []
+            for salary in queryset:
+                data.append({
+                    'Employee Code': salary.employee.employee_code,
+                    'Employee Name': salary.employee.name,
+                    'PF Amount': salary.pf,
+                    'Month': salary.get_month_display(),
+                    'Year': salary.year
+                })
+            return data
+
         elif self.report_type == 'ESIC':
-            return Salary.objects.filter(employee__site=self.site, year__gte=self.from_date.year,
-                                         year__lte=self.to_date.year).values('esic')
+            queryset = Salary.objects.filter(
+                employee__site=self.site,
+                **base_filters
+            ).select_related('employee')
+            
+            data = []
+            for salary in queryset:
+                data.append({
+                    'Employee Code': salary.employee.employee_code,
+                    'Employee Name': salary.employee.name,
+                    'ESIC Amount': salary.esic,
+                    'Month': salary.get_month_display(),
+                    'Year': salary.year
+                })
+            return data
         return None
 
 

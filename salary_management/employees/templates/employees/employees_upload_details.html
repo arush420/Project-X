@@ -2,37 +2,264 @@
 {% block title %}Upload Monthly Data{% endblock %}
 {% block content %}
 <div class="container mt-5">
-    <h2>Upload Monthly Data</h2>
-    <p>Upload attendance, advance, and arrears for a specific site and month.</p>
-    
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="{{ form.site.id_for_label }}">Select Site:</label>
-            {{ form.site }}
+    <h2>Monthly Data Management</h2>
+
+    <!-- Common Site, Month, Year Selection -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Select Period</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="site-select">Select Site:</label>
+                        <select id="site-select" class="form-control">
+                            <option value="">-- Select Site --</option>
+                            {% for site in sites %}
+                            <option value="{{ site.id }}">{{ site.site_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="month-select">Select Month:</label>
+                        <select id="month-select" class="form-control">
+                            {% for month in months %}
+                            <option value="{{ month.0 }}">{{ month.1 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="year-input">Select Year:</label>
+                        <input type="number" id="year-input" class="form-control" min="2000" max="2100" value="{% now 'Y' %}">
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="{{ form.month.id_for_label }}">Select Month:</label>
-            {{ form.month }}
+    </div>
+
+    <!-- Tabs for different entry methods -->
+    <ul class="nav nav-tabs mb-3" id="entryTabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="bulk-tab" data-toggle="tab" href="#bulk" role="tab">Bulk Upload</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="attendance-tab" data-toggle="tab" href="#attendance" role="tab">Attendance Entry</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="advance-tab" data-toggle="tab" href="#advance" role="tab">Advance Entry</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="arrear-tab" data-toggle="tab" href="#arrear" role="tab">Arrear Entry</a>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="entryTabsContent">
+        <!-- Bulk Upload Tab -->
+        <div class="tab-pane fade show active" id="bulk" role="tabpanel">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Bulk Upload</h5>
+                    <form method="post" enctype="multipart/form-data" id="bulk-upload-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="bulk_upload">
+                        <div class="form-group">
+                            <label for="upload-type">Upload Type:</label>
+                            <select name="upload_type" id="upload-type" class="form-control">
+                                <option value="attendance">Attendance</option>
+                                <option value="advance">Advance</option>
+                                <option value="arrears">Arrears</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="upload-file">Upload File:</label>
+                            <input type="file" name="upload_file" id="upload-file" class="form-control-file">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                        <a id="download-link" href="#" class="btn btn-info ml-2">Download Template</a>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="{{ form.year.id_for_label }}">Select Year:</label>
-            {{ form.year }}
+
+        <!-- Attendance Entry Tab -->
+        <div class="tab-pane fade" id="attendance" role="tabpanel">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Attendance Entry</h5>
+                    <form method="post" id="attendance-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="attendance">
+                        <input type="hidden" name="site" id="attendance-site">
+                        <input type="hidden" name="month" id="attendance-month">
+                        <input type="hidden" name="year" id="attendance-year">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Employee Code</th>
+                                        <th>Employee Name</th>
+                                        <th>Days Worked</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendance-entries">
+                                    <tr class="attendance-entry">
+                                        <td>
+                                            <div class="input-group">
+                                                <input type="text" name="employee_code[]" class="form-control emp-code" required>
+                                                <div class="input-group-append">
+                                                    <button type="button" class="btn btn-outline-secondary search-btn" onclick="searchEmployeeRow(this)">Search</button>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><input type="text" class="form-control emp-name" readonly></td>
+                                        <td><input type="number" name="days_worked[]" class="form-control" min="0" max="31" required></td>
+                                        <td>
+                                            <button type="button" class="btn btn-danger btn-sm remove-entry" style="display: none;">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-secondary" id="add-attendance-entry" onclick="addNewRow('attendance')">
+                                <i class="fas fa-plus"></i> Add Row
+                            </button>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save All Entries
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="{{ form.upload_file.id_for_label }}">Upload File:</label>
-            {{ form.upload_file }}
+
+        <!-- Advance Entry Tab -->
+        <div class="tab-pane fade" id="advance" role="tabpanel">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Advance Entry</h5>
+                    <form method="post" id="advance-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="advance">
+                        <input type="hidden" name="site" id="advance-site">
+                        <input type="hidden" name="month" id="advance-month">
+                        <input type="hidden" name="year" id="advance-year">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Employee Code</th>
+                                        <th>Employee Name</th>
+                                        <th>Bank Account</th>
+                                        <th>IFSC Code</th>
+                                        <th>Advance Amount</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="advance-entries">
+                                    <tr class="advance-entry">
+                                        <td>
+                                            <div class="input-group">
+                                                <input type="text" name="employee_code[]" class="form-control emp-code" required>
+                                                <div class="input-group-append">
+                                                    <button type="button" class="btn btn-outline-secondary search-btn" onclick="searchEmployeeRow(this)">Search</button>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><input type="text" class="form-control emp-name" readonly></td>
+                                        <td><input type="text" class="form-control bank-account" readonly></td>
+                                        <td><input type="text" class="form-control ifsc" readonly></td>
+                                        <td><input type="number" name="advance_amount[]" class="form-control" min="0" step="0.01" required></td>
+                                        <td>
+                                            <button type="button" class="btn btn-danger btn-sm remove-entry" style="display: none;">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-secondary" id="add-advance-entry" onclick="addNewRow('advance')">
+                                <i class="fas fa-plus"></i> Add Row
+                            </button>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save All Entries
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
-        <button type="submit" class="btn btn-primary">Upload</button>
-        <a id="download-link" href="#" class="btn btn-info ml-2">Download Template</a>
-    </form>
+
+        <!-- Arrear Entry Tab -->
+        <div class="tab-pane fade" id="arrear" role="tabpanel">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Arrear Entry</h5>
+                    <form method="post" id="arrear-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="arrear">
+                        <input type="hidden" name="site" id="arrear-site">
+                        <input type="hidden" name="month" id="arrear-month">
+                        <input type="hidden" name="year" id="arrear-year">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Employee Code</th>
+                                        <th>Employee Name</th>
+                                        <th>Arrear Amount</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="arrear-entries">
+                                    <tr class="arrear-entry">
+                                        <td>
+                                            <div class="input-group">
+                                                <input type="text" name="employee_code[]" class="form-control emp-code" required>
+                                                <div class="input-group-append">
+                                                    <button type="button" class="btn btn-outline-secondary search-btn" onclick="searchEmployeeRow(this)">Search</button>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><input type="text" class="form-control emp-name" readonly></td>
+                                        <td><input type="number" name="arrear_amount[]" class="form-control" min="0" step="0.01" required></td>
+                                        <td>
+                                            <button type="button" class="btn btn-danger btn-sm remove-entry" style="display: none;">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-secondary" id="add-arrear-entry" onclick="addNewRow('arrear')">
+                                <i class="fas fa-plus"></i> Add Row
+                            </button>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save All Entries
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const site = document.getElementById('{{ form.site.id_for_label }}');
-        const month = document.getElementById('{{ form.month.id_for_label }}');
-        const year = document.getElementById('{{ form.year.id_for_label }}');
+        const site = document.getElementById('site-select');
+        const month = document.getElementById('month-select');
+        const year = document.getElementById('year-input');
         const downloadLink = document.getElementById('download-link');
 
         function updateDownloadLink() {
@@ -54,6 +281,257 @@
 
         // Initial call
         updateDownloadLink();
+    });
+
+    function searchEmployeeRow(button) {
+        console.log('Search button clicked (new function)');
+        const siteId = document.getElementById('site-select').value;
+        console.log('Site ID:', siteId);
+        
+        // Find the table row containing this button
+        const entryRow = button.closest('tr');
+        console.log('Entry row found:', entryRow);
+        
+        if (!entryRow) {
+            alert('Error: Could not find table row');
+            return;
+        }
+        
+        // Find the employee code input in this row
+        const empCodeInput = entryRow.querySelector('input[name="employee_code[]"]');
+        const empNameInput = entryRow.querySelector('.emp-name');
+        
+        if (!empCodeInput || !empNameInput) {
+            alert('Error: Could not find input fields in this row');
+            return;
+        }
+        
+        const empCode = empCodeInput.value.trim();
+        console.log('Employee code:', empCode);
+        
+        if (!siteId) {
+            alert('Please select a site first');
+            return;
+        }
+        
+        if (!empCode) {
+            alert('Please enter employee code');
+            return;
+        }
+
+        const url = `/employees/search-employee/?site_id=${siteId}&employee_code=${empCode}`;
+        console.log('Request URL:', url);
+
+        // Make AJAX call to search employee
+        fetch(url)
+            .then(response => {
+                console.log('Response received:', response);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.success) {
+                    empNameInput.value = data.employee.name;
+                    
+                    // For advance entry, also update bank details
+                    if (entryRow.classList.contains('advance-entry')) {
+                        const bankInput = entryRow.querySelector('.bank-account');
+                        const ifscInput = entryRow.querySelector('.ifsc');
+                        if (bankInput) bankInput.value = data.employee.bank_account || '';
+                        if (ifscInput) ifscInput.value = data.employee.ifsc || '';
+                    }
+                } else {
+                    alert(data.message || 'Employee not found');
+                    empNameInput.value = '';
+                    if (entryRow.classList.contains('advance-entry')) {
+                        const bankInput = entryRow.querySelector('.bank-account');
+                        const ifscInput = entryRow.querySelector('.ifsc');
+                        if (bankInput) bankInput.value = '';
+                        if (ifscInput) ifscInput.value = '';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error searching for employee: ' + error.message);
+            });
+    }
+
+    // Keep the old function for backward compatibility
+    function searchEmployee(button) {
+        searchEmployeeRow(button);
+    }
+
+    function addNewRow(type) {
+        console.log(`Adding new ${type} row`);
+        const container = document.getElementById(`${type}-entries`);
+        console.log('Container found:', container);
+        
+        if (!container) {
+            alert(`Error: Could not find container for ${type}`);
+            return;
+        }
+        
+        const newRowHtml = createEntryHtml(type);
+        console.log('New row HTML:', newRowHtml);
+        container.insertAdjacentHTML('beforeend', newRowHtml);
+        
+        // Show all remove buttons since we have more than one row now
+        container.querySelectorAll('.remove-entry').forEach(btn => btn.style.display = 'block');
+        console.log(`${type} row added successfully`);
+    }
+
+    function createEntryHtml(type) {
+        const templates = {
+            attendance: `
+                <tr class="attendance-entry">
+                    <td>
+                        <div class="input-group">
+                            <input type="text" name="employee_code[]" class="form-control emp-code" required>
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-outline-secondary search-btn" onclick="searchEmployeeRow(this)">Search</button>
+                            </div>
+                        </div>
+                    </td>
+                    <td><input type="text" class="form-control emp-name" readonly></td>
+                    <td><input type="number" name="days_worked[]" class="form-control" min="0" max="31" required></td>
+                    <td>
+                        <button type="button" class="btn btn-danger btn-sm remove-entry">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `,
+            advance: `
+                <tr class="advance-entry">
+                    <td>
+                        <div class="input-group">
+                            <input type="text" name="employee_code[]" class="form-control emp-code" required>
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-outline-secondary search-btn" onclick="searchEmployeeRow(this)">Search</button>
+                            </div>
+                        </div>
+                    </td>
+                    <td><input type="text" class="form-control emp-name" readonly></td>
+                    <td><input type="text" class="form-control bank-account" readonly></td>
+                    <td><input type="text" class="form-control ifsc" readonly></td>
+                    <td><input type="number" name="advance_amount[]" class="form-control" min="0" step="0.01" required></td>
+                    <td>
+                        <button type="button" class="btn btn-danger btn-sm remove-entry">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `,
+            arrear: `
+                <tr class="arrear-entry">
+                    <td>
+                        <div class="input-group">
+                            <input type="text" name="employee_code[]" class="form-control emp-code" required>
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-outline-secondary search-btn" onclick="searchEmployeeRow(this)">Search</button>
+                            </div>
+                        </div>
+                    </td>
+                    <td><input type="text" class="form-control emp-name" readonly></td>
+                    <td><input type="number" name="arrear_amount[]" class="form-control" min="0" step="0.01" required></td>
+                    <td>
+                        <button type="button" class="btn btn-danger btn-sm remove-entry">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `
+        };
+        return templates[type];
+    }
+
+    function updateHiddenFields() {
+        const site = document.getElementById('site-select').value;
+        const month = document.getElementById('month-select').value;
+        const year = document.getElementById('year-select').value;
+
+        // Update hidden fields for each form
+        ['attendance', 'advance', 'arrear'].forEach(formType => {
+            document.getElementById(`${formType}-site`).value = site;
+            document.getElementById(`${formType}-month`).value = month;
+            document.getElementById(`${formType}-year`).value = year;
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Page loaded, setting up event listeners');
+        
+        // Add change event listeners to common selectors
+        document.getElementById('site-select').addEventListener('change', updateHiddenFields);
+        document.getElementById('month-select').addEventListener('change', updateHiddenFields);
+        document.getElementById('year-select').addEventListener('change', updateHiddenFields);
+
+        // Initialize hidden fields with current values
+        updateHiddenFields();
+
+        // Existing code for download link...
+
+        // Add entry buttons
+        ['attendance', 'advance', 'arrear'].forEach(type => {
+            const addButton = document.getElementById(`add-${type}-entry`);
+            console.log(`Looking for add button: add-${type}-entry`, addButton);
+            if (addButton) {
+                addButton.addEventListener('click', function() {
+                    console.log(`Add ${type} button clicked`);
+                    const container = document.getElementById(`${type}-entries`);
+                    console.log(`Container found:`, container);
+                    const newRowHtml = createEntryHtml(type);
+                    console.log(`New row HTML:`, newRowHtml);
+                    container.insertAdjacentHTML('beforeend', newRowHtml);
+                    container.querySelectorAll('.remove-entry').forEach(btn => btn.style.display = 'block');
+                    console.log(`Row added successfully`);
+                });
+            } else {
+                console.log(`Add button not found for type: ${type}`);
+            }
+        });
+
+        // Direct event binding for existing search buttons
+        document.querySelectorAll('.search-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                console.log('Direct search button clicked');
+                e.preventDefault();
+                searchEmployee(this);
+            });
+        });
+
+        // Event delegation for dynamically added search buttons
+        document.addEventListener('click', function(e) {
+            console.log('Document click detected on:', e.target);
+            console.log('Target classes:', e.target.classList);
+            console.log('Target text content:', e.target.textContent);
+            
+            if (e.target.classList.contains('search-btn') || e.target.textContent.trim() === 'Search') {
+                console.log('Search button clicked - calling searchEmployee');
+                e.preventDefault();
+                e.stopPropagation();
+                searchEmployee(e.target);
+            }
+            if (e.target.classList.contains('remove-entry')) {
+                const entry = e.target.closest('.attendance-entry, .advance-entry, .arrear-entry');
+                const container = entry.parentElement;
+                entry.remove();
+                
+                // Hide remove button if only one entry left
+                const entries = container.children;
+                if (entries.length === 1) {
+                    entries[0].querySelector('.remove-entry').style.display = 'none';
+                }
+            }
+        });
+
+        // Hide remove button if only one entry
+        document.querySelectorAll('#attendance-entries, #advance-entries, #arrear-entries').forEach(container => {
+            if (container.children.length === 1) {
+                container.querySelector('.remove-entry').style.display = 'none';
+            }
+        });
     });
 </script>
 {% endblock %}

@@ -567,18 +567,12 @@ class SalaryOtherFieldForm(forms.ModelForm):
 SalaryOtherFieldFormSet = modelformset_factory(SalaryOtherField, form=SalaryOtherFieldForm, extra=1)
 
 
-# attendance and advance upload form
-class UploadForm(forms.Form):
-    company = forms.ModelChoiceField(queryset=Company.objects.all(), required=True, label="Select Company", widget=forms.Select(attrs={'class': 'form-control'}))
-    month = forms.ChoiceField(choices=[(i, i) for i in range(1, 13)], required=True, label="Select Month", widget=forms.Select(attrs={'class': 'form-control'}))
-    year = forms.IntegerField(min_value=2000, max_value=2100, required=True, label="Select Year", widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'YYYY'}))
-    upload_type = forms.ChoiceField(choices=[('attendance', 'Attendance'), ('advance', 'Advance')], required=True, label="Upload Type", widget=forms.Select(attrs={'class': 'form-control'}))
-    upload_file = forms.FileField(required=True, label="Upload File", widget=forms.ClearableFileInput(attrs={'class': 'form-control-file'}))
 
 
-# Arrear form with 6 sub categories
+
+# Upload form for attendance, advance, and arrears
 class UploadForm(forms.Form):
-    company = forms.ModelChoiceField(queryset=Company.objects.all(), required=True, label="Select Company", widget=forms.Select(attrs={'class': 'form-control'}))
+    site = forms.ModelChoiceField(queryset=Site.objects.all(), required=True, label="Select Site", widget=forms.Select(attrs={'class': 'form-control'}))
     month = forms.ChoiceField(choices=[(i, i) for i in range(1, 13)], required=True, label="Select Month", widget=forms.Select(attrs={'class': 'form-control'}))
     year = forms.IntegerField(min_value=2000, max_value=2100, required=True, label="Select Year", widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'YYYY'}))
     upload_type = forms.ChoiceField(choices=[
@@ -694,22 +688,27 @@ EInvoiceLineItemFormSet = modelformset_factory(
     can_delete=True,  # Allow deletion of existing items
 )
 
+from .models import MONTH_CHOICES
+
 class ReportForm(forms.ModelForm):
     class Meta:
         model = Report
-        fields = ['site', 'report_type', 'from_date', 'to_date']
+        fields = ['site', 'report_type', 'month', 'year']
         widgets = {
-            'from_date': forms.DateInput(attrs={'type': 'date'}),
-            'to_date': forms.DateInput(attrs={'type': 'date'}),
+            'month': forms.Select(attrs={'class': 'form-control'}),
+            'year': forms.NumberInput(attrs={'class': 'form-control', 'min': '2000', 'max': '2100'}),
+            'site': forms.Select(attrs={'class': 'form-control'}),
+            'report_type': forms.Select(attrs={'class': 'form-control'}),
         }
 
-    def clean(self):
-        cleaned_data = super().clean()
-        from_date = cleaned_data.get('from_date')
-        to_date = cleaned_data.get('to_date')
-
-        if from_date and to_date and from_date > to_date:
-            raise ValidationError("From Date cannot be later than To Date.")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add choices for month field
+        self.fields['month'].choices = MONTH_CHOICES
+        # Set current year as initial value
+        from datetime import datetime
+        current_year = datetime.now().year
+        self.fields['year'].initial = current_year
 
 
 # Bill Template Forms
