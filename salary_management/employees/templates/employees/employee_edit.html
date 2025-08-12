@@ -2,16 +2,301 @@
 
 {% block title %}Edit Employee{% endblock %}
 
+{% block extra_css %}
+<style>
+    .edit-employee-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-header h2 {
+        margin: 0;
+        font-weight: 300;
+        font-size: 2rem;
+    }
+
+    .employee-name {
+        font-weight: 600;
+        color: #ffd700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .form-container {
+        background: white;
+        padding: 2.5rem 2rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e9ecef;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        display: block;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-control {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        outline: none;
+    }
+
+    .form-control:hover {
+        border-color: #c3c8d6;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .form-help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+
+    .errorlist {
+        color: #dc3545;
+        list-style: none;
+        padding: 0;
+        margin: 0.25rem 0 0 0;
+        font-size: 0.875rem;
+    }
+
+    .errorlist li {
+        margin-bottom: 0.25rem;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .form-group.half-width {
+        grid-column: span 1;
+    }
+
+    /* Icon styles */
+    .btn-primary::before {
+        content: "💾";
+        margin-right: 0.5rem;
+    }
+
+    .btn-secondary::before {
+        content: "↩️";
+        margin-right: 0.5rem;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .edit-employee-container {
+            padding: 1rem 0.5rem;
+        }
+
+        .form-container {
+            padding: 1.5rem 1rem;
+        }
+
+        .page-header {
+            padding: 1.5rem;
+        }
+
+        .page-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .form-group.full-width,
+        .form-group.half-width {
+            grid-column: 1;
+        }
+
+        .button-group {
+            flex-direction: column;
+        }
+
+        .btn {
+            justify-content: center;
+        }
+    }
+
+    /* Animation for form appearance */
+    .form-container {
+        animation: slideInUp 0.6s ease-out;
+    }
+
+    @keyframes slideInUp {
+        from {
+            transform: translateY(30px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <h2>Edit Employee - {{ employee.name }}</h2>
-    
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        
-        <button type="submit" class="btn btn-primary">Update Employee</button>
-        <a href="{% url 'employees:employee_list' %}" class="btn btn-secondary">Cancel</a>
-    </form>
+<div class="edit-employee-container">
+    <div class="page-header">
+        <h2>Edit Employee - <span class="employee-name">{{ employee.name }}</span></h2>
+    </div>
+
+    <div class="form-container">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="form-grid">
+                {% for field in form %}
+                    {% if field.name == 'employee_code' or field.name == 'name' %}
+                        <div class="form-group half-width">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-help-text">{{ field.help_text }}</div>
+                            {% endif %}
+                            {{ field.errors }}
+                        </div>
+                    {% elif field.name == 'father_name' or field.name == 'mother_name' %}
+                        <div class="form-group half-width">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-help-text">{{ field.help_text }}</div>
+                            {% endif %}
+                            {{ field.errors }}
+                        </div>
+                    {% elif field.name == 'gender' or field.name == 'date_of_birth' %}
+                        <div class="form-group half-width">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-help-text">{{ field.help_text }}</div>
+                            {% endif %}
+                            {{ field.errors }}
+                        </div>
+                    {% elif field.name == 'marital_status' or field.name == 'spouse_name' %}
+                        <div class="form-group half-width">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-help-text">{{ field.help_text }}</div>
+                            {% endif %}
+                            {{ field.errors }}
+                        </div>
+                    {% elif field.name == 'mobile' or field.name == 'email' %}
+                        <div class="form-group half-width">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-help-text">{{ field.help_text }}</div>
+                            {% endif %}
+                            {{ field.errors }}
+                        </div>
+                    {% else %}
+                        <div class="form-group full-width">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-help-text">{{ field.help_text }}</div>
+                            {% endif %}
+                            {{ field.errors }}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">Update Employee</button>
+                <a href="{% url 'employees:employee_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

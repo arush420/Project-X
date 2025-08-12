@@ -51,6 +51,7 @@
 
 
                         <!-- Salary Rules Section -->
+                        {% if salary_rule_formset %}
                         <h5 class="mt-4 text-center">Salary Rules</h5>
                         <hr>
                         <div class="form-group">
@@ -226,8 +227,12 @@
                                 </table>
                             </div>
                         </div>
+                        {% else %}
+                        <div class="alert alert-info text-center">Salary Rules are now configured at Site level.</div>
+                        {% endif %}
 
                         <!-- Salary Other Fields Section -->
+                        {% if salary_other_field_formset %}
                         <h5 class="mt-4 text-center">Salary Other Fields</h5>
                         <hr>
                         <div class="form-group">
@@ -400,6 +405,9 @@
                                 </table>
                             </div>
                         </div>
+                        {% else %}
+                        <div class="alert alert-info text-center">Salary Other Fields are now configured at Site level.</div>
+                        {% endif %}
 
                         <!-- Submit Button -->
                         <div class="text-center mt-4">

@@ -246,6 +246,176 @@
                             </div>
                         </div>
 
+                        {% if salary_rule_formset %}
+                        <h5 class="mt-4">Salary Rules</h5>
+                        {{ salary_rule_formset.management_form }}
+                        <div class="table-responsive mb-4">
+                            <table class="table table-bordered table-hover text-center">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Standard Head</th>
+                                        <th>Rate Type</th>
+                                        <th>Pay Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for formset_form in salary_rule_formset %}
+                                    <tr>
+                                        <td>Basic</td>
+                                        <td>{{ formset_form.Basic_rate_type }}</td>
+                                        <td>{{ formset_form.Basic_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Sr All</td>
+                                        <td>{{ formset_form.Sr_All_rate_type }}</td>
+                                        <td>{{ formset_form.Sr_All_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>DA</td>
+                                        <td>{{ formset_form.DA_rate_type }}</td>
+                                        <td>{{ formset_form.DA_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>HRA</td>
+                                        <td>{{ formset_form.HRA_rate_type }}</td>
+                                        <td>{{ formset_form.HRA_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>TA</td>
+                                        <td>{{ formset_form.TA_rate_type }}</td>
+                                        <td>{{ formset_form.TA_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Med</td>
+                                        <td>{{ formset_form.Med_rate_type }}</td>
+                                        <td>{{ formset_form.Med_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Conv</td>
+                                        <td>{{ formset_form.Conv_rate_type }}</td>
+                                        <td>{{ formset_form.Conv_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Wash</td>
+                                        <td>{{ formset_form.Wash_rate_type }}</td>
+                                        <td>{{ formset_form.Wash_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Eff</td>
+                                        <td>{{ formset_form.Eff_rate_type }}</td>
+                                        <td>{{ formset_form.Eff_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Other</td>
+                                        <td>{{ formset_form.Other_rate_type }}</td>
+                                        <td>{{ formset_form.Other_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Incentive</td>
+                                        <td>{{ formset_form.Incentive_rate_type }}</td>
+                                        <td>{{ formset_form.Incentive_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Bonus</td>
+                                        <td>{{ formset_form.Bonus_rate_type }}</td>
+                                        <td>{{ formset_form.Bonus_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Over Time</td>
+                                        <td>{{ formset_form.Over_Time_rate_type }}</td>
+                                        <td>{{ formset_form.Over_Time_pay_type }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+
+                        {% if salary_other_field_formset %}
+                        <h5 class="mt-4">Salary Other Fields</h5>
+                        {{ salary_other_field_formset.management_form }}
+                        <div class="table-responsive mb-4">
+                            <table class="table table-bordered table-hover text-center">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Allowance Type</th>
+                                        <th>Rate Type</th>
+                                        <th>Pay Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for oform in salary_other_field_formset %}
+                                    <tr>
+                                        <td>Good Work Allowance</td>
+                                        <td>{{ oform.Good_Work_Allowance_rate_type }}</td>
+                                        <td>{{ oform.Good_Work_Allowance_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>ABRY</td>
+                                        <td>{{ oform.ABRY_rate_type }}</td>
+                                        <td>{{ oform.ABRY_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Add Bonus</td>
+                                        <td>{{ oform.Add_Bonus_rate_type }}</td>
+                                        <td>{{ oform.Add_Bonus_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Arrears</td>
+                                        <td>{{ oform.Arrears_rate_type }}</td>
+                                        <td>{{ oform.Arrears_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Attendance Award</td>
+                                        <td>{{ oform.Attnd_Award_rate_type }}</td>
+                                        <td>{{ oform.Attnd_Award_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Attendance Incentive</td>
+                                        <td>{{ oform.Attnd_Incentive_rate_type }}</td>
+                                        <td>{{ oform.Attnd_Incentive_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Bonus Allowance</td>
+                                        <td>{{ oform.Bonus_Allowance_rate_type }}</td>
+                                        <td>{{ oform.Bonus_Allowance_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Conveyance Allowance</td>
+                                        <td>{{ oform.Conveyance_Allowance_rate_type }}</td>
+                                        <td>{{ oform.Conveyance_Allowance_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Festival Bonus Refund</td>
+                                        <td>{{ oform.Festival_Bonus_refund_rate_type }}</td>
+                                        <td>{{ oform.Festival_Bonus_refund_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Gratuity</td>
+                                        <td>{{ oform.Gratuity_rate_type }}</td>
+                                        <td>{{ oform.Gratuity_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Night Allowance</td>
+                                        <td>{{ oform.Night_Allowance_rate_type }}</td>
+                                        <td>{{ oform.Night_Allowance_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Production Incentive</td>
+                                        <td>{{ oform.Production_incentive_rate_type }}</td>
+                                        <td>{{ oform.Production_incentive_pay_type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Welding Allowance</td>
+                                        <td>{{ oform.Welding_Allowance_rate_type }}</td>
+                                        <td>{{ oform.Welding_Allowance_pay_type }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+
                         <div class="form-group">
                             <button type="submit" class="btn btn-success">
                                 <i class="fas fa-save"></i> Save Site

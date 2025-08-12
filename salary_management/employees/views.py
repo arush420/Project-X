@@ -31,6 +31,7 @@ import json
 import csv
 import logging
 from django.utils.timezone import now
+from openpyxl import Workbook
 from openpyxl.utils.datetime import days_to_time
 from .models import (
     Employee, Salary, Task, Profile, Payment, PurchaseItem, VendorInformation, 
@@ -1188,41 +1189,28 @@ def company_list(request):
 def company_add(request):
     if request.method == 'POST':
         company_form = CompanyForm(request.POST)
-        salary_rule_formset = SalaryRuleFormSet(request.POST, queryset=SalaryRule.objects.none())
-        salary_other_field_formset = SalaryOtherFieldFormSet(request.POST, queryset=SalaryOtherField.objects.none())
+        # Salary rules/other fields are now managed at Site level, not Company
 
-        if company_form.is_valid()  and salary_rule_formset.is_valid() and salary_other_field_formset.is_valid():
+        if company_form.is_valid():
             company = company_form.save()
-            for form in salary_rule_formset:
-                salary_rule = form.save(commit=False)
-                salary_rule.company = company
-                salary_rule.save()
-
-            for form in salary_other_field_formset:
-                salary_other_field = form.save(commit=False)
-                salary_other_field.company = company
-                salary_other_field.save()
 
             messages.success(request, "Company added successfully!")
             return redirect('employees:company_list')
 
     else:
         company_form = CompanyForm()
-        salary_rule_formset = SalaryRuleFormSet(queryset=SalaryRule.objects.none())
-        salary_other_field_formset = SalaryOtherFieldFormSet(queryset=SalaryOtherField.objects.none())
 
     return render(request, 'employees/company_add_update.html', {
         'company_form': company_form,
-        'salary_rule_formset': salary_rule_formset,
-        'salary_other_field_formset': salary_other_field_formset,
         'is_update': False,
     })
 
 def company_detail(request, company_id):
     # Fetch company and related data
     company = get_object_or_404(Company, id=company_id)
-    salary_rules = SalaryRule.objects.filter(company=company, add=True)  # Only rules with 'Add' checked
-    salary_other_fields = SalaryOtherField.objects.filter(company=company, add=True)  # Same for other fields
+    # Salary rules are defined per Site now. Show sites under this company if applicable.
+    salary_rules = SalaryRule.objects.none()
+    salary_other_fields = SalaryOtherField.objects.none()
 
     return render(request, 'employees/company_detail.html', {
         'company': company,
@@ -1235,32 +1223,17 @@ def company_update(request, company_id):
 
     if request.method == 'POST':
         company_form = CompanyForm(request.POST, instance=company)
-        salary_rule_formset = SalaryRuleFormSet(request.POST, queryset=company.salary_rules.all())
-        salary_other_field_formset = SalaryOtherFieldFormSet(request.POST, queryset=SalaryOtherField.objects.filter(company=company))
 
-        if company_form.is_valid() and salary_rule_formset.is_valid() and salary_other_field_formset.is_valid():
+        if company_form.is_valid():
             company_form.save()
-            for form in salary_rule_formset:
-                salary_rule = form.save(commit=False)
-                salary_rule.company = company
-                salary_rule.save()
 
-            for form in salary_other_field_formset:
-                salary_other_field = form.save(commit=False)
-                salary_other_field.company = company
-                salary_other_field.save()
-
-            messages.success(request, "Company and salary rules updated successfully!")
+            messages.success(request, "Company updated successfully!")
             return redirect('employees:company_list')
     else:
         company_form = CompanyForm(instance=company)
-        salary_rule_formset = SalaryRuleFormSet(queryset=company.salary_rules.all())
-        salary_other_field_formset = SalaryOtherFieldFormSet(queryset=SalaryOtherField.objects.filter(company=company))
 
     return render(request, 'employees/company_add_update.html', {
         'company_form': company_form,
-        'salary_rule_formset': salary_rule_formset,
-        'salary_other_field_formset': salary_other_field_formset,
         'is_update': True,
     })
 
@@ -1283,17 +1256,41 @@ def site_list(request):
 def site_add(request):
     if request.method == 'POST':
         form = SiteForm(request.POST)
-        if form.is_valid():
-            form.save()
+        salary_rule_formset = SalaryRuleFormSet(request.POST, queryset=SalaryRule.objects.none())
+        salary_other_field_formset = SalaryOtherFieldFormSet(request.POST, queryset=SalaryOtherField.objects.none())
+
+        if form.is_valid() and salary_rule_formset.is_valid() and salary_other_field_formset.is_valid():
+            site = form.save()
+            for rule_form in salary_rule_formset:
+                if not rule_form.has_changed():
+                    continue
+                salary_rule = rule_form.save(commit=False)
+                salary_rule.site = site
+                salary_rule.save()
+
+            for other_form in salary_other_field_formset:
+                if not other_form.has_changed():
+                    continue
+                salary_other = other_form.save(commit=False)
+                salary_other.site = site
+                salary_other.save()
+
             messages.success(request, "Site added successfully!")
             return redirect('employees:site_list')
         else:
             # Debug: Print form errors
-            print("Form validation errors:", form.errors)
-            messages.error(request, f"Form validation failed: {form.errors}")
+            print("Form validation errors:", form.errors, salary_rule_formset.errors, salary_other_field_formset.errors)
+            messages.error(request, "Form validation failed. Please review the errors.")
     else:
         form = SiteForm()
-    return render(request, 'employees/site_form.html', {'form': form})
+        salary_rule_formset = SalaryRuleFormSet(queryset=SalaryRule.objects.none())
+        salary_other_field_formset = SalaryOtherFieldFormSet(queryset=SalaryOtherField.objects.none())
+
+    return render(request, 'employees/site_form.html', {
+        'form': form,
+        'salary_rule_formset': salary_rule_formset,
+        'salary_other_field_formset': salary_other_field_formset,
+    })
 
 def site_detail(request, site_id):
     site = get_object_or_404(Site, id=site_id)
@@ -1305,17 +1302,37 @@ def site_update(request, site_id):
     site = get_object_or_404(Site, id=site_id)
     if request.method == 'POST':
         form = SiteForm(request.POST, instance=site)
-        if form.is_valid():
-            form.save()
+        salary_rule_formset = SalaryRuleFormSet(request.POST, queryset=SalaryRule.objects.filter(site=site))
+        salary_other_field_formset = SalaryOtherFieldFormSet(request.POST, queryset=SalaryOtherField.objects.filter(site=site))
+
+        if form.is_valid() and salary_rule_formset.is_valid() and salary_other_field_formset.is_valid():
+            site = form.save()
+            for rule_form in salary_rule_formset:
+                salary_rule = rule_form.save(commit=False)
+                salary_rule.site = site
+                salary_rule.save()
+
+            for other_form in salary_other_field_formset:
+                salary_other = other_form.save(commit=False)
+                salary_other.site = site
+                salary_other.save()
+
             messages.success(request, "Site updated successfully!")
             return redirect('employees:site_list')
         else:
             # Debug: Print form errors
-            print("Form validation errors:", form.errors)
-            messages.error(request, f"Form validation failed: {form.errors}")
+            print("Form validation errors:", form.errors, salary_rule_formset.errors, salary_other_field_formset.errors)
+            messages.error(request, "Form validation failed. Please review the errors.")
     else:
         form = SiteForm(instance=site)
-    return render(request, 'employees/site_form.html', {'form': form})
+        salary_rule_formset = SalaryRuleFormSet(queryset=SalaryRule.objects.filter(site=site))
+        salary_other_field_formset = SalaryOtherFieldFormSet(queryset=SalaryOtherField.objects.filter(site=site))
+
+    return render(request, 'employees/site_form.html', {
+        'form': form,
+        'salary_rule_formset': salary_rule_formset,
+        'salary_other_field_formset': salary_other_field_formset,
+    })
 
 def delete_site(request, site_id):
     site = get_object_or_404(Site, id=site_id)
@@ -2270,3 +2287,43 @@ def manage_site_employee(request, site_id):
         'upload_form': upload_form,
     }
     return render(request, 'employees/site_employees.html', context)
+
+@login_required
+def get_employee_data(request):
+    site_id = request.GET.get('site_id')
+    month = request.GET.get('month')
+    year = request.GET.get('year')
+
+    if not all([site_id, month, year]):
+        return JsonResponse({'error': 'Missing required parameters'}, status=400)
+
+    try:
+        # Fetch all data for the given period
+        attendance = EmployeesAttendance.objects.filter(employee__site_id=site_id, month=month, year=year)
+        advances = CompanyAdvanceTransaction.objects.filter(site_id=site_id, month=month, year=year)
+        arrears = Arrear.objects.filter(site_id=site_id, month=month, year=year)
+
+        # Create dictionaries for quick lookups
+        attendance_map = {att.employee.employee_code: att.days_worked for att in attendance}
+        advances_map = {adv.employee_id: adv.amount for adv in advances}
+        arrears_map = {arr.employee_id: arr.basic_salary_arrears for arr in arrears}
+
+        # Get all employees for the site
+        employees = Employee.objects.filter(site_id=site_id)
+        
+        # Prepare data for JSON response
+        employee_data = [
+            {
+                'employee_code': emp.employee_code,
+                'name': emp.name,
+                'days_worked': attendance_map.get(emp.employee_code, 0),
+                'advance': advances_map.get(emp.employee_code, 0),
+                'arrears': arrears_map.get(emp.employee_code, 0),
+            }
+            for emp in employees
+        ]
+
+        return JsonResponse({'employees': employee_data})
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

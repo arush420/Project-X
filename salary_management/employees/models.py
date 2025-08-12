@@ -169,7 +169,8 @@ class SalaryRule(models.Model):
     add = models.BooleanField(default=False)  # Track if this rule was selected
 
     def __str__(self):
-        return f"{self.company.company_name} - Salary Rule"
+        site_name = self.site.site_name if self.site_id else "Unknown Site"
+        return f"{site_name} - Salary Rule"
 
 
 class SalaryOtherField(models.Model):
@@ -228,7 +229,8 @@ class SalaryOtherField(models.Model):
     add = models.BooleanField(default=False)  # Track if this field was selected
 
     def __str__(self):
-        return f"{self.company.company_name} - Salary Other Fields"
+        site_name = self.site.site_name if self.site_id else "Unknown Site"
+        return f"{site_name} - Salary Other Fields"
 
 
 
